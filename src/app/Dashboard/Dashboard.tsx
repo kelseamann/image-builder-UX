@@ -312,6 +312,12 @@ const Dashboard: React.FunctionComponent = () => {
     'VMWare',
   ];
 
+  const capitalizeWords = (str: string) => {
+    return str.split(' ')
+             .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+             .join(' ');
+  };
+
   const getStatusBadge = (status: string) => {
     const statusMap = {
       'ready': { color: 'green' as const, variant: 'filled' as const },
@@ -322,7 +328,7 @@ const Dashboard: React.FunctionComponent = () => {
     const config = statusMap[status as keyof typeof statusMap] || statusMap.expired;
     return (
       <Label color={config.color} variant={config.variant}>
-        {status}
+        {capitalizeWords(status)}
       </Label>
     );
   };
