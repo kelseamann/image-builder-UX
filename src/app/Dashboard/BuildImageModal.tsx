@@ -695,9 +695,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
             {/* Timezone Section */}
             <div style={{ marginTop: '2rem' }}>
-              <h4 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', color: '#151515' }}>
+              <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                 Timezone
-              </h4>
+              </Title>
               
               <FormGroup
                 label="Timezone"
@@ -754,9 +754,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
             {/* Locale Section */}
             <div style={{ marginTop: '2rem' }}>
-              <h4 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', color: '#151515' }}>
+              <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                 Locale
-              </h4>
+              </Title>
               
               <FormGroup
                 label="Languages"
@@ -819,9 +819,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
             {/* Hostname Section */}
             <div style={{ marginTop: '2rem' }}>
-              <h4 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', color: '#151515' }}>
+              <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                 Hostname
-              </h4>
+              </Title>
               
               <FormGroup
                 label="Hostname"
@@ -841,9 +841,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
             {/* Kernel Section */}
             <div style={{ marginTop: '2rem' }}>
-              <h4 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', color: '#151515' }}>
+              <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                 Kernel
-              </h4>
+              </Title>
               
               <FormGroup
                 label="Kernel package"
@@ -904,9 +904,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
             {/* Users Section */}
             <div style={{ marginTop: '2rem' }}>
-              <h4 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem', color: '#151515' }}>
+              <Title headingLevel="h3" size="lg" style={{ marginBottom: '0.5rem' }}>
                 Users
-              </h4>
+              </Title>
               <p style={{ fontSize: '14px', lineHeight: '1.5', marginBottom: '1rem', color: '#666' }}>
                 Create user accounts for systems that will use this image.
               </p>
