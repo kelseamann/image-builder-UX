@@ -6,7 +6,7 @@ import CopyPlugin from 'copy-webpack-plugin';
 import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
 import Dotenv from 'dotenv-webpack';
 const BG_IMAGES_DIRNAME = 'bgimages';
-const ASSET_PATH = process.env.ASSET_PATH || (process.env.NODE_ENV === 'production' ? '/image-builder-UX/' : '/');
+const ASSET_PATH = process.env.ASSET_PATH || (process.env.NODE_ENV === 'production' ? './' : '/');
 
 export default (env) => {
   return {
