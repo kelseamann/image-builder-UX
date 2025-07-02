@@ -185,7 +185,7 @@ const UseBaseImageModal: React.FunctionComponent<UseBaseImageModalProps> = ({
   return (
     <Modal
       variant={ModalVariant.large}
-      title="Popular Downloads for Red Hat Enterprise Linux"
+      title="Popular Downloads for Red Hat Enterprise Linux" 
       isOpen={isOpen}
       onClose={onClose}
     >
@@ -216,6 +216,22 @@ const UseBaseImageModal: React.FunctionComponent<UseBaseImageModalProps> = ({
                           <FlexItem>
                             <Flex spaceItems={{ default: 'spaceItemsSm' }}>
                               <FlexItem>
+                                <Button
+                                  variant="primary"
+                                  onClick={() => handleBuildLatest(image.name)}
+                                >
+                                  Build latest
+                                </Button>
+                              </FlexItem>
+                              <FlexItem>
+                                <Button
+                                  variant="secondary"
+                                  onClick={() => handleDownload(image.name)}
+                                >
+                                  Download
+                                </Button>
+                              </FlexItem>
+                              <FlexItem>
                                 <Popover
                                   aria-label="Image details"
                                   bodyContent={renderDetailsPopover(image)}
@@ -230,22 +246,6 @@ const UseBaseImageModal: React.FunctionComponent<UseBaseImageModalProps> = ({
                                     Show details
                                   </Button>
                                 </Popover>
-                              </FlexItem>
-                              <FlexItem>
-                                <Button
-                                  variant="secondary"
-                                  onClick={() => handleDownload(image.name)}
-                                >
-                                  Download
-                                </Button>
-                              </FlexItem>
-                              <FlexItem>
-                                <Button
-                                  variant="primary"
-                                  onClick={() => handleBuildLatest(image.name)}
-                                >
-                                  Build latest
-                                </Button>
                               </FlexItem>
                             </Flex>
                           </FlexItem>
