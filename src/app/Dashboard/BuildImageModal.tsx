@@ -1657,14 +1657,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 
                 {/* Enable repeatable build Section */}
                 <div style={{ marginBottom: '2rem' }}>
-                  <h4 style={{ 
-                    fontSize: '1rem', 
-                    fontWeight: 600, 
-                    marginBottom: '1rem',
-                    color: '#151515'
-                  }}>
+                  <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                     Enable repeatable build
-                  </h4>
+                  </Title>
                   <FormGroup
                     label="Select snapshot date"
                     fieldId="snapshot-date"
@@ -1716,14 +1711,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 
                 {/* Kickstart File Section */}
                 <div style={{ marginBottom: '2rem' }}>
-                  <h4 style={{ 
-                    fontSize: '1rem', 
-                    fontWeight: 600, 
-                    marginBottom: '1rem',
-                    color: '#151515'
-                  }}>
+                  <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                     Kickstart File
-                  </h4>
+                  </Title>
                   <FormGroup fieldId="kickstart-file">
                     <FileUpload
                       id="kickstart-file-upload"
@@ -1769,14 +1759,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 
                 {/* Compliance Section */}
                 <div style={{ marginBottom: '2rem' }}>
-                  <h4 style={{ 
-                    fontSize: '1rem', 
-                    fontWeight: 600, 
-                    marginBottom: '1rem',
-                    color: '#151515'
-                  }}>
+                  <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                     Compliance
-                  </h4>
+                  </Title>
                   <div style={{ 
                     fontSize: '14px', 
                     color: '#6a6e73', 
