@@ -960,9 +960,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       case 0:
         return (
           <div>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1rem', color: '#151515' }}>
+            <Title headingLevel="h2" size="xl" style={{ marginBottom: '1rem' }}>
               Base Image Selection
-            </h3>
+            </Title>
             <p style={{ fontSize: '16px', color: '#666', marginBottom: '2rem' }}>
               Choose the base operating system and version for your custom image.
             </p>
@@ -970,14 +970,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             <Form>
               {/* Image Details Section */}
               <div style={{ marginBottom: '2rem' }}>
-                <h4 style={{ 
-                  fontSize: '1rem', 
-                  fontWeight: 600, 
-                  marginBottom: '1rem',
-                  color: '#151515'
-                }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                   Image details
-                </h4>
+                </Title>
                 
                 <FormGroup
                   label="Name"
@@ -1011,14 +1006,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               
               {/* Image Output Section */}
               <div style={{ marginBottom: '2rem' }}>
-                <h4 style={{ 
-                  fontSize: '1rem', 
-                  fontWeight: 600, 
-                  marginBottom: '1rem',
-                  color: '#151515'
-                }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                   Image output
-                </h4>
+                </Title>
                 
                 <FormGroup
                   label="Release"
@@ -1989,9 +1979,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       case 1:
         return (
           <div>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1rem', color: '#151515' }}>
+            <Title headingLevel="h2" size="xl" style={{ marginBottom: '1rem' }}>
               Repositories and Packages
-            </h3>
+            </Title>
             <p style={{ fontSize: '16px', color: '#666', marginBottom: '2rem' }}>
               Configure package repositories and select additional software packages to include in your image.
             </p>
@@ -1999,14 +1989,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             <Form>
               {/* Use Extended Support Section */}
               <div style={{ marginBottom: '32px' }}>
-                <h4 style={{ 
-                  fontSize: '1rem', 
-                  fontWeight: 600, 
-                  marginBottom: '1rem',
-                  color: '#151515'
-                }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                   Use Extended Support
-                </h4>
+                </Title>
                 
                 <FormGroup
                   label="Extended support subscription"
@@ -2458,23 +2443,18 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       case 2:
         return (
           <div>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1rem', color: '#151515' }}>
+            <Title headingLevel="h2" size="xl" style={{ marginBottom: '1rem' }}>
               Advanced Settings
-            </h3>
+            </Title>
             <p style={{ fontSize: '16px', color: '#666', marginBottom: '2rem' }}>
               Configure advanced system settings including registration, timezone, locale, and security options.
             </p>
             <Form>
               {/* Register Section */}
               <div style={{ marginBottom: '32px' }}>
-                <h4 style={{ 
-                  fontSize: '1rem', 
-                  fontWeight: 600, 
-                  marginBottom: '0.5rem',
-                  color: '#151515'
-                }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '0.5rem' }}>
                   Register
-                </h4>
+                </Title>
                 <p style={{ 
                   fontSize: '14px', 
                   lineHeight: '1.5',
@@ -2549,9 +2529,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       case 3:
         return (
           <div>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1rem', color: '#151515' }}>
+            <Title headingLevel="h2" size="xl" style={{ marginBottom: '1rem' }}>
               Review Image Configuration
-            </h3>
+            </Title>
             <p style={{ fontSize: '16px', color: '#666', marginBottom: '2rem' }}>
               Review your image configuration and build settings before creating the image.
             </p>
@@ -2562,9 +2542,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 <Card>
                   <CardBody>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                      <h4 style={{ fontSize: '1rem', fontWeight: 600, color: '#151515', margin: 0 }}>
+                      <Title headingLevel="h3" size="lg" style={{ margin: 0 }}>
                         Image Overview
-                      </h4>
+                      </Title>
                       <Button
                         variant="link"
                         onClick={() => setActiveTabKey(0)}
@@ -2617,9 +2597,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 <Card>
                   <CardBody>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                      <h4 style={{ fontSize: '1rem', fontWeight: 600, color: '#151515', margin: 0 }}>
+                      <Title headingLevel="h3" size="lg" style={{ margin: 0 }}>
                         Registration Settings
-                      </h4>
+                      </Title>
                       <Button
                         variant="link"
                         onClick={() => setActiveTabKey(2)}
@@ -2659,9 +2639,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 <Card>
                   <CardBody>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                      <h4 style={{ fontSize: '1rem', fontWeight: 600, color: '#151515', margin: 0 }}>
+                      <Title headingLevel="h3" size="lg" style={{ margin: 0 }}>
                         Users Configuration
-                      </h4>
+                      </Title>
                       <Button
                         variant="link"
                         onClick={() => setActiveTabKey(2)}
