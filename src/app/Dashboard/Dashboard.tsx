@@ -815,7 +815,16 @@ const Dashboard: React.FunctionComponent = () => {
                   </Button>
                 </FlexItem>
                 <FlexItem>
-                  <Button variant="secondary" onClick={() => console.log('Import clicked')}>
+                  <Button 
+                    variant="secondary" 
+                    onClick={() => console.log('Import clicked')}
+                    style={{
+                      backgroundColor: '#ff0080',
+                      borderColor: '#ff0080',
+                      color: 'white',
+                      boxShadow: '0 0 10px rgba(255, 0, 128, 0.5)'
+                    }}
+                  >
                     Import
                   </Button>
                 </FlexItem>
