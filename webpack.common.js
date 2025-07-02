@@ -105,6 +105,7 @@ export default (env) => {
     plugins: [
       new HtmlWebpackPlugin({
         template: path.resolve('./src', 'index.html'),
+        publicPath: ASSET_PATH,
       }),
       new Dotenv({
         systemvars: true,
