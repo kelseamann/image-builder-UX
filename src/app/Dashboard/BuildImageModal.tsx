@@ -2696,9 +2696,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 <Card>
                   <CardBody>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                      <h4 style={{ fontSize: '1rem', fontWeight: 600, color: '#151515', margin: 0 }}>
+                      <Title headingLevel="h3" size="lg" style={{ margin: 0 }}>
                         Advanced Settings
-                      </h4>
+                      </Title>
                       <Button
                         variant="link"
                         onClick={() => setActiveTabKey(2)}
@@ -2779,9 +2779,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 <Card>
                   <CardBody>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                      <h4 style={{ fontSize: '1rem', fontWeight: 600, color: '#151515', margin: 0 }}>
+                      <Title headingLevel="h3" size="lg" style={{ margin: 0 }}>
                         Packages
-                      </h4>
+                      </Title>
                       <Button
                         variant="link"
                         onClick={() => setActiveTabKey(1)}
@@ -2825,6 +2825,21 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     <strong>Estimated build time:</strong> 5-15 minutes
                   </p>
                 </Alert>
+              </StackItem>
+
+              {/* Build Action */}
+              <StackItem>
+                <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '1rem' }}>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    onClick={handleConfirm}
+                    isLoading={isLoading}
+                    isDisabled={isLoading}
+                  >
+                    {isLoading ? 'Building...' : 'Build image'}
+                  </Button>
+                </div>
               </StackItem>
             </Stack>
           </div>
@@ -3073,45 +3088,21 @@ ${config.kernel.arguments.length > 0 ? `  arguments:\n${config.kernel.arguments.
           padding: '16px 24px',
           borderTop: '1px solid #d2d2d2'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <Button
-                variant="link"
-                onClick={handleCancel}
-                isDisabled={isLoading}
-              >
-                Cancel
-              </Button>
-            </div>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              {!isFirstTab && (
-                <Button
-                  variant="secondary"
-                  onClick={handleBack}
-                  isDisabled={isLoading}
-                >
-                  Back
-                </Button>
-              )}
-              {!isLastTab ? (
-                <Button
-                  variant="primary"
-                  onClick={handleNext}
-                  isDisabled={isLoading}
-                >
-                  Next
-                </Button>
-              ) : (
-                <Button
-                  variant="primary"
-                  onClick={handleConfirm}
-                  isLoading={isLoading}
-                  isDisabled={isLoading}
-                >
-                  {isLoading ? 'Building...' : 'Build image'}
-                </Button>
-              )}
-            </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px' }}>
+            <Button
+              variant="secondary"
+              onClick={handleCancel}
+              isDisabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => setActiveTabKey(3)}
+              isDisabled={isLoading}
+            >
+              Review image
+            </Button>
           </div>
         </div>
       </div>
