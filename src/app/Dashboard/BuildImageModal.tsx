@@ -695,9 +695,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
             {/* Timezone Section */}
             <div style={{ marginTop: '2rem' }}>
-              <h4 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', color: '#151515' }}>
+              <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                 Timezone
-              </h4>
+              </Title>
               
               <FormGroup
                 label="Timezone"
@@ -754,9 +754,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
             {/* Locale Section */}
             <div style={{ marginTop: '2rem' }}>
-              <h4 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', color: '#151515' }}>
+              <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                 Locale
-              </h4>
+              </Title>
               
               <FormGroup
                 label="Languages"
@@ -819,9 +819,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
             {/* Hostname Section */}
             <div style={{ marginTop: '2rem' }}>
-              <h4 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', color: '#151515' }}>
+              <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                 Hostname
-              </h4>
+              </Title>
               
               <FormGroup
                 label="Hostname"
@@ -841,9 +841,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
             {/* Kernel Section */}
             <div style={{ marginTop: '2rem' }}>
-              <h4 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', color: '#151515' }}>
+              <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                 Kernel
-              </h4>
+              </Title>
               
               <FormGroup
                 label="Kernel package"
@@ -904,9 +904,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
             {/* Users Section */}
             <div style={{ marginTop: '2rem' }}>
-              <h4 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem', color: '#151515' }}>
+              <Title headingLevel="h3" size="lg" style={{ marginBottom: '0.5rem' }}>
                 Users
-              </h4>
+              </Title>
               <p style={{ fontSize: '14px', lineHeight: '1.5', marginBottom: '1rem', color: '#666' }}>
                 Create user accounts for systems that will use this image.
               </p>
@@ -960,9 +960,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       case 0:
         return (
           <div>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1rem', color: '#151515' }}>
+            <Title headingLevel="h2" size="xl" style={{ marginBottom: '1rem' }}>
               Base Image Selection
-            </h3>
+            </Title>
             <p style={{ fontSize: '16px', color: '#666', marginBottom: '2rem' }}>
               Choose the base operating system and version for your custom image.
             </p>
@@ -970,14 +970,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             <Form>
               {/* Image Details Section */}
               <div style={{ marginBottom: '2rem' }}>
-                <h4 style={{ 
-                  fontSize: '1rem', 
-                  fontWeight: 600, 
-                  marginBottom: '1rem',
-                  color: '#151515'
-                }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                   Image details
-                </h4>
+                </Title>
                 
                 <FormGroup
                   label="Name"
@@ -1011,14 +1006,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               
               {/* Image Output Section */}
               <div style={{ marginBottom: '2rem' }}>
-                <h4 style={{ 
-                  fontSize: '1rem', 
-                  fontWeight: 600, 
-                  marginBottom: '1rem',
-                  color: '#151515'
-                }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                   Image output
-                </h4>
+                </Title>
                 
                 <FormGroup
                   label="Release"
@@ -1667,14 +1657,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 
                 {/* Enable repeatable build Section */}
                 <div style={{ marginBottom: '2rem' }}>
-                  <h4 style={{ 
-                    fontSize: '1rem', 
-                    fontWeight: 600, 
-                    marginBottom: '1rem',
-                    color: '#151515'
-                  }}>
+                  <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                     Enable repeatable build
-                  </h4>
+                  </Title>
                   <FormGroup
                     label="Select snapshot date"
                     fieldId="snapshot-date"
@@ -1726,14 +1711,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 
                 {/* Kickstart File Section */}
                 <div style={{ marginBottom: '2rem' }}>
-                  <h4 style={{ 
-                    fontSize: '1rem', 
-                    fontWeight: 600, 
-                    marginBottom: '1rem',
-                    color: '#151515'
-                  }}>
+                  <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                     Kickstart File
-                  </h4>
+                  </Title>
                   <FormGroup fieldId="kickstart-file">
                     <FileUpload
                       id="kickstart-file-upload"
@@ -1779,14 +1759,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 
                 {/* Compliance Section */}
                 <div style={{ marginBottom: '2rem' }}>
-                  <h4 style={{ 
-                    fontSize: '1rem', 
-                    fontWeight: 600, 
-                    marginBottom: '1rem',
-                    color: '#151515'
-                  }}>
+                  <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                     Compliance
-                  </h4>
+                  </Title>
                   <div style={{ 
                     fontSize: '14px', 
                     color: '#6a6e73', 
@@ -1989,9 +1964,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       case 1:
         return (
           <div>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1rem', color: '#151515' }}>
+            <Title headingLevel="h2" size="xl" style={{ marginBottom: '1rem' }}>
               Repositories and Packages
-            </h3>
+            </Title>
             <p style={{ fontSize: '16px', color: '#666', marginBottom: '2rem' }}>
               Configure package repositories and select additional software packages to include in your image.
             </p>
@@ -1999,14 +1974,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             <Form>
               {/* Use Extended Support Section */}
               <div style={{ marginBottom: '32px' }}>
-                <h4 style={{ 
-                  fontSize: '1rem', 
-                  fontWeight: 600, 
-                  marginBottom: '1rem',
-                  color: '#151515'
-                }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                   Use Extended Support
-                </h4>
+                </Title>
                 
                 <FormGroup
                   label="Extended support subscription"
@@ -2458,23 +2428,18 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       case 2:
         return (
           <div>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1rem', color: '#151515' }}>
+            <Title headingLevel="h2" size="xl" style={{ marginBottom: '1rem' }}>
               Advanced Settings
-            </h3>
+            </Title>
             <p style={{ fontSize: '16px', color: '#666', marginBottom: '2rem' }}>
               Configure advanced system settings including registration, timezone, locale, and security options.
             </p>
             <Form>
               {/* Register Section */}
               <div style={{ marginBottom: '32px' }}>
-                <h4 style={{ 
-                  fontSize: '1rem', 
-                  fontWeight: 600, 
-                  marginBottom: '0.5rem',
-                  color: '#151515'
-                }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '0.5rem' }}>
                   Register
-                </h4>
+                </Title>
                 <p style={{ 
                   fontSize: '14px', 
                   lineHeight: '1.5',
@@ -2549,9 +2514,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       case 3:
         return (
           <div>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1rem', color: '#151515' }}>
+            <Title headingLevel="h2" size="xl" style={{ marginBottom: '1rem' }}>
               Review Image Configuration
-            </h3>
+            </Title>
             <p style={{ fontSize: '16px', color: '#666', marginBottom: '2rem' }}>
               Review your image configuration and build settings before creating the image.
             </p>
@@ -2562,9 +2527,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 <Card>
                   <CardBody>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                      <h4 style={{ fontSize: '1rem', fontWeight: 600, color: '#151515', margin: 0 }}>
+                      <Title headingLevel="h3" size="lg" style={{ margin: 0 }}>
                         Image Overview
-                      </h4>
+                      </Title>
                       <Button
                         variant="link"
                         onClick={() => setActiveTabKey(0)}
@@ -2617,9 +2582,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 <Card>
                   <CardBody>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                      <h4 style={{ fontSize: '1rem', fontWeight: 600, color: '#151515', margin: 0 }}>
+                      <Title headingLevel="h3" size="lg" style={{ margin: 0 }}>
                         Registration Settings
-                      </h4>
+                      </Title>
                       <Button
                         variant="link"
                         onClick={() => setActiveTabKey(2)}
@@ -2659,9 +2624,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 <Card>
                   <CardBody>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                      <h4 style={{ fontSize: '1rem', fontWeight: 600, color: '#151515', margin: 0 }}>
+                      <Title headingLevel="h3" size="lg" style={{ margin: 0 }}>
                         Users Configuration
-                      </h4>
+                      </Title>
                       <Button
                         variant="link"
                         onClick={() => setActiveTabKey(2)}
@@ -2731,9 +2696,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 <Card>
                   <CardBody>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                      <h4 style={{ fontSize: '1rem', fontWeight: 600, color: '#151515', margin: 0 }}>
+                      <Title headingLevel="h3" size="lg" style={{ margin: 0 }}>
                         Advanced Settings
-                      </h4>
+                      </Title>
                       <Button
                         variant="link"
                         onClick={() => setActiveTabKey(2)}
@@ -2814,9 +2779,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 <Card>
                   <CardBody>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                      <h4 style={{ fontSize: '1rem', fontWeight: 600, color: '#151515', margin: 0 }}>
+                      <Title headingLevel="h3" size="lg" style={{ margin: 0 }}>
                         Packages
-                      </h4>
+                      </Title>
                       <Button
                         variant="link"
                         onClick={() => setActiveTabKey(1)}
@@ -2860,6 +2825,21 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     <strong>Estimated build time:</strong> 5-15 minutes
                   </p>
                 </Alert>
+              </StackItem>
+
+              {/* Build Action */}
+              <StackItem>
+                <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '1rem' }}>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    onClick={handleConfirm}
+                    isLoading={isLoading}
+                    isDisabled={isLoading}
+                  >
+                    {isLoading ? 'Building...' : 'Build image'}
+                  </Button>
+                </div>
               </StackItem>
             </Stack>
           </div>
@@ -3108,45 +3088,21 @@ ${config.kernel.arguments.length > 0 ? `  arguments:\n${config.kernel.arguments.
           padding: '16px 24px',
           borderTop: '1px solid #d2d2d2'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <Button
-                variant="link"
-                onClick={handleCancel}
-                isDisabled={isLoading}
-              >
-                Cancel
-              </Button>
-            </div>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              {!isFirstTab && (
-                <Button
-                  variant="secondary"
-                  onClick={handleBack}
-                  isDisabled={isLoading}
-                >
-                  Back
-                </Button>
-              )}
-              {!isLastTab ? (
-                <Button
-                  variant="primary"
-                  onClick={handleNext}
-                  isDisabled={isLoading}
-                >
-                  Next
-                </Button>
-              ) : (
-                <Button
-                  variant="primary"
-                  onClick={handleConfirm}
-                  isLoading={isLoading}
-                  isDisabled={isLoading}
-                >
-                  {isLoading ? 'Building...' : 'Build image'}
-                </Button>
-              )}
-            </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px' }}>
+            <Button
+              variant="secondary"
+              onClick={handleCancel}
+              isDisabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => setActiveTabKey(3)}
+              isDisabled={isLoading}
+            >
+              Review image
+            </Button>
           </div>
         </div>
       </div>

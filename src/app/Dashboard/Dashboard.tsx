@@ -12,6 +12,7 @@ import {
   SearchInput,
   Badge,
   Label,
+  Divider,
   Dropdown,
   DropdownList,
   DropdownItem,
@@ -21,6 +22,10 @@ import {
   CardBody,
   Flex,
   FlexItem,
+  Modal,
+  ModalVariant,
+  ModalHeader,
+  ModalBody,
   Pagination,
   Form,
   FormGroup,
@@ -57,7 +62,9 @@ const Dashboard: React.FunctionComponent = () => {
   const [isUseBaseImageModalOpen, setIsUseBaseImageModalOpen] = React.useState(false);
   const [isBuildImageModalOpen, setIsBuildImageModalOpen] = React.useState(false);
   const [isOverlayOpen, setIsOverlayOpen] = React.useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
   const [selectedImage, setSelectedImage] = React.useState<ImageInfo | null>(null);
+  const [imageToDelete, setImageToDelete] = React.useState<ImageTableRow | null>(null);
   const [alertInfo, setAlertInfo] = React.useState<{
     variant: AlertVariant;
     title: string;
@@ -696,6 +703,42 @@ const Dashboard: React.FunctionComponent = () => {
     setOpenDropdowns(new Set());
   };
 
+  const handleDeleteConfirmation = (image: ImageTableRow) => {
+    setImageToDelete(image);
+    setIsDeleteModalOpen(true);
+    setOpenDropdowns(new Set());
+  };
+
+  const handleDeleteConfirm = () => {
+    if (imageToDelete) {
+      // Remove the image from the data
+      setImageData(prevData => prevData.filter(img => img.id !== imageToDelete.id));
+      
+      // Remove from selected rows if it was selected
+      setSelectedRows(prevSelected => {
+        const newSelected = new Set(prevSelected);
+        newSelected.delete(imageToDelete.id);
+        return newSelected;
+      });
+      
+      // Show success alert
+      setAlertInfo({
+        variant: AlertVariant.success,
+        title: 'Image Deleted',
+        message: `Successfully deleted "${imageToDelete.name}"`,
+      });
+    }
+    
+    // Close modal and reset state
+    setIsDeleteModalOpen(false);
+    setImageToDelete(null);
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteModalOpen(false);
+    setImageToDelete(null);
+  };
+
   const handleBuildLatest = (imageName: string, imageDetails: ImageItem) => {
     // Create a new image entry for the table
     const newImageId = String(imageData.length + 1);
@@ -1140,7 +1183,7 @@ const Dashboard: React.FunctionComponent = () => {
                       <>Owner{getSortIcon('owner')}</>
                     )}
                   </th>
-                  <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600 }}>Actions</th>
+                  <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600 }}> </th>
                 </tr>
               </thead>
               <tbody>
@@ -1228,8 +1271,19 @@ const Dashboard: React.FunctionComponent = () => {
                             setOpenDropdowns(new Set());
                           }
                         }}
+                        style={{
+                          position: 'relative',
+                          zIndex: 1000
+                        }}
                       >
-                        <DropdownList>
+                        <DropdownList style={{
+                          backgroundColor: 'white',
+                          border: '1px solid #ccc',
+                          borderRadius: '4px',
+                          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                          minWidth: '150px',
+                          zIndex: 1001
+                        }}>
                           <DropdownItem 
                             onClick={() => {
                               handleEditImage(image);
@@ -1237,7 +1291,7 @@ const Dashboard: React.FunctionComponent = () => {
                           >
                             Edit
                           </DropdownItem>
-                          <DropdownItem component="hr" />
+                          <Divider />
                           <DropdownItem 
                             onClick={() => {
                               openMigrationOverlay(image);
@@ -1270,13 +1324,10 @@ const Dashboard: React.FunctionComponent = () => {
                           >
                             Download
                           </DropdownItem>
-                          <DropdownItem component="hr" />
+                          <Divider />
                           <DropdownItem 
                             isDanger
-                            onClick={() => {
-                              console.log(`Deleting ${image.name}`);
-                              setOpenDropdowns(new Set());
-                            }}
+                            onClick={() => handleDeleteConfirmation(image)}
                           >
                             Delete
                           </DropdownItem>
@@ -1590,6 +1641,45 @@ const Dashboard: React.FunctionComponent = () => {
         isOpen={isBuildImageModalOpen}
         onClose={() => setIsBuildImageModalOpen(false)}
       />
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        variant={ModalVariant.small}
+        isOpen={isDeleteModalOpen}
+        onClose={handleDeleteCancel}
+      >
+        <ModalHeader>
+          <Title headingLevel="h2" size="lg">
+            Delete image
+          </Title>
+        </ModalHeader>
+        {imageToDelete && (
+          <ModalBody style={{ padding: '24px' }}>
+            <p style={{ 
+              margin: 0, 
+              marginBottom: '24px',
+              fontSize: '16px',
+              lineHeight: '1.5'
+            }}>
+              Are you sure you want to delete <strong>"{imageToDelete.name}"</strong>? 
+              This action cannot be undone.
+            </p>
+            <div style={{ 
+              display: 'flex', 
+              gap: '12px', 
+              justifyContent: 'flex-end',
+              marginRight: '-8px'  // Align with X button position
+            }}>
+              <Button variant="danger" onClick={handleDeleteConfirm}>
+                Delete
+              </Button>
+              <Button variant="link" onClick={handleDeleteCancel}>
+                Cancel
+              </Button>
+            </div>
+          </ModalBody>
+        )}
+      </Modal>
   </PageSection>
     </>
   );
