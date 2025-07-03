@@ -14,7 +14,7 @@ import {
   Popover,
   ClipboardCopy,
 } from '@patternfly/react-core';
-import { DownloadIcon, BuilderImageIcon, InfoCircleIcon } from '@patternfly/react-icons';
+import { DownloadIcon, BuilderImageIcon, InfoCircleIcon, NetworkIcon, VirtualMachineIcon, OptimizeIcon } from '@patternfly/react-icons';
 
 interface UseBaseImageModalProps {
   isOpen: boolean;
@@ -131,6 +131,11 @@ const UseBaseImageModal: React.FunctionComponent<UseBaseImageModalProps> = ({
     console.log('Download:', imageName);
   };
 
+  const getDownloadIcon = (imageName: string) => {
+    // All download buttons get the download icon
+    return <DownloadIcon />;
+  };
+
   const handleBuildLatest = (imageName: string) => {
     // Find the image details
     let imageDetails: ImageItem | undefined;
@@ -226,6 +231,7 @@ const UseBaseImageModal: React.FunctionComponent<UseBaseImageModalProps> = ({
                               <FlexItem>
                                 <Button
                                   variant="secondary"
+                                  icon={getDownloadIcon(image.name)}
                                   onClick={() => handleDownload(image.name)}
                                 >
                                   Download

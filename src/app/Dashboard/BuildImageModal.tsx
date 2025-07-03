@@ -121,8 +121,11 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const [timezone, setTimezone] = React.useState<string>('');
   const [isTimezoneOpen, setIsTimezoneOpen] = React.useState<boolean>(false);
   const [ntpServers, setNtpServers] = React.useState<string>('');
-  const [languages, setLanguages] = React.useState<string[]>(['English/United States/utf-8']);
-  const [suggestedKeyboard, setSuggestedKeyboard] = React.useState<string>('US QWERTY');
+  const [languages, setLanguages] = React.useState<Array<{ id: number; value: string; isOpen: boolean; filterValue: string }>>([
+    { id: 0, value: 'English/United States/utf-8', isOpen: false, filterValue: '' }
+  ]);
+  const [nextLanguageId, setNextLanguageId] = React.useState<number>(1);
+  const [suggestedKeyboard, setSuggestedKeyboard] = React.useState<string>('');
   const [isSuggestedKeyboardOpen, setIsSuggestedKeyboardOpen] = React.useState<boolean>(false);
   const [specialtyKeyboards, setSpecialtyKeyboards] = React.useState<string[]>([]);
   const [hostname, setHostname] = React.useState<string>('');
@@ -284,6 +287,38 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     'Asia/Tokyo'
   ];
 
+  const languageOptions = [
+    'Arabic/Egypt/utf-8',
+    'Bulgarian/Bulgaria/utf-8',
+    'Chinese/China/utf-8',
+    'Czech/Czech Republic/utf-8',
+    'Danish/Denmark/utf-8',
+    'Dutch/Netherlands/utf-8',
+    'English/United States/utf-8',
+    'Estonian/Estonia/utf-8',
+    'Finnish/Finland/utf-8',
+    'French/France/utf-8',
+    'German/Germany/utf-8',
+    'Greek/Greece/utf-8',
+    'Hebrew/Israel/utf-8',
+    'Hungarian/Hungary/utf-8',
+    'Italian/Italy/utf-8',
+    'Japanese/Japan/utf-8',
+    'Korean/South Korea/utf-8',
+    'Norwegian/Norway/utf-8',
+    'Polish/Poland/utf-8',
+    'Portuguese/Portugal/utf-8',
+    'Portuguese/Brazil/utf-8',
+    'Romanian/Romania/utf-8',
+    'Russian/Russia/utf-8',
+    'Slovak/Slovakia/utf-8',
+    'Spanish/Spain/utf-8',
+    'Spanish/Mexico/utf-8',
+    'Swedish/Sweden/utf-8',
+    'Turkish/Turkey/utf-8',
+    'Ukrainian/Ukraine/utf-8'
+  ];
+
   const customCompliancePolicyOptions = [
     'DISA STIG for Red Hat Enterprise Linux 9',
     'CIS Red Hat Enterprise Linux 9 Benchmark',
@@ -369,6 +404,42 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
   const handleCancel = () => {
     onClose();
+  };
+
+  // Language management functions
+  const addLanguage = () => {
+    setLanguages([...languages, { id: nextLanguageId, value: '', isOpen: false, filterValue: '' }]);
+    setNextLanguageId(nextLanguageId + 1);
+  };
+
+  const removeLanguage = (id: number) => {
+    if (id === 0) return; // Cannot remove the first language
+    setLanguages(languages.filter(lang => lang.id !== id));
+  };
+
+  const updateLanguage = (id: number, value: string) => {
+    setLanguages(languages.map(lang => 
+      lang.id === id ? { ...lang, value } : lang
+    ));
+  };
+
+  const toggleLanguageDropdown = (id: number) => {
+    setLanguages(languages.map(lang => 
+      lang.id === id ? { ...lang, isOpen: !lang.isOpen } : { ...lang, isOpen: false }
+    ));
+  };
+
+  const updateLanguageFilter = (id: number, filterValue: string) => {
+    setLanguages(languages.map(lang => 
+      lang.id === id ? { ...lang, filterValue } : lang
+    ));
+  };
+
+  const getFilteredLanguageOptions = (filterValue: string) => {
+    if (!filterValue) return languageOptions;
+    return languageOptions.filter(option => 
+      option.toLowerCase().includes(filterValue.toLowerCase())
+    );
   };
 
   const onActivationKeySelect = (
@@ -677,7 +748,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     </div>
                   }
                 >
-                  <Button variant="plain" style={{ padding: '0.25rem' }}>
+                  <Button variant="secondary" icon={<InfoCircleIcon />}>
                     View details
                   </Button>
                 </Popover>
@@ -759,25 +830,82 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               </Title>
               
               <FormGroup
-                label="Languages"
+                label="Suggest keyboards from these languages"
                 fieldId="languages"
               >
-                <LabelGroup>
-                  {languages.map((lang, index) => (
-                    <Label key={index} onClose={() => {
-                      setLanguages(languages.filter((_, i) => i !== index));
-                    }}>
-                      {lang}
-                    </Label>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {languages.map((language) => (
+                    <div key={language.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <div style={{ width: '400px' }}>
+                        <Select
+                          id={`language-select-${language.id}`}
+                          isOpen={language.isOpen}
+                          selected={language.value}
+                          onSelect={(_, selection) => {
+                            updateLanguage(language.id, String(selection));
+                            toggleLanguageDropdown(language.id);
+                          }}
+                          onOpenChange={() => toggleLanguageDropdown(language.id)}
+                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                            <MenuToggle 
+                              ref={toggleRef} 
+                              onClick={() => toggleLanguageDropdown(language.id)}
+                              isExpanded={language.isOpen}
+                              style={{ width: '100%' }}
+                            >
+                              {language.value || 'Select language'}
+                            </MenuToggle>
+                          )}
+                        >
+                          <SelectList>
+                            <div style={{ padding: '0.5rem', borderBottom: '1px solid #D2D2D2' }}>
+                              <SearchInput
+                                placeholder="Search languages..."
+                                value={language.filterValue}
+                                onChange={(_, value) => updateLanguageFilter(language.id, value)}
+                                onClear={() => updateLanguageFilter(language.id, '')}
+                              />
+                            </div>
+                            {getFilteredLanguageOptions(language.filterValue).map((lang) => (
+                              <SelectOption key={lang} value={lang}>
+                                {lang}
+                              </SelectOption>
+                            ))}
+                          </SelectList>
+                        </Select>
+                      </div>
+                      {language.id !== 0 && (
+                        <Button
+                          variant="plain"
+                          aria-label="Remove language"
+                          onClick={() => removeLanguage(language.id)}
+                          style={{ minWidth: 'auto', padding: '0.5rem', color: '#6A6E73' }}
+                        >
+                          <MinusIcon />
+                        </Button>
+                      )}
+                    </div>
                   ))}
-                </LabelGroup>
-                <Button
-                  variant="link"
-                  icon={<PlusIcon />}
-                  style={{ marginTop: '0.5rem', padding: 0 }}
-                >
-                  Add language
-                </Button>
+                </div>
+                <div style={{ marginTop: '0.75rem' }}>
+                  <div style={{ color: '#6A6E73', marginBottom: '0.75rem', fontSize: '0.875rem' }}>
+                    Search by country, language or UTF code
+                  </div>
+                  <Button
+                    variant="link"
+                    onClick={addLanguage}
+                    style={{ 
+                      padding: '0.5rem 1rem', 
+                      border: '1px solid #C7C7C7', 
+                      borderRadius: '24px', 
+                      color: '#0066CC', 
+                      backgroundColor: 'transparent',
+                      textDecoration: 'none'
+                    }}
+                  >
+                    Add more
+                  </Button>
+                </div>
               </FormGroup>
 
               <FormGroup
@@ -800,7 +928,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       isExpanded={isSuggestedKeyboardOpen}
                       style={{ width: '300px' }}
                     >
-                      {suggestedKeyboard}
+                      {suggestedKeyboard || 'Select keyboard'}
                     </MenuToggle>
                   )}
                 >
@@ -2454,24 +2582,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 label="Organization ID"
                 fieldId="organization-id"
               >
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                  <TextInput
-                    value={organizationId}
-                    onChange={(_event, value) => setOrganizationId(value)}
-                    id="organization-id"
-                    style={{ flex: 1 }}
-                    placeholder="Enter your organization ID"
-                  />
-                  <ClipboardCopy 
-                    isReadOnly 
-                    hoverTip="Copy Organization ID" 
-                    clickTip="Organization ID copied!"
-                    variant="inline"
-                    style={{ minWidth: 'auto' }}
-                  >
-                    {organizationId}
-                  </ClipboardCopy>
-                </div>
+                <ClipboardCopy 
+                  isReadOnly 
+                  hoverTip="Copy Organization ID" 
+                  clickTip="Organization ID copied!"
+                  variant="inline"
+                >
+                  {organizationId}
+                </ClipboardCopy>
                 <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
                   If you're using an activation key with command line registration, you must provide your organization's ID
                 </div>
@@ -2737,8 +2855,8 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                             <DescriptionListDescription>
                               {languages.length > 0 ? (
                                 <LabelGroup>
-                                  {languages.map((lang) => (
-                                    <Label key={lang}>{lang}</Label>
+                                  {languages.filter(lang => lang.value).map((lang) => (
+                                    <Label key={lang.id}>{lang.value}</Label>
                                   ))}
                                 </LabelGroup>
                               ) : (
@@ -2890,7 +3008,7 @@ ${config.ntpServers ? `ntpServers: "${config.ntpServers}"` : ''}
 
 locale:
   languages:
-${config.languages.map(lang => `    - "${lang}"`).join('\n')}
+${config.languages.filter(lang => lang.value).map(lang => `    - "${lang.value}"`).join('\n')}
 ${config.keyboard ? `  keyboard: "${config.keyboard}"` : ''}
 
 ${config.hostname ? `hostname: "${config.hostname}"` : ''}
