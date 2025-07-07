@@ -23,10 +23,11 @@ import {
   FlexItem,
   Pagination,
   ClipboardCopy,
-  Tooltip
+  Tooltip,
+  Divider
 } from '@patternfly/react-core';
 import { EllipsisVIcon, FilterIcon, TableIcon, MigrationIcon, CopyIcon, BuildIcon, StarIcon, OutlinedStarIcon, AngleRightIcon, AngleDownIcon } from '@patternfly/react-icons';
-import { ImageMigrationModal, ImageInfo, MigrationData } from '../Dashboard/ImageMigrationModal';
+import { ImageInfo, MigrationData } from '../Dashboard/ImageMigrationModal';
 
 interface ImageTableRow extends ImageInfo {
   id: string;
@@ -42,8 +43,6 @@ interface ImageTableRow extends ImageInfo {
 }
 
 const Images: React.FunctionComponent = () => {
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
-  const [selectedImage, setSelectedImage] = React.useState<ImageInfo | null>(null);
   const [alertInfo, setAlertInfo] = React.useState<{
     variant: AlertVariant;
     title: string;
@@ -55,6 +54,8 @@ const Images: React.FunctionComponent = () => {
   const [secondaryFilter, setSecondaryFilter] = React.useState<string>('');
   const [isPrimaryFilterOpen, setIsPrimaryFilterOpen] = React.useState(false);
   const [isSecondaryFilterOpen, setIsSecondaryFilterOpen] = React.useState(false);
+  const [favoritesFilter, setFavoritesFilter] = React.useState<string>('all');
+  const [isFavoritesFilterOpen, setIsFavoritesFilterOpen] = React.useState(false);
   const [nameSearchText, setNameSearchText] = React.useState<string>('');
   const [sortField, setSortField] = React.useState<string>('dateUpdated');
   const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('desc');
@@ -165,34 +166,14 @@ const Images: React.FunctionComponent = () => {
   // Reset pagination when filters change
   React.useEffect(() => {
     setPage(1);
-  }, [primaryFilter, secondaryFilter, sortField, sortDirection]);
+  }, [primaryFilter, secondaryFilter, favoritesFilter, sortField, sortDirection]);
 
-  const handleMigrationConfirm = async (migrationData: MigrationData): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (Math.random() > 0.3) {
-          setAlertInfo({
-            variant: AlertVariant.success,
-            title: 'Migration Successful',
-            message: `Image "${selectedImage?.name}" successfully migrated to ${migrationData.targetRelease} in ${migrationData.targetEnvironment} environment.`,
-          });
-          resolve();
-        } else {
-          setAlertInfo({
-            variant: AlertVariant.danger,
-            title: 'Migration Failed',
-            message: `Failed to migrate image "${selectedImage?.name}". Please try again or contact support.`,
-          });
-          reject(new Error('Migration failed'));
-        }
-      }, 2000);
+  const handleMigrationClick = (image?: ImageInfo) => {
+    setAlertInfo({
+      variant: AlertVariant.info,
+      title: 'Migration Feature',
+      message: `We don't need to build this right now.`,
     });
-  };
-
-  const openMigrationModal = (image: ImageInfo) => {
-    setSelectedImage(image);
-    setIsModalOpen(true);
-    setAlertInfo(null);
   };
 
   const capitalizeWords = (str: string) => {
@@ -220,24 +201,23 @@ const Images: React.FunctionComponent = () => {
   const { paginatedImages, totalFilteredCount } = React.useMemo(() => {
     let filtered = [...imageData];
 
+    // Apply favorites filter first (always available)
+    if (favoritesFilter === 'favorites') {
+      filtered = filtered.filter(image => image.isFavorited);
+    } else if (favoritesFilter === 'non-favorites') {
+      filtered = filtered.filter(image => !image.isFavorited);
+    }
+
+    // Apply primary filter name search
+    if (primaryFilter === 'name' && nameSearchText.trim()) {
+      filtered = filtered.filter(image => 
+        image.name.toLowerCase().includes(nameSearchText.toLowerCase())
+      );
+    }
+
     // Apply filters based on primary and secondary filter selections
     if (primaryFilter && secondaryFilter) {
       switch (primaryFilter) {
-        case 'name':
-          // Apply favorites filter first if selected
-          if (secondaryFilter === 'favorites') {
-            filtered = filtered.filter(image => image.isFavorited);
-          } else if (secondaryFilter === 'non-favorites') {
-            filtered = filtered.filter(image => !image.isFavorited);
-          }
-          
-          // Apply text search if there's search text
-          if (nameSearchText.trim()) {
-            filtered = filtered.filter(image => 
-              image.name.toLowerCase().includes(nameSearchText.toLowerCase())
-            );
-          }
-          break;
         case 'target environment':
           filtered = filtered.filter(image => image.targetEnvironment === secondaryFilter);
           break;
@@ -321,7 +301,7 @@ const Images: React.FunctionComponent = () => {
       paginatedImages: paginatedResults,
       totalFilteredCount: totalCount
     };
-  }, [imageData, primaryFilter, secondaryFilter, nameSearchText, sortField, sortDirection, page, perPage]);
+  }, [imageData, primaryFilter, secondaryFilter, favoritesFilter, nameSearchText, sortField, sortDirection, page, perPage]);
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -362,7 +342,7 @@ const Images: React.FunctionComponent = () => {
   const getSecondaryFilterOptions = () => {
     switch (primaryFilter) {
       case 'name':
-        return ['all', 'favorites', 'non-favorites'];
+        return []; // No secondary options for name filter - just use search
       case 'target environment':
         return ['AWS', 'GCP', 'Azure', 'Bare metal', 'VMWare'];
       case 'release':
@@ -379,9 +359,7 @@ const Images: React.FunctionComponent = () => {
   const getSecondaryFilterPlaceholder = () => {
     switch (primaryFilter) {
       case 'name':
-        return secondaryFilter && ['favorites', 'non-favorites', 'all'].includes(secondaryFilter) 
-          ? 'Filter by favorites' 
-          : 'Search image names...';
+        return 'Search image names...';
       case 'target environment':
         return 'Select target environment';
       case 'release':
@@ -421,6 +399,19 @@ const Images: React.FunctionComponent = () => {
       setSecondaryFilter(selectedValue);
     }
     setIsSecondaryFilterOpen(false);
+  };
+
+  const onFavoritesFilterSelect = (
+    _event: React.MouseEvent<Element, MouseEvent> | undefined,
+    selection: string | number | undefined
+  ) => {
+    const selectedValue = String(selection);
+    if (favoritesFilter === selectedValue) {
+      setFavoritesFilter('all');
+    } else {
+      setFavoritesFilter(selectedValue);
+    }
+    setIsFavoritesFilterOpen(false);
   };
 
   const toggleRowSelection = (imageId: string) => {
@@ -465,12 +456,11 @@ const Images: React.FunctionComponent = () => {
   const handleBulkMigration = () => {
     if (selectedRows.size === 0) return;
     
-    const firstSelectedImage = imageData.find(img => selectedRows.has(img.id));
-    if (firstSelectedImage) {
-      setSelectedImage(firstSelectedImage);
-      setIsModalOpen(true);
-      setAlertInfo(null);
-    }
+    setAlertInfo({
+      variant: AlertVariant.info,
+      title: 'Migration Feature',
+      message: `We don't need to build this right now.`,
+    });
   };
 
   const duplicateImage = (image: ImageTableRow) => {
@@ -547,6 +537,18 @@ const Images: React.FunctionComponent = () => {
       message: `Rebuilding ${selectedRows.size} selected image${selectedRows.size > 1 ? 's' : ''}: ${selectedImageNames.join(', ')}`,
     });
   };
+
+  const deleteImage = (image: ImageTableRow) => {
+    setImageData(prevData => prevData.filter(img => img.id !== image.id));
+    
+    setAlertInfo({
+      variant: AlertVariant.success,
+      title: 'Image Deleted',
+      message: `Successfully deleted "${image.name}"`,
+    });
+  };
+
+
   
   return (
     <>
@@ -554,9 +556,9 @@ const Images: React.FunctionComponent = () => {
       {alertInfo && (
         <div style={{
           position: 'fixed',
-          top: '20px',
+          top: '80px',
           right: '20px',
-          zIndex: 10000,
+          zIndex: 99999,
           maxWidth: '400px',
           minWidth: '300px'
         }}>
@@ -699,40 +701,52 @@ const Images: React.FunctionComponent = () => {
                   ) : null}
                 </ToolbarItem>
                 
-                {/* Favorites filter dropdown for name filter */}
-                {primaryFilter === 'name' && (
-                  <ToolbarItem>
-                    <div style={{ width: '180px' }}>
-                      <Dropdown
-                        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                          <MenuToggle 
-                            ref={toggleRef}
-                            onClick={() => setIsSecondaryFilterOpen(!isSecondaryFilterOpen)}
-                            isExpanded={isSecondaryFilterOpen}
-                            style={{ width: '100%' }}
-                          >
-                            {secondaryFilter ? secondaryFilter.charAt(0).toUpperCase() + secondaryFilter.slice(1) : 'All images'}
-                          </MenuToggle>
-                        )}
-                        isOpen={isSecondaryFilterOpen}
-                        onOpenChange={setIsSecondaryFilterOpen}
-                        onSelect={onSecondaryFilterSelect}
-                      >
-                        <DropdownList>
-                          {getSecondaryFilterOptions().map(option => (
-                            <DropdownItem 
-                              key={option} 
-                              value={option}
-                              isSelected={secondaryFilter === option}
-                            >
-                              {option.charAt(0).toUpperCase() + option.slice(1)}
-                            </DropdownItem>
-                          ))}
-                        </DropdownList>
-                      </Dropdown>
-                    </div>
-                  </ToolbarItem>
-                )}
+                {/* Always-visible favorites filter */}
+                <ToolbarItem>
+                  <div style={{ width: '180px' }}>
+                    <Dropdown
+                      toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                        <MenuToggle 
+                          ref={toggleRef}
+                          onClick={() => setIsFavoritesFilterOpen(!isFavoritesFilterOpen)}
+                          isExpanded={isFavoritesFilterOpen}
+                          style={{ width: '100%' }}
+                        >
+                          {favoritesFilter === 'all' ? 'All images' : 
+                           favoritesFilter === 'favorites' ? 'Favorites only' : 
+                           'Non-favorites only'}
+                        </MenuToggle>
+                      )}
+                      isOpen={isFavoritesFilterOpen}
+                      onOpenChange={setIsFavoritesFilterOpen}
+                      onSelect={onFavoritesFilterSelect}
+                    >
+                      <DropdownList>
+                        <DropdownItem 
+                          key="all" 
+                          value="all"
+                          isSelected={favoritesFilter === 'all'}
+                        >
+                          All images
+                        </DropdownItem>
+                        <DropdownItem 
+                          key="favorites" 
+                          value="favorites"
+                          isSelected={favoritesFilter === 'favorites'}
+                        >
+                          Favorites only
+                        </DropdownItem>
+                        <DropdownItem 
+                          key="non-favorites" 
+                          value="non-favorites"
+                          isSelected={favoritesFilter === 'non-favorites'}
+                        >
+                          Non-favorites only
+                        </DropdownItem>
+                      </DropdownList>
+                    </Dropdown>
+                  </div>
+                </ToolbarItem>
 
                 <ToolbarItem>
                   <Button
@@ -977,9 +991,10 @@ const Images: React.FunctionComponent = () => {
                             <DropdownItem isDisabled>
                               Edit (disabled)
                             </DropdownItem>
+                            <Divider />
                             <DropdownItem 
                               onClick={() => {
-                                openMigrationModal(image);
+                                handleMigrationClick(image);
                                 setOpenDropdowns(new Set());
                               }}
                             >
@@ -1000,6 +1015,24 @@ const Images: React.FunctionComponent = () => {
                               }}
                             >
                               Rebuild
+                            </DropdownItem>
+                            <DropdownItem 
+                              onClick={() => {
+                                console.log(`Downloading ${image.name}`);
+                                setOpenDropdowns(new Set());
+                              }}
+                            >
+                              Download
+                            </DropdownItem>
+                            <Divider />
+                            <DropdownItem 
+                              isDanger
+                              onClick={() => {
+                                deleteImage(image);
+                                setOpenDropdowns(new Set());
+                              }}
+                            >
+                              Delete
                             </DropdownItem>
                           </DropdownList>
                         </Dropdown>
@@ -1070,12 +1103,7 @@ const Images: React.FunctionComponent = () => {
           </CardBody>
         </Card>
 
-        <ImageMigrationModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          imageInfo={selectedImage || undefined}
-          onConfirm={handleMigrationConfirm}
-        />
+
       </PageSection>
     </>
   );
