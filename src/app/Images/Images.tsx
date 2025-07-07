@@ -26,7 +26,7 @@ import {
   Tooltip,
   Divider
 } from '@patternfly/react-core';
-import { EllipsisVIcon, FilterIcon, TableIcon, MigrationIcon, CopyIcon, BuildIcon, StarIcon, OutlinedStarIcon, AngleRightIcon, AngleDownIcon } from '@patternfly/react-icons';
+import { EllipsisVIcon, FilterIcon, TableIcon, MigrationIcon, CopyIcon, BuildIcon, StarIcon, OutlinedStarIcon, AngleRightIcon, AngleDownIcon, ExclamationTriangleIcon, InfoCircleIcon } from '@patternfly/react-icons';
 import { ImageInfo, MigrationData } from '../Dashboard/ImageMigrationModal';
 
 interface ImageTableRow extends ImageInfo {
@@ -200,12 +200,12 @@ const Images: React.FunctionComponent = () => {
     
     if (status === 'expired') {
       return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ color: '#f0ab00' }}>⚠️</span>
-          <Label color={config.color} variant={config.variant}>
-            {capitalizeWords(status)}
-          </Label>
-        </div>
+        <Label color={config.color} variant={config.variant}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <ExclamationTriangleIcon style={{ fontSize: '0.875rem', color: '#f0ab00' }} />
+            <span>{capitalizeWords(status)}</span>
+          </span>
+        </Label>
       );
     }
     

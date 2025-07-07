@@ -39,7 +39,7 @@ import {
   ClipboardCopy,
   Tooltip
 } from '@patternfly/react-core';
-import { EllipsisVIcon, FilterIcon, BuilderImageIcon, MigrationIcon, StarIcon, OutlinedStarIcon, CopyIcon, BuildIcon, DownloadIcon, TrashIcon, TimesIcon, AngleRightIcon, AngleDownIcon, EditIcon, PlayIcon } from '@patternfly/react-icons';
+import { EllipsisVIcon, FilterIcon, BuilderImageIcon, MigrationIcon, StarIcon, OutlinedStarIcon, CopyIcon, BuildIcon, DownloadIcon, TrashIcon, TimesIcon, AngleRightIcon, AngleDownIcon, EditIcon, PlayIcon, ExclamationTriangleIcon, InfoCircleIcon } from '@patternfly/react-icons';
 import { ImageMigrationModal, ImageInfo, MigrationData } from './ImageMigrationModal';
 import { UseBaseImageModal, type ImageItem } from './UseBaseImageModal';
 import BuildImageModal from './BuildImageModal';
@@ -351,12 +351,12 @@ const Dashboard: React.FunctionComponent = () => {
     
     if (status === 'expired') {
       return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ color: '#f0ab00' }}>⚠️</span>
-          <Label color={config.color} variant={config.variant}>
-            {capitalizeWords(status)}
-          </Label>
-        </div>
+        <Label color={config.color} variant={config.variant}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <ExclamationTriangleIcon style={{ fontSize: '0.875rem', color: '#f0ab00' }} />
+            <span>{capitalizeWords(status)}</span>
+          </span>
+        </Label>
       );
     }
     
