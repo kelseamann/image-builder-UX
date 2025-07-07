@@ -930,7 +930,10 @@ const Dashboard: React.FunctionComponent = () => {
             <FlexItem>
               <Flex spaceItems={{ default: 'spaceItemsSm' }}>
                 <FlexItem>
-                  <Button variant="secondary" onClick={() => setIsBuildImageModalOpen(true)}>
+                  <Button variant="secondary" onClick={() => {
+                    setSelectedImage(null); // Clear selected image for creation flow
+                    setIsBuildImageModalOpen(true);
+                  }}>
                     Build Image
                   </Button>
                 </FlexItem>
@@ -1716,6 +1719,7 @@ const Dashboard: React.FunctionComponent = () => {
       <BuildImageModal
         isOpen={isBuildImageModalOpen}
         onClose={() => setIsBuildImageModalOpen(false)}
+        editingImage={selectedImage || undefined}
       />
 
       {/* Delete Confirmation Modal */}

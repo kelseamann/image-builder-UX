@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ImageInfo } from './ImageMigrationModal';
 import {
   Modal,
   ModalVariant,
@@ -26,7 +27,7 @@ import {
   Title,
   Split,
   SplitItem,
-  Divider,
+
   Card,
   CardBody,
   Gallery,
@@ -79,12 +80,14 @@ interface BuildImageModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm?: () => void;
+  editingImage?: ImageInfo;
 }
 
 const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   isOpen,
   onClose,
   onConfirm,
+  editingImage,
 }) => {
   const [activeTabKey, setActiveTabKey] = React.useState<string | number>(0);
   const [registrationMethod, setRegistrationMethod] = React.useState<string>('auto');
@@ -159,6 +162,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const [isAzureIntegrationOpen, setIsAzureIntegrationOpen] = React.useState<boolean>(false);
   const [azureId, setAzureId] = React.useState<string>('');
   const [isAzureAuthorized, setIsAzureAuthorized] = React.useState<boolean>(false);
+  const [azureResourceGroup, setAzureResourceGroup] = React.useState<string>('');
   
   // Private cloud state
   const [isVMWareSelected, setIsVMWareSelected] = React.useState<boolean>(false);
@@ -192,6 +196,26 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
   // YAML editor state
   const [editableYaml, setEditableYaml] = React.useState<string>('');
+  
+  // Track what the user has modified to detect migration-only changes
+  const [modifiedFields, setModifiedFields] = React.useState<Set<string>>(new Set());
+  
+  // Check if user should see migration suggestion (only in editing mode)
+  const shouldShowMigrationSuggestion = React.useMemo(() => {
+    // Only show in editing mode (when editingImage exists)
+    if (!editingImage) return false;
+    
+    // Only show if they've changed the release
+    return modifiedFields.has('baseImageRelease');
+  }, [modifiedFields, editingImage]);
+
+  // Helper function to handle cloud provider selection with tracking
+  const handleCloudProviderSelect = (provider: string) => {
+    const newProvider = selectedCloudProvider === provider ? '' : provider;
+    setSelectedCloudProvider(newProvider);
+    // Track target environment change
+    setModifiedFields(prev => new Set(prev.add('targetEnvironment')));
+  };
 
   // Update editable YAML when switching to code view or when form data changes
   React.useEffect(() => {
@@ -457,6 +481,8 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     if (typeof selection === 'string') {
       setOutputRelease(selection);
       setIsOutputReleaseOpen(false);
+      // Track this modification
+      setModifiedFields(prev => new Set(prev.add('outputRelease')));
     }
   };
 
@@ -467,6 +493,8 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     if (typeof selection === 'string') {
       setBaseImageRelease(selection);
       setIsBaseImageReleaseOpen(false);
+      // Track this modification
+      setModifiedFields(prev => new Set(prev.add('baseImageRelease')));
     }
   };
 
@@ -588,6 +616,8 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     } else {
       setSelectedPackages(selectedPackages.filter(id => id !== packageId));
     }
+    // Track package modifications
+    setModifiedFields(prev => new Set(prev.add('packages')));
   };
 
   const handleSelectAllPackages = (isSelected: boolean) => {
@@ -625,7 +655,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     selection: string | number | undefined,
   ) => {
     if (typeof selection === 'string') {
-      setSearchPackageType(selection === 'Individual packages' ? 'individual' : 'groups');
+      setSearchPackageType(selection === 'individual' ? 'individual' : 'groups');
       setIsSearchPackageTypeOpen(false);
     }
   };
@@ -707,6 +737,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             <FormGroup
               label="Activation key"
               fieldId="activation-key"
+              style={{ marginBottom: '1rem' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Select
@@ -762,10 +793,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             </FormGroup>
 
             {/* Divider */}
-            <div style={{ height: '1px', backgroundColor: '#d2d2d2', margin: '2rem 0' }} />
+            <div style={{ 
+              height: '1px', 
+              backgroundColor: '#d2d2d2', 
+              margin: '2rem 0' 
+            }} />
 
             {/* Timezone Section */}
-            <div style={{ marginTop: '2rem' }}>
+            <div style={{ marginBottom: '2rem' }}>
               <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                 Timezone
               </Title>
@@ -773,6 +808,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               <FormGroup
                 label="Timezone"
                 fieldId="timezone"
+                style={{ marginBottom: '1rem' }}
               >
                 <Select
                   id="timezone-select"
@@ -807,6 +843,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               <FormGroup
                 label="NTP servers"
                 fieldId="ntp-servers"
+                style={{ marginBottom: '1rem' }}
               >
                 <TextInput
                   id="ntp-servers"
@@ -821,10 +858,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             </div>
 
             {/* Divider */}
-            <div style={{ height: '1px', backgroundColor: '#d2d2d2', margin: '2rem 0' }} />
+            <div style={{ 
+              height: '1px', 
+              backgroundColor: '#d2d2d2', 
+              margin: '2rem 0' 
+            }} />
 
             {/* Locale Section */}
-            <div style={{ marginTop: '2rem' }}>
+            <div style={{ marginBottom: '2rem' }}>
               <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                 Locale
               </Title>
@@ -832,8 +873,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               <FormGroup
                 label="Suggest keyboards from these languages"
                 fieldId="languages"
+                style={{ marginBottom: '1rem' }}
               >
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {languages.map((language) => (
                     <div key={language.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <div style={{ width: '400px' }}>
@@ -911,6 +953,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               <FormGroup
                 label="Suggested keyboards"
                 fieldId="suggested-keyboards"
+                style={{ marginBottom: '1rem' }}
               >
                 <Select
                   id="suggested-keyboards-select"
@@ -943,10 +986,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             </div>
 
             {/* Divider */}
-            <div style={{ height: '1px', backgroundColor: '#d2d2d2', margin: '2rem 0' }} />
+            <div style={{ 
+              height: '1px', 
+              backgroundColor: '#d2d2d2', 
+              margin: '2rem 0' 
+            }} />
 
             {/* Hostname Section */}
-            <div style={{ marginTop: '2rem' }}>
+            <div style={{ marginBottom: '2rem' }}>
               <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                 Hostname
               </Title>
@@ -954,6 +1001,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               <FormGroup
                 label="Hostname"
                 fieldId="hostname"
+                style={{ marginBottom: '1rem' }}
               >
                 <TextInput
                   id="hostname"
@@ -965,10 +1013,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             </div>
 
             {/* Divider */}
-            <div style={{ height: '1px', backgroundColor: '#d2d2d2', margin: '2rem 0' }} />
+            <div style={{ 
+              height: '1px', 
+              backgroundColor: '#d2d2d2', 
+              margin: '2rem 0' 
+            }} />
 
             {/* Kernel Section */}
-            <div style={{ marginTop: '2rem' }}>
+            <div style={{ marginBottom: '2rem' }}>
               <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                 Kernel
               </Title>
@@ -976,6 +1028,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               <FormGroup
                 label="Kernel package"
                 fieldId="kernel-package"
+                style={{ marginBottom: '1rem' }}
               >
                 <Select
                   id="kernel-package-select"
@@ -1007,6 +1060,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               <FormGroup
                 label="Kernel arguments"
                 fieldId="kernel-arguments"
+                style={{ marginBottom: '1rem' }}
               >
                 <LabelGroup>
                   {kernelArguments.map((arg, index) => (
@@ -1028,14 +1082,23 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             </div>
 
             {/* Divider */}
-            <div style={{ height: '1px', backgroundColor: '#d2d2d2', margin: '2rem 0' }} />
+            <div style={{ 
+              height: '1px', 
+              backgroundColor: '#d2d2d2', 
+              margin: '2rem 0' 
+            }} />
 
             {/* Users Section */}
-            <div style={{ marginTop: '2rem' }}>
-              <Title headingLevel="h3" size="lg" style={{ marginBottom: '0.5rem' }}>
+            <div style={{ marginBottom: '2rem' }}>
+              <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                 Users
               </Title>
-              <p style={{ fontSize: '14px', lineHeight: '1.5', marginBottom: '1rem', color: '#666' }}>
+              <p style={{ 
+                fontSize: '14px', 
+                lineHeight: '1.5',
+                marginBottom: '1rem',
+                color: '#666'
+              }}>
                 Create user accounts for systems that will use this image.
               </p>
 
@@ -1054,7 +1117,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             variant="info"
             isInline
             title="Register with Red Hat Insights within 30 days"
-            style={{ marginTop: '1rem' }}
+            style={{ marginTop: '2rem' }}
           >
             <p style={{ marginBottom: '0.5rem' }}>
               If you don't register your systems within 30 days, you will not be able to use Red Hat Insights capabilities.
@@ -1073,7 +1136,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             variant="warning"
             isInline
             title="Work in Progress"
-            style={{ marginTop: '1rem' }}
+            style={{ marginTop: '2rem' }}
           >
             Satellite registration is currently being developed and will be available in a future release.
           </Alert>
@@ -1097,7 +1160,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             
             <Form>
               {/* Image Details Section */}
-              <div style={{ marginBottom: '2rem' }}>
+              <div>
                 <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                   Image details
                 </Title>
@@ -1106,6 +1169,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   label="Name"
                   fieldId="image-name"
                   isRequired
+                  style={{ marginBottom: '1rem' }}
                 >
                   <TextInput
                     id="image-name"
@@ -1119,6 +1183,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 <FormGroup
                   label="Details"
                   fieldId="image-details"
+                  style={{ marginBottom: '1rem' }}
                 >
                   <TextInput
                     id="image-details"
@@ -1130,8 +1195,12 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               </div>
               
               {/* Divider between Image details and Image output */}
-              <Divider style={{ margin: '32px 0 24px 0', borderColor: '#d2d2d2' }} />
-              
+              <div style={{ 
+                height: '1px', 
+                backgroundColor: '#d2d2d2', 
+                margin: '1rem 0' 
+              }} />
+
               {/* Image Output Section */}
               <div style={{ marginBottom: '2rem' }}>
                 <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
@@ -1142,6 +1211,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   label="Release"
                   fieldId="base-image-release"
                   isRequired
+                  style={{ marginBottom: '1rem' }}
                 >
                   <Select
                     id="base-image-release-select"
@@ -1173,11 +1243,25 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   </div>
                 </FormGroup>
 
+                {/* Migration suggestion alert - shown immediately when release changes */}
+                {shouldShowMigrationSuggestion && (
+                  <Alert
+                    variant="info"
+                    title="Consider using migration instead"
+                    style={{ marginBottom: '1rem' }}
+                  >
+                    <p>
+                      If you're only changing the release version, you might want to use the migration 
+                      feature instead. Try using the "Migrate" button on an existing image for faster results.
+                    </p>
+                  </Alert>
+                )}
+
                 <FormGroup
                   label="Architecture"
                   fieldId="base-image-architecture"
                   isRequired
-                  style={{ marginTop: '1rem' }}
+                  style={{ marginBottom: '1rem' }}
                 >
                   <Select
                     id="base-image-architecture-select"
@@ -1209,7 +1293,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 <FormGroup
                   label="Public cloud"
                   fieldId="public-cloud"
-                  style={{ marginTop: '1rem' }}
+                  style={{ marginBottom: '1rem' }}
                 >
                   <div style={{ 
                     fontSize: '14px', 
@@ -1222,7 +1306,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     <Card
                       isClickable
                       isSelected={selectedCloudProvider === 'aws'}
-                      onClick={() => setSelectedCloudProvider(selectedCloudProvider === 'aws' ? '' : 'aws')}
+                      onClick={() => handleCloudProviderSelect('aws')}
                       style={{ 
                         cursor: 'pointer',
                         border: selectedCloudProvider === 'aws' ? '2px solid #0066cc' : '1px solid #d2d2d2',
@@ -1238,7 +1322,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     <Card
                       isClickable
                       isSelected={selectedCloudProvider === 'gcp'}
-                      onClick={() => setSelectedCloudProvider(selectedCloudProvider === 'gcp' ? '' : 'gcp')}
+                      onClick={() => handleCloudProviderSelect('gcp')}
                       style={{ 
                         cursor: 'pointer',
                         border: selectedCloudProvider === 'gcp' ? '2px solid #0066cc' : '1px solid #d2d2d2',
@@ -1254,7 +1338,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     <Card
                       isClickable
                       isSelected={selectedCloudProvider === 'azure'}
-                      onClick={() => setSelectedCloudProvider(selectedCloudProvider === 'azure' ? '' : 'azure')}
+                      onClick={() => handleCloudProviderSelect('azure')}
                       style={{ 
                         cursor: 'pointer',
                         border: selectedCloudProvider === 'azure' ? '2px solid #0066cc' : '1px solid #d2d2d2',
@@ -1271,7 +1355,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       <Card
                         isClickable
                         isSelected={selectedCloudProvider === 'oci'}
-                        onClick={() => setSelectedCloudProvider(selectedCloudProvider === 'oci' ? '' : 'oci')}
+                        onClick={() => handleCloudProviderSelect('oci')}
                         style={{ 
                           cursor: 'pointer',
                           border: selectedCloudProvider === 'oci' ? '2px solid #0066cc' : '1px solid #d2d2d2',
@@ -1290,7 +1374,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 {/* AWS Integration Section */}
                 {selectedCloudProvider === 'aws' && (
                   <div style={{ 
-                    marginTop: '1.5rem',
+                    marginBottom: '1rem',
                     padding: '1.5rem',
                     border: '1px solid #d2d2d2',
                     borderRadius: '8px',
@@ -1299,115 +1383,37 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     <FormGroup
                       label="Integrations"
                       fieldId="integrations"
+                      style={{ marginBottom: '1rem' }}
                     >
-                                                <Select
-                            id="integrations-select"
-                            isOpen={isIntegrationOpen}
-                            selected={selectedIntegration}
-                            onSelect={onIntegrationSelect}
-                            onOpenChange={(isOpen) => setIsIntegrationOpen(isOpen)}
-                            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                              <MenuToggle 
-                                ref={toggleRef} 
-                                onClick={() => setIsIntegrationOpen(!isIntegrationOpen)}
-                                isExpanded={isIntegrationOpen}
-                                style={{ width: '300px' }}
-                              >
-                                {selectedIntegration || 'Choose source'}
-                              </MenuToggle>
-                            )}
+                      <Select
+                        id="integrations-select"
+                        isOpen={isIntegrationOpen}
+                        selected={selectedIntegration}
+                        onSelect={onIntegrationSelect}
+                        onOpenChange={(isOpen) => setIsIntegrationOpen(isOpen)}
+                        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                          <MenuToggle 
+                            ref={toggleRef} 
+                            onClick={() => setIsIntegrationOpen(!isIntegrationOpen)}
+                            isExpanded={isIntegrationOpen}
+                            style={{ width: '300px' }}
                           >
-                            <SelectList>
-                              {selectedIntegration && (
-                                <SelectOption 
-                                  key="clear-integration" 
-                                  value=""
-                                  style={{ 
-                                    fontStyle: 'italic',
-                                    color: '#6a6e73',
-                                    borderBottom: '1px solid #d2d2d2',
-                                    marginBottom: '4px',
-                                    paddingBottom: '8px'
-                                  }}
-                                >
-                                  Clear selection
-                                </SelectOption>
-                              )}
-                              {integrationOptions.map((integration) => (
-                                <SelectOption key={integration} value={integration}>
-                                  {integration}
-                                </SelectOption>
-                              ))}
-                            </SelectList>
-                          </Select>
-                      <div style={{ 
-                        fontSize: '14px', 
-                        color: '#6a6e73', 
-                        marginTop: '8px',
-                        lineHeight: '1.4'
-                      }}>
-                        Using an Integration will auto-fill your account information. If you can't add an integration, manually paste your account ID.
-                      </div>
-                      <div style={{ marginTop: '8px' }}>
-                        <Button
-                          variant="link"
-                          isInline
-                          icon={<ExternalLinkAltIcon />}
-                          iconPosition="right"
-                          style={{ padding: 0, fontSize: '14px' }}
-                        >
-                          Manage Insights Integrations
-                        </Button>
-                      </div>
-                    </FormGroup>
-
-                    {!selectedIntegration && (
-                      <Alert
-                        variant="info"
-                        isInline
-                        title="If you're not using an integration, you can still manually paste your account ID from AWS"
-                        style={{ marginTop: '1rem', marginBottom: '1rem' }}
-                      />
-                    )}
-
-                    <FormGroup
-                      label="Account ID"
-                      fieldId="aws-account-id"
-                      style={{ marginTop: '1rem' }}
-                    >
-                      <TextInput
-                        id="aws-account-id"
-                        type="text"
-                        value={awsAccountId}
-                        onChange={(event, value) => setAwsAccountId(value)}
-                        placeholder="XXXX-XXXX-XXXX"
-                        style={{ width: '300px' }}
-                      />
-                      <div style={{ 
-                        fontSize: '14px', 
-                        color: '#6a6e73', 
-                        marginTop: '8px',
-                        lineHeight: '1.4'
-                      }}>
-                        Detected from Integrations or copy the 12 digit number in the upper-right dropdown next to your AWS username
-                      </div>
-                      <div style={{ marginTop: '8px' }}>
-                        <Button
-                          variant="link"
-                          isInline
-                          icon={<ExternalLinkAltIcon />}
-                          iconPosition="right"
-                          style={{ padding: 0, fontSize: '14px' }}
-                        >
-                          Sign into AWS
-                        </Button>
-                      </div>
+                            {selectedIntegration || 'Select integration'}
+                          </MenuToggle>
+                        )}
+                      >
+                        <SelectList>
+                          <SelectOption value="aws-account">AWS Account</SelectOption>
+                          <SelectOption value="aws-iam">AWS IAM</SelectOption>
+                          <SelectOption value="aws-ec2">AWS EC2</SelectOption>
+                        </SelectList>
+                      </Select>
                     </FormGroup>
 
                     <FormGroup
                       label="Default region"
                       fieldId="aws-default-region"
-                      style={{ marginTop: '1rem' }}
+                      style={{ marginBottom: '1rem' }}
                     >
                       <Select
                         id="aws-region-select"
@@ -1449,72 +1455,45 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 {/* GCP Integration Section */}
                 {selectedCloudProvider === 'gcp' && (
                   <div style={{ 
-                    marginTop: '1.5rem',
+                    marginBottom: '1rem',
                     padding: '1.5rem',
                     border: '1px solid #d2d2d2',
                     borderRadius: '8px',
                     backgroundColor: '#f8f9fa'
                   }}>
                     <FormGroup
-                      label="Account Credentials"
-                      fieldId="gcp-credentials"
+                      label="GCP account type"
+                      fieldId="gcp-account-type"
+                      style={{ marginBottom: '1rem' }}
                     >
-                      <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                        <div style={{ flex: 1 }}>
-                          <Select
-                            id="gcp-account-type-select"
-                            isOpen={isGcpAccountTypeOpen}
-                            selected={gcpAccountType}
-                            onSelect={onGcpAccountTypeSelect}
-                            onOpenChange={(isOpen) => setIsGcpAccountTypeOpen(isOpen)}
-                            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                              <MenuToggle 
-                                ref={toggleRef} 
-                                onClick={() => setIsGcpAccountTypeOpen(!isGcpAccountTypeOpen)}
-                                isExpanded={isGcpAccountTypeOpen}
-                                style={{ width: '300px' }}
-                              >
-                                {gcpAccountType}
-                              </MenuToggle>
-                            )}
+                      <Select
+                        id="gcp-account-type-select"
+                        isOpen={isGcpAccountTypeOpen}
+                        selected={gcpAccountType}
+                        onSelect={onGcpAccountTypeSelect}
+                        onOpenChange={(isOpen) => setIsGcpAccountTypeOpen(isOpen)}
+                        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                          <MenuToggle 
+                            ref={toggleRef} 
+                            onClick={() => setIsGcpAccountTypeOpen(!isGcpAccountTypeOpen)}
+                            isExpanded={isGcpAccountTypeOpen}
+                            style={{ width: '200px' }}
                           >
-                            <SelectList>
-                              {gcpAccountTypes.map((accountType, index) => (
-                                <SelectOption key={index} value={accountType}>
-                                  {accountType}
-                                </SelectOption>
-                              ))}
-                            </SelectList>
-                          </Select>
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <TextInput
-                            id="gcp-email-domain"
-                            value={gcpEmailOrDomain}
-                            onChange={(event, value) => setGcpEmailOrDomain(value)}
-                            placeholder={
-                              gcpAccountType === 'Google Workspace domain or Cloud Identity domain' 
-                                ? 'Domain' 
-                                : 'Principal email address'
-                            }
-                            style={{ width: '100%' }}
-                          />
-                        </div>
-                      </div>
-                      <div style={{ 
-                        fontSize: '14px', 
-                        color: '#6a6e73', 
-                        marginTop: '8px',
-                        lineHeight: '1.4'
-                      }}>
-                        The email or domain associated with your Google Cloud Platform account
-                      </div>
+                            {gcpAccountType}
+                          </MenuToggle>
+                        )}
+                      >
+                        <SelectList>
+                          <SelectOption value="Service account">Service account</SelectOption>
+                          <SelectOption value="Service account (JSON)">Service account (JSON)</SelectOption>
+                        </SelectList>
+                      </Select>
                     </FormGroup>
 
                     <FormGroup
                       label="Select image sharing"
                       fieldId="gcp-image-sharing"
-                      style={{ marginTop: '1.5rem' }}
+                      style={{ marginBottom: '1rem' }}
                     >
                       <Radio
                         id="gcp-share-google-account"
@@ -1538,15 +1517,58 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 {/* Azure Integration Section */}
                 {selectedCloudProvider === 'azure' && (
                   <div style={{ 
-                    marginTop: '1.5rem',
+                    marginBottom: '1rem',
                     padding: '1.5rem',
                     border: '1px solid #d2d2d2',
                     borderRadius: '8px',
                     backgroundColor: '#f8f9fa'
                   }}>
                     <FormGroup
-                      label="HyperV Generation"
+                      label="Azure integration"
+                      fieldId="azure-integration"
+                      style={{ marginBottom: '1rem' }}
+                    >
+                      <Select
+                        id="azure-integration-select"
+                        isOpen={isAzureIntegrationOpen}
+                        selected={azureIntegration}
+                        onSelect={onAzureIntegrationSelect}
+                        onOpenChange={(isOpen) => setIsAzureIntegrationOpen(isOpen)}
+                        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                          <MenuToggle 
+                            ref={toggleRef} 
+                            onClick={() => setIsAzureIntegrationOpen(!isAzureIntegrationOpen)}
+                            isExpanded={isAzureIntegrationOpen}
+                            style={{ width: '300px' }}
+                          >
+                            {azureIntegration}
+                          </MenuToggle>
+                        )}
+                      >
+                        <SelectList>
+                          <SelectOption value="Microsoft Azure">Microsoft Azure</SelectOption>
+                          <SelectOption value="Azure Government">Azure Government</SelectOption>
+                        </SelectList>
+                      </Select>
+                    </FormGroup>
+
+                    <FormGroup
+                      label="Resource group"
+                      fieldId="azure-resource-group"
+                      style={{ marginBottom: '1rem' }}
+                    >
+                      <TextInput
+                        id="azure-resource-group"
+                        value={azureResourceGroup}
+                        onChange={(_event, value) => setAzureResourceGroup(value)}
+                        placeholder="Enter resource group name"
+                      />
+                    </FormGroup>
+
+                    <FormGroup
+                      label="Hyper-V generation"
                       fieldId="azure-hyperv-generation"
+                      style={{ marginBottom: '1rem' }}
                     >
                       <Select
                         id="azure-hyperv-generation-select"
@@ -1559,201 +1581,48 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                             ref={toggleRef} 
                             onClick={() => setIsAzureHypervGenerationOpen(!isAzureHypervGenerationOpen)}
                             isExpanded={isAzureHypervGenerationOpen}
-                            style={{ width: '300px' }}
+                            style={{ width: '200px' }}
                           >
                             {azureHypervGeneration}
                           </MenuToggle>
                         )}
                       >
                         <SelectList>
-                          {azureHypervGenerationOptions.map((generation) => (
-                            <SelectOption key={generation} value={generation}>
-                              {generation}
-                            </SelectOption>
-                          ))}
+                          <SelectOption value="V1">V1</SelectOption>
+                          <SelectOption value="V2">V2</SelectOption>
                         </SelectList>
                       </Select>
-                      <div style={{ 
-                        fontSize: '14px', 
-                        color: '#6a6e73', 
-                        marginTop: '8px',
-                        lineHeight: '1.4'
-                      }}>
-                        The latest generation is recommended and selected by default.
-                      </div>
                     </FormGroup>
 
-                    <FormGroup
-                      label="Integrations"
-                      fieldId="azure-integrations"
+                    <Button
+                      variant="primary"
+                      onClick={handleAzureAuthorize}
                       style={{ marginTop: '1rem' }}
                     >
-                      <Select
-                        id="azure-integrations-select"
-                        isOpen={isAzureIntegrationOpen}
-                        selected={azureIntegration}
-                        onSelect={onAzureIntegrationSelect}
-                        onOpenChange={(isOpen) => setIsAzureIntegrationOpen(isOpen)}
-                        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                          <MenuToggle 
-                            ref={toggleRef} 
-                            onClick={() => setIsAzureIntegrationOpen(!isAzureIntegrationOpen)}
-                            isExpanded={isAzureIntegrationOpen}
-                            style={{ width: '300px' }}
-                          >
-                            {azureIntegration || 'Choose source'}
-                          </MenuToggle>
-                        )}
-                      >
-                        <SelectList>
-                          {azureIntegration && (
-                            <SelectOption 
-                              key="clear-azure-integration" 
-                              value=""
-                              style={{ 
-                                fontStyle: 'italic',
-                                color: '#6a6e73',
-                                borderBottom: '1px solid #d2d2d2',
-                                marginBottom: '4px',
-                                paddingBottom: '8px'
-                              }}
-                            >
-                              Clear selection
-                            </SelectOption>
-                          )}
-                          {azureIntegrationOptions.map((integration) => (
-                            <SelectOption key={integration} value={integration}>
-                              {integration}
-                            </SelectOption>
-                          ))}
-                        </SelectList>
-                      </Select>
-                      <div style={{ 
-                        fontSize: '14px', 
-                        color: '#6a6e73', 
-                        marginTop: '8px',
-                        lineHeight: '1.4'
-                      }}>
-                        Choosing a Source will populate the ID or you can enter it manually.
-                      </div>
-                    </FormGroup>
+                      Authorize Azure
+                    </Button>
+                  </div>
+                )}
 
-                    <FormGroup
-                      label="Azure ID"
-                      fieldId="azure-id"
-                      style={{ marginTop: '1rem' }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <TextInput
-                          id="azure-id"
-                          type="text"
-                          value={azureId}
-                          onChange={(event, value) => setAzureId(value)}
-                          placeholder="GUID or Tenant ID"
-                          style={{ width: '300px' }}
-                        />
-                        
-                        <Popover
-                          aria-label="Authorize Image Builder details"
-                          position={PopoverPosition.right}
-                          bodyContent={
-                            <div>
-                              Configures Image Builder as an authorized application for the provided Tenant ID
-                            </div>
-                          }
-                        >
-                          <Button 
-                            variant="secondary"
-                            onClick={handleAzureAuthorize}
-                            isDisabled={!azureId.trim() || isAzureAuthorized}
-                          >
-                            {isAzureAuthorized ? (
-                              <>
-                                <CheckIcon style={{ marginRight: '8px', color: '#3e8635' }} />
-                                Authorized
-                              </>
-                            ) : (
-                              'Authorize Image Builder'
-                            )}
-                          </Button>
-                        </Popover>
-                      </div>
-                      
-                      {/* Validation criteria */}
-                      <div style={{ 
-                        marginTop: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        fontSize: '14px'
-                      }}>
-                        {isAzureAuthorized ? (
-                          <>
-                            <CheckIcon style={{ color: '#3e8635', fontSize: '16px' }} />
-                            <span style={{ color: '#3e8635' }}>Authorize ID with Image Builder</span>
-                          </>
-                        ) : (
-                          <>
-                            <TimesIcon style={{ color: '#c9190b', fontSize: '16px' }} />
-                            <span style={{ color: '#c9190b' }}>Authorize ID with Image Builder</span>
-                          </>
-                        )}
-                      </div>
-                      
-                      <div style={{ marginTop: '8px' }}>
-                        <Button
-                          variant="link"
-                          isInline
-                          icon={<ExternalLinkAltIcon />}
-                          iconPosition="right"
-                          style={{ padding: 0, fontSize: '14px' }}
-                        >
-                          Sign into the Azure Portal
-                        </Button>
-                      </div>
-                    </FormGroup>
+                {/* Oracle Cloud Infrastructure Section */}
+                {selectedCloudProvider === 'oci' && (
+                  <div style={{ 
+                    marginBottom: '1rem',
+                    padding: '1.5rem',
+                    border: '1px solid #d2d2d2',
+                    borderRadius: '8px',
+                    backgroundColor: '#f8f9fa'
+                  }}>
+                    <p style={{ margin: 0, fontSize: '14px', color: '#6a6e73' }}>
+                      Oracle Cloud Infrastructure integration is ready to use. No additional configuration required.
+                    </p>
                   </div>
                 )}
 
                 <FormGroup
-                  label="Private cloud"
-                  fieldId="private-cloud"
-                  style={{ marginTop: '2rem' }}
-                >
-                  <Checkbox
-                    id="vmware-vsphere"
-                    label="VMWare vSphere"
-                    isChecked={isVMWareSelected}
-                    onChange={() => setIsVMWareSelected(!isVMWareSelected)}
-                    style={{ marginBottom: '1rem' }}
-                  />
-                  
-                  {isVMWareSelected && (
-                    <div style={{ marginLeft: '24px', marginTop: '1rem' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <Radio
-                          isChecked={vmwareFormat === 'ova'}
-                          name="vmware-format"
-                          onChange={() => setVmwareFormat('ova')}
-                          label="Open virtualization format (.ova)"
-                          id="vmware-ova"
-                        />
-                        <Radio
-                          isChecked={vmwareFormat === 'vmdk'}
-                          name="vmware-format"
-                          onChange={() => setVmwareFormat('vmdk')}
-                          label="Virtual disk (.vmdk)"
-                          id="vmware-vmdk"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </FormGroup>
-
-                <FormGroup
                   label="Other"
                   fieldId="other-formats"
-                  style={{ marginTop: '2rem' }}
+                  style={{ marginBottom: '1rem' }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <Radio
@@ -1781,309 +1650,54 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 </FormGroup>
 
                 {/* Divider before Enable repeatable build */}
-                <Divider style={{ margin: '32px 0 24px 0', borderColor: '#d2d2d2' }} />
+                <div style={{ 
+                  height: '1px', 
+                  backgroundColor: '#d2d2d2', 
+                  margin: '2rem 0' 
+                }} />
                 
                 {/* Enable repeatable build Section */}
                 <div style={{ marginBottom: '2rem' }}>
                   <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                     Enable repeatable build
                   </Title>
+                  <p style={{ fontSize: '14px', color: '#666', marginBottom: '1rem' }}>
+                    Create images that can be reproduced consistently with the same package versions and configurations.
+                  </p>
+                  
                   <FormGroup
-                    label="Select snapshot date"
+                    label="Snapshot date"
                     fieldId="snapshot-date"
+                    style={{ marginBottom: '1rem' }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <DatePicker
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <TextInput
+                        id="snapshot-date"
                         value={snapshotDate}
-                        onChange={(event, value, date) => {
-                          setSnapshotDate(value);
-                        }}
-                        placeholder="MM/DD/YYYY"
+                        onChange={(_event, value) => setSnapshotDate(value)}
+                        placeholder="YYYY-MM-DD"
+                        type="date"
                         style={{ width: '200px' }}
                       />
                       <Button
                         variant="secondary"
-                        onClick={() => setSnapshotDate('')}
-                        isDisabled={!snapshotDate}
-                      >
-                        Clear date
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        onClick={() => {
-                          const today = new Date();
-                          const formattedToday = today.toLocaleDateString('en-US', {
-                            month: '2-digit',
-                            day: '2-digit',
-                            year: 'numeric'
-                          });
-                          setSnapshotDate(formattedToday);
-                        }}
+                        onClick={() => setSnapshotDate(new Date().toISOString().split('T')[0])}
+                        style={{ padding: '0.25rem 0.5rem' }}
                       >
                         Today's date
                       </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={() => setSnapshotDate('')}
+                        style={{ padding: '0.25rem 0.5rem' }}
+                      >
+                        Clear date
+                      </Button>
                     </div>
-                    <div style={{ 
-                      fontSize: '14px', 
-                      color: '#6a6e73', 
-                      marginTop: '8px',
-                      lineHeight: '1.4'
-                    }}>
-                      Image Builder will reflect the state of repositories based on the selected date when building this image.
-                    </div>
-                  </FormGroup>
-                </div>
-
-                {/* Divider before Kickstart File */}
-                <Divider style={{ margin: '32px 0 24px 0', borderColor: '#d2d2d2' }} />
-                
-                {/* Kickstart File Section */}
-                <div style={{ marginBottom: '2rem' }}>
-                  <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                    Kickstart File
-                  </Title>
-                  <FormGroup fieldId="kickstart-file">
-                    <FileUpload
-                      id="kickstart-file-upload"
-                      value={kickstartFile}
-                      filename={kickstartFilename}
-                      onFileInputChange={(event, file) => {
-                        setKickstartFile(file || '');
-                        setKickstartFilename(file instanceof File ? file.name : '');
-                      }}
-                      onClearClick={() => {
-                        setKickstartFile('');
-                        setKickstartFilename('');
-                      }}
-                      isLoading={isKickstartLoading}
-                      browseButtonText="Upload"
-                      clearButtonText="Clear"
-                    />
-                    <TextArea
-                      id="custom-kickstart-code"
-                      value={customKickstartCode}
-                      onChange={(event, value) => setCustomKickstartCode(value)}
-                      placeholder="Enter custom kickstart code here..."
-                      rows={8}
-                      style={{ 
-                        fontFamily: 'monospace',
-                        marginTop: '12px',
-                        resize: 'vertical'
-                      }}
-                    />
-                    <div style={{ 
-                      fontSize: '14px', 
-                      color: '#6a6e73', 
-                      marginTop: '8px',
-                      lineHeight: '1.4'
-                    }}>
-                      Upload a CSV file or enter custom kickstart code.
+                    <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                      Use packages from this date to ensure reproducible builds
                     </div>
                   </FormGroup>
-                </div>
-
-                {/* Divider before Compliance */}
-                <Divider style={{ margin: '32px 0 24px 0', borderColor: '#d2d2d2' }} />
-                
-                {/* Compliance Section */}
-                <div style={{ marginBottom: '2rem' }}>
-                  <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                    Compliance
-                  </Title>
-                  <div style={{ 
-                    fontSize: '14px', 
-                    color: '#6a6e73', 
-                    marginBottom: '1.5rem',
-                    lineHeight: '1.4'
-                  }}>
-                    Below you can select which Insights compliance policy or OpenSCAP profile your image will be compliant to. Insights can automatically help monitor the adherence of your registered RHEL systems to a selected policy or profile.
-                  </div>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    {/* Custom Compliance Policy */}
-                    <div>
-                      <Radio
-                        isChecked={complianceType === 'custom'}
-                        name="compliance-type"
-                        onChange={() => setComplianceType('custom')}
-                        label="Use a custom Compliance policy"
-                        id="compliance-custom"
-                        style={{ marginBottom: '0.5rem' }}
-                      />
-                                            <div style={{ 
-                        fontSize: '14px', 
-                        color: '#6a6e73', 
-                        marginLeft: '24px',
-                        marginBottom: '0.5rem'
-                      }}>
-                        <a 
-                          href="#" 
-                          style={{ 
-                            color: '#0066cc', 
-                            textDecoration: 'none',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}
-                        >
-                          Manage with Insights Compliance
-                          <ExternalLinkAltIcon size={16} />
-                        </a>
-                      </div>
-                      
-                      {complianceType === 'custom' && (
-                        <div style={{ marginLeft: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <Select
-                            id="custom-compliance-policy-select"
-                            isOpen={isCustomCompliancePolicyOpen}
-                            selected={customCompliancePolicy}
-                            onSelect={onCustomCompliancePolicySelect}
-                            onOpenChange={(isOpen) => setIsCustomCompliancePolicyOpen(isOpen)}
-                            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                              <MenuToggle 
-                                ref={toggleRef} 
-                                onClick={() => setIsCustomCompliancePolicyOpen(!isCustomCompliancePolicyOpen)}
-                                isExpanded={isCustomCompliancePolicyOpen}
-                                style={{ width: '400px' }}
-                              >
-                                {customCompliancePolicy || 'Select a compliance policy'}
-                              </MenuToggle>
-                            )}
-                          >
-                            <SelectList>
-                              {customCompliancePolicyOptions.map((policy) => (
-                                <SelectOption key={policy} value={policy}>
-                                  {policy}
-                                </SelectOption>
-                              ))}
-                            </SelectList>
-                          </Select>
-                          
-                          {customCompliancePolicy && (
-                            <Popover
-                              aria-label="Compliance policy details"
-                              headerContent={<div>Selected Compliance policy</div>}
-                              bodyContent={
-                                <div>
-                                  <div style={{ marginBottom: '12px' }}>
-                                    <strong>Policy type:</strong> {customCompliancePolicy}
-                                  </div>
-                                  <div style={{ marginBottom: '12px' }}>
-                                    <strong>Policy description:</strong> This compliance policy provides security guidelines and configurations to help ensure your system meets regulatory requirements.
-                                  </div>
-                                  <div style={{ marginBottom: '12px' }}>
-                                    <strong>Compliance threshold (usually 100%):</strong> 100%
-                                  </div>
-                                  <div style={{ marginBottom: '12px' }}>
-                                    <strong>Business objective:</strong> Maintain security compliance and regulatory adherence
-                                  </div>
-                                  <div>
-                                    <strong>Last Updated:</strong> December 2024
-                                  </div>
-                                </div>
-                              }
-                            >
-                              <Button variant="secondary" icon={<InfoCircleIcon />}>
-                                View details
-                              </Button>
-                            </Popover>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* OpenSCAP Profile */}
-                    <div>
-                      <Radio
-                        isChecked={complianceType === 'openscap'}
-                        name="compliance-type"
-                        onChange={() => setComplianceType('openscap')}
-                        label="Use a default OpenSCAP profile"
-                        id="compliance-openscap"
-                        style={{ marginBottom: '0.5rem' }}
-                      />
-                      <div style={{ 
-                        fontSize: '14px', 
-                        color: '#6a6e73', 
-                        marginLeft: '24px',
-                        marginBottom: '0.5rem'
-                      }}>
-                        <a 
-                          href="#" 
-                          style={{ 
-                            color: '#0066cc', 
-                            textDecoration: 'none',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}
-                                                 >
-                           Learn more in OpenSCAP
-                           <ExternalLinkAltIcon size={16} />
-                         </a>
-                      </div>
-                      
-                      {complianceType === 'openscap' && (
-                        <div style={{ marginLeft: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <Select
-                            id="openscap-profile-select"
-                            isOpen={isOpenscapProfileOpen}
-                            selected={openscapProfile}
-                            onSelect={onOpenscapProfileSelect}
-                            onOpenChange={(isOpen) => setIsOpenscapProfileOpen(isOpen)}
-                            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                              <MenuToggle 
-                                ref={toggleRef} 
-                                onClick={() => setIsOpenscapProfileOpen(!isOpenscapProfileOpen)}
-                                isExpanded={isOpenscapProfileOpen}
-                                style={{ width: '400px' }}
-                              >
-                                {openscapProfile || 'Select an OpenSCAP profile'}
-                              </MenuToggle>
-                            )}
-                          >
-                            <SelectList>
-                              {openscapProfileOptions.map((profile) => (
-                                <SelectOption key={profile} value={profile}>
-                                  {profile}
-                                </SelectOption>
-                              ))}
-                            </SelectList>
-                          </Select>
-                          
-                          {openscapProfile && (
-                            <Popover
-                              aria-label="OpenSCAP profile details"
-                              headerContent={<div>Selected Compliance policy</div>}
-                              bodyContent={
-                                <div>
-                                  <div style={{ marginBottom: '12px' }}>
-                                    <strong>Policy type:</strong> {openscapProfile}
-                                  </div>
-                                  <div style={{ marginBottom: '12px' }}>
-                                    <strong>Policy description:</strong> This OpenSCAP profile provides automated security compliance scanning and remediation capabilities.
-                                  </div>
-                                  <div style={{ marginBottom: '12px' }}>
-                                    <strong>Compliance threshold (usually 100%):</strong> 100%
-                                  </div>
-                                  <div style={{ marginBottom: '12px' }}>
-                                    <strong>Business objective:</strong> Maintain security compliance and regulatory adherence
-                                  </div>
-                                  <div>
-                                    <strong>Last Updated:</strong> December 2024
-                                  </div>
-                                </div>
-                              }
-                            >
-                              <Button variant="secondary" icon={<InfoCircleIcon />}>
-                                View details
-                              </Button>
-                            </Popover>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
                 </div>
               </div>
             </Form>
@@ -2101,7 +1715,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             
             <Form>
               {/* Use Extended Support Section */}
-              <div style={{ marginBottom: '32px' }}>
+              <div style={{ marginBottom: '2rem' }}>
                 <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                   Use Extended Support
                 </Title>
@@ -2109,6 +1723,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 <FormGroup
                   label="Extended support subscription"
                   fieldId="extended-support"
+                  style={{ marginBottom: '1rem' }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <Radio
@@ -2137,10 +1752,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               </div>
 
               {/* Divider between sections */}
-              <Divider style={{ margin: '32px 0 24px 0', borderColor: '#d2d2d2' }} />
+              <div style={{ 
+                height: '1px', 
+                backgroundColor: '#d2d2d2', 
+                margin: '2rem 0' 
+              }} />
 
               {/* Selected Packages Accordion */}
-              <div style={{ marginBottom: '32px' }}>
+              <div style={{ marginBottom: '2rem' }}>
                 <Accordion 
                   asDefinitionList={false}
                   togglePosition="start"
@@ -2300,21 +1919,20 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               </div>
 
               {/* Divider between sections */}
-              <Divider style={{ margin: '20px 0 16px 0', borderColor: '#d2d2d2' }} />
+              <div style={{ 
+                height: '1px', 
+                backgroundColor: '#d2d2d2', 
+                margin: '2rem 0' 
+              }} />
 
               {/* Search Packages Section */}
-              <div style={{ marginBottom: '24px' }}>
-                <h4 style={{ 
-                  fontSize: '1rem', 
-                  fontWeight: 600, 
-                  marginBottom: '12px',
-                  color: '#151515'
-                }}>
+              <div style={{ marginBottom: '2rem' }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                   Search packages
-                </h4>
+                </Title>
 
                 {/* Search Form */}
-                <div style={{ marginBottom: '16px' }}>
+                <div style={{ marginBottom: '1rem' }}>
                   <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
                     {/* Types Dropdown */}
                     <div style={{ flex: '0 0 200px' }}>
@@ -2322,6 +1940,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                         label="Types"
                         fieldId="search-package-types"
                         isRequired
+                        style={{ marginBottom: '1rem' }}
                       >
                         <Select
                           id="search-package-types-select"
@@ -2341,31 +1960,28 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                           )}
                         >
                           <SelectList>
-                            {searchPackageTypes.map((type) => (
-                              <SelectOption key={type} value={type}>
-                                {type}
-                              </SelectOption>
-                            ))}
+                            <SelectOption value="individual">Individual packages</SelectOption>
+                            <SelectOption value="groups">Package groups</SelectOption>
                           </SelectList>
                         </Select>
                       </FormGroup>
                     </div>
 
-                    {/* Repositories Section */}
-                    <div style={{ flex: '0 0 180px' }}>
+                    {/* Repository Dropdown */}
+                    <div style={{ flex: '0 0 200px' }}>
                       <FormGroup
-                        label="Repositories"
-                        fieldId="repositories"
+                        label="Repository"
+                        fieldId="search-repository"
                         isRequired
+                        style={{ marginBottom: '1rem' }}
                       >
                         <Select
-                          id="repositories-select"
+                          id="search-repository-select"
                           isOpen={isRepositoryDropdownOpen}
                           selected={selectedRepository}
-                          onSelect={(_event, selection) => {
-                            if (typeof selection === 'string') {
-                              handleRepositorySelect(selection);
-                            }
+                          onSelect={(_, selection) => {
+                            setSelectedRepository(String(selection));
+                            setIsRepositoryDropdownOpen(false);
                           }}
                           onOpenChange={(isOpen) => setIsRepositoryDropdownOpen(isOpen)}
                           toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
@@ -2375,7 +1991,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                               isExpanded={isRepositoryDropdownOpen}
                               style={{ width: '100%' }}
                             >
-                              {selectedRepository}
+                              {selectedRepository || 'Select repository'}
                             </MenuToggle>
                           )}
                         >
@@ -2390,55 +2006,55 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       </FormGroup>
                     </div>
 
-                    {/* Advanced Search */}
+                    {/* Search Input */}
                     <div style={{ flex: 1 }}>
                       <FormGroup
-                        label="Search"
-                        fieldId="advanced-search"
-                        isRequired
+                        label="Search terms"
+                        fieldId="search-terms"
+                        style={{ marginBottom: '1rem' }}
                       >
-                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                          <TextInput
-                            id="advanced-search-input"
-                            value={advancedSearchTerm}
-                            onChange={(_event, value) => setAdvancedSearchTerm(value)}
-                            placeholder="Search for packages by name"
-                            style={{ flex: 1 }}
-                            onKeyPress={(event) => {
-                              if (event.key === 'Enter') {
-                                handleSearchPackages();
-                              }
-                            }}
-                          />
-                          <Button
-                            variant="control"
-                            onClick={handleSearchPackages}
-                            icon={<ArrowRightIcon />}
-                            aria-label="Search packages"
-                            isDisabled={!advancedSearchTerm.trim()}
-                          />
-                        </div>
+                        <SearchInput
+                          placeholder="Search for packages..."
+                          value={advancedSearchTerm}
+                          onChange={(_event, value) => setAdvancedSearchTerm(value)}
+                          onClear={() => setAdvancedSearchTerm('')}
+                          style={{ width: '100%' }}
+                        />
                       </FormGroup>
+                    </div>
+
+                    {/* Search Button */}
+                    <div style={{ flex: '0 0 auto' }}>
+                      <Button
+                        variant="primary"
+                        onClick={handleSearchPackages}
+                        isDisabled={!selectedRepository || !advancedSearchTerm.trim()}
+                        style={{ marginBottom: '1rem' }}
+                      >
+                        Search
+                      </Button>
                     </div>
                   </div>
                 </div>
 
-                {/* Search Results Table */}
+                {/* Search Results */}
                 {searchResults.length > 0 && (
-                  <div>
+                  <div style={{ marginTop: '1rem' }}>
                     <h5 style={{ 
                       fontSize: '0.875rem', 
                       fontWeight: 600, 
-                      marginBottom: '8px',
+                      marginBottom: '1rem',
                       color: '#151515'
                     }}>
-                      Search Results ({searchResults.length} packages)
+                      Search Results ({getFilteredSearchResults().length} packages found)
                     </h5>
-                    
+
+                    {/* Compact Table */}
                     <div style={{ 
                       border: '1px solid #d2d2d2',
                       borderRadius: '4px',
-                      overflow: 'hidden'
+                      overflow: 'hidden',
+                      marginBottom: '1rem'
                     }}>
                       <table style={{ 
                         width: '100%', 
@@ -2477,7 +2093,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                               borderBottom: '1px solid #d2d2d2',
                               fontWeight: 600
                             }}>
-                              Application Stream
+                              Version
                             </th>
                             <th style={{ 
                               padding: '8px 12px',
@@ -2485,15 +2101,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                               borderBottom: '1px solid #d2d2d2',
                               fontWeight: 600
                             }}>
-                              Retirement date
-                            </th>
-                            <th style={{ 
-                              padding: '8px 12px',
-                              textAlign: 'left',
-                              borderBottom: '1px solid #d2d2d2',
-                              fontWeight: 600
-                            }}>
-                              Package repository
+                              Repository
                             </th>
                           </tr>
                         </thead>
@@ -2516,13 +2124,10 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                                 {pkg.name}
                               </td>
                               <td style={{ padding: '8px 12px' }}>
-                                {pkg.applicationStream}
+                                {pkg.version}
                               </td>
                               <td style={{ padding: '8px 12px' }}>
-                                {pkg.retirementDate}
-                              </td>
-                              <td style={{ padding: '8px 12px' }}>
-                                {pkg.packageRepository}
+                                {pkg.repository}
                               </td>
                             </tr>
                           ))}
@@ -2530,23 +2135,35 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       </table>
                     </div>
 
-                    {/* Search Results Pagination */}
-                    {searchResults.length > searchResultsPerPage && (
-                      <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'flex-end' }}>
-                        <Pagination
-                          itemCount={getFilteredSearchResults().length}
-                          perPage={searchResultsPerPage}
-                          page={searchResultsPage}
-                          onSetPage={(_event, pageNumber) => setSearchResultsPage(pageNumber)}
-                          onPerPageSelect={(_event, perPage) => {
-                            setSearchResultsPerPage(perPage);
-                            setSearchResultsPage(1);
-                          }}
-                          variant="bottom"
-                          isCompact
-                        />
-                      </div>
-                    )}
+                    {/* Pagination for Search Results */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Button
+                        variant="primary"
+                        onClick={() => {
+                          // Add selected search results to the main packages list
+                          setSelectedPackages(prev => [...prev, ...selectedSearchResults]);
+                          setSelectedSearchResults([]);
+                          setSearchResults([]);
+                          setAdvancedSearchTerm('');
+                        }}
+                        isDisabled={selectedSearchResults.length === 0}
+                      >
+                        Add Selected ({selectedSearchResults.length})
+                      </Button>
+                      
+                      <Pagination
+                        itemCount={getFilteredSearchResults().length}
+                        perPage={searchResultsPerPage}
+                        page={searchResultsPage}
+                        onSetPage={(_event, pageNumber) => setSearchResultsPage(pageNumber)}
+                        onPerPageSelect={(_event, perPage) => {
+                          setSearchResultsPerPage(perPage);
+                          setSearchResultsPage(1);
+                        }}
+                        variant="bottom"
+                        isCompact
+                      />
+                    </div>
                   </div>
                 )}
               </div>
@@ -2564,8 +2181,8 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             </p>
             <Form>
               {/* Register Section */}
-              <div style={{ marginBottom: '32px' }}>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '0.5rem' }}>
+              <div style={{ marginBottom: '2rem' }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                   Register
                 </Title>
                 <p style={{ 
@@ -2576,53 +2193,55 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 }}>
                   Configure registration settings for systems that will use this image.
                 </p>
-              </div>
-
-              <FormGroup
-                label="Organization ID"
-                fieldId="organization-id"
-              >
-                <ClipboardCopy 
-                  isReadOnly 
-                  hoverTip="Copy Organization ID" 
-                  clickTip="Organization ID copied!"
-                  variant="inline"
+                
+                <FormGroup
+                  label="Organization ID"
+                  fieldId="organization-id"
+                  style={{ marginBottom: '1rem' }}
                 >
-                  {organizationId}
-                </ClipboardCopy>
-                <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
-                  If you're using an activation key with command line registration, you must provide your organization's ID
-                </div>
-              </FormGroup>
+                  <ClipboardCopy 
+                    isReadOnly 
+                    hoverTip="Copy Organization ID" 
+                    clickTip="Organization ID copied!"
+                    variant="inline"
+                  >
+                    {organizationId}
+                  </ClipboardCopy>
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                    If you're using an activation key with command line registration, you must provide your organization's ID
+                  </div>
+                </FormGroup>
 
-              <FormGroup
-                label="Registration method"
-                fieldId="registration-method"
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <Radio
-                    isChecked={registrationMethod === 'auto'}
-                    name="registration-method"
-                    onChange={() => setRegistrationMethod('auto')}
-                    label="Automatically register and enable advanced capabilities"
-                    id="auto-register"
-                  />
-                  <Radio
-                    isChecked={registrationMethod === 'later'}
-                    name="registration-method"
-                    onChange={() => setRegistrationMethod('later')}
-                    label="Register later"
-                    id="register-later"
-                  />
-                  <Radio
-                    isChecked={registrationMethod === 'satellite'}
-                    name="registration-method"
-                    onChange={() => setRegistrationMethod('satellite')}
-                    label="Register with Satellite"
-                    id="register-satellite"
-                  />
-                </div>
-              </FormGroup>
+                <FormGroup
+                  label="Registration method"
+                  fieldId="registration-method"
+                  style={{ marginBottom: '1rem' }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <Radio
+                      isChecked={registrationMethod === 'auto'}
+                      name="registration-method"
+                      onChange={() => setRegistrationMethod('auto')}
+                      label="Automatically register and enable advanced capabilities"
+                      id="auto-register"
+                    />
+                    <Radio
+                      isChecked={registrationMethod === 'later'}
+                      name="registration-method"
+                      onChange={() => setRegistrationMethod('later')}
+                      label="Register later"
+                      id="register-later"
+                    />
+                    <Radio
+                      isChecked={registrationMethod === 'satellite'}
+                      name="registration-method"
+                      onChange={() => setRegistrationMethod('satellite')}
+                      label="Register with Satellite"
+                      id="register-satellite"
+                    />
+                  </div>
+                </FormGroup>
+              </div>
 
               {renderChangeableContent()}
             </Form>
@@ -2638,6 +2257,8 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             <p style={{ fontSize: '16px', color: '#666', marginBottom: '2rem' }}>
               Review your image configuration and build settings before creating the image.
             </p>
+            
+
             
             <Stack hasGutter>
               {/* Image Overview Card */}
@@ -2945,20 +2566,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 </Alert>
               </StackItem>
 
-              {/* Build Action */}
-              <StackItem>
-                <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '1rem' }}>
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    onClick={handleConfirm}
-                    isLoading={isLoading}
-                    isDisabled={isLoading}
-                  >
-                    {isLoading ? 'Building...' : 'Build image'}
-                  </Button>
-                </div>
-              </StackItem>
+
             </Stack>
           </div>
         );
@@ -3214,12 +2822,22 @@ ${config.kernel.arguments.length > 0 ? `  arguments:\n${config.kernel.arguments.
             >
               Cancel
             </Button>
+            {activeTabKey !== 3 && (
+              <Button
+                variant="primary"
+                onClick={() => setActiveTabKey(3)}
+                isDisabled={false}
+              >
+                Review image
+              </Button>
+            )}
             <Button
               variant="primary"
-              onClick={() => setActiveTabKey(3)}
+              onClick={handleConfirm}
+              isLoading={isLoading}
               isDisabled={isLoading}
             >
-              Review image
+              {isLoading ? 'Building...' : 'Build image'}
             </Button>
           </div>
         </div>

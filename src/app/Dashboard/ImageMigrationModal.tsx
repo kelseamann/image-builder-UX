@@ -159,8 +159,8 @@ const ImageMigrationModal: React.FunctionComponent<ImageMigrationModalProps> = (
     >
       <div style={{ padding: '24px' }}>
         {/* Hero Section */}
-        <div style={{ marginBottom: '32px' }}>
-          <Title headingLevel="h1" size="xl" style={{ marginBottom: '16px' }}>
+        <div style={{ marginBottom: '2rem' }}>
+          <Title headingLevel="h1" size="xl" style={{ marginBottom: '1rem' }}>
             Migrate
           </Title>
           <p style={{ 
@@ -178,7 +178,7 @@ const ImageMigrationModal: React.FunctionComponent<ImageMigrationModalProps> = (
           isInline
           title="Do you need to keep a copy of this image?"
           customIcon={<InfoCircleIcon />}
-          style={{ marginBottom: '24px' }}
+          style={{ marginBottom: '2rem' }}
         >
           <p>
             Use the duplication button, and then migrate a copy of this image in order to preserve your current configuration settings.
@@ -191,6 +191,7 @@ const ImageMigrationModal: React.FunctionComponent<ImageMigrationModalProps> = (
           <FormGroup
             label="Release"
             fieldId="release-group"
+            style={{ marginBottom: '1rem' }}
           >
             <div style={{ marginBottom: '8px' }}>
               <label style={{ 
@@ -267,6 +268,7 @@ const ImageMigrationModal: React.FunctionComponent<ImageMigrationModalProps> = (
           <FormGroup
             label="Environment"
             fieldId="environment-group"
+            style={{ marginBottom: '1rem' }}
           >
             <div style={{ marginBottom: '8px' }}>
               <label style={{ 
@@ -343,8 +345,8 @@ const ImageMigrationModal: React.FunctionComponent<ImageMigrationModalProps> = (
       {/* Footer with prominent divider */}
       <div style={{ 
         borderTop: '2px solid #d2d2d2', 
-        marginTop: '24px', 
-        paddingTop: '24px',
+        marginTop: '2rem', 
+        paddingTop: '2rem',
         display: 'flex', 
         gap: '1rem', 
         justifyContent: 'flex-end' 
