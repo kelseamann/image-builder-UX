@@ -55,6 +55,7 @@ interface ImageTableRow extends ImageInfo {
   isFavorited: boolean;
   uuid: string;
   architecture: 'x86_64' | 'aarch64';
+  fileExtension: string;
 }
 
 const Dashboard: React.FunctionComponent = () => {
@@ -113,7 +114,7 @@ const Dashboard: React.FunctionComponent = () => {
       id: '1',
       name: 'web-frontend',
       tag: 'v2.1.0',
-      currentRelease: 'Red Hat Enterprise Linux 9',
+      currentRelease: 'RHEL 9',
       currentEnvironment: 'AWS',
       status: 'ready',
       lastUpdate: '2024-01-15 14:30:25',
@@ -123,13 +124,14 @@ const Dashboard: React.FunctionComponent = () => {
       owner: 'DevOps Team',
       isFavorited: true,
       uuid: '7fb34b5c-c0d4-40ab-b112-a8492d6ee61b',
-      architecture: 'x86_64'
+      architecture: 'x86_64',
+      fileExtension: '.qcow2'
     },
     {
       id: '2', 
       name: 'api-backend',
       tag: 'v1.8.2',
-      currentRelease: 'Red Hat Enterprise Linux 8',
+      currentRelease: 'RHEL 8',
       currentEnvironment: 'GCP',
       status: 'ready',
       lastUpdate: '2024-01-14 09:15:40',
@@ -139,13 +141,14 @@ const Dashboard: React.FunctionComponent = () => {
       owner: 'Backend Team',
       isFavorited: false,
       uuid: 'a2c5f8e1-9b3d-4f7a-8e2c-1d5b7f9a3c6e',
-      architecture: 'aarch64'
+      architecture: 'aarch64',
+      fileExtension: '.qcow2'
     },
     {
       id: '3',
       name: 'data-processor',
       tag: 'v3.0.0-beta',
-      currentRelease: 'Red Hat Enterprise Linux 10',
+      currentRelease: 'RHEL 10',
       currentEnvironment: 'Azure',
       status: 'build failed',
       lastUpdate: '2024-01-15 16:45:12',
@@ -155,13 +158,14 @@ const Dashboard: React.FunctionComponent = () => {
       owner: 'Data Team',
       isFavorited: false,
       uuid: 'f3e7d2a9-5c8b-4a1f-9e6d-2b5a8c1f4e7a',
-      architecture: 'x86_64'
+      architecture: 'x86_64',
+      fileExtension: '.qcow2'
     },
     {
       id: '4',
       name: 'auth-service',
       tag: 'v1.5.3',
-      currentRelease: 'Red Hat Enterprise Linux 9',
+      currentRelease: 'RHEL 9',
       currentEnvironment: 'Bare metal',
       status: 'ready',
       lastUpdate: '2024-01-13 11:20:18',
@@ -171,13 +175,14 @@ const Dashboard: React.FunctionComponent = () => {
       owner: 'Security Team',
       isFavorited: true,
       uuid: 'b8d4c2f6-7a9e-4b3c-8f1d-5e2a9c6b8d4f',
-      architecture: 'aarch64'
+      architecture: 'aarch64',
+      fileExtension: '.iso'
     },
     {
       id: '5',
       name: 'monitoring-dashboard',
       tag: 'v2.3.1',
-      currentRelease: 'Red Hat Enterprise Linux 8',
+      currentRelease: 'RHEL 8',
       currentEnvironment: 'VMWare',
       status: 'expired',
       lastUpdate: '2023-10-12 08:45:30',
@@ -187,13 +192,14 @@ const Dashboard: React.FunctionComponent = () => {
       owner: 'SRE Team',
       isFavorited: false,
       uuid: 'e9a3b7f2-4d6c-4e8a-9b2f-7c4e1a6b9d3e',
-      architecture: 'x86_64'
+      architecture: 'x86_64',
+      fileExtension: '.qcow2'
     },
     {
       id: '6',
       name: 'notification-service',
       tag: 'v1.2.0',
-      currentRelease: 'Red Hat Enterprise Linux 9',
+      currentRelease: 'RHEL 9',
       currentEnvironment: 'AWS',
       status: 'build failed',
       lastUpdate: '2024-01-15 13:22:44',
@@ -203,7 +209,8 @@ const Dashboard: React.FunctionComponent = () => {
       owner: 'Platform Team',
       isFavorited: false,
       uuid: 'c5f8a1d3-6b2e-4c9f-8a5d-3f7b2e9c5a8d',
-      architecture: 'aarch64'
+      architecture: 'aarch64',
+      fileExtension: '.tar.gz'
     }
   ]);
 
@@ -335,12 +342,24 @@ const Dashboard: React.FunctionComponent = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap = {
-      'ready': { color: 'green' as const, variant: 'filled' as const },
-      'expired': { color: 'grey' as const, variant: 'filled' as const },
-      'build failed': { color: 'red' as const, variant: 'filled' as const }
+      'ready': { color: 'green' as const, variant: 'outline' as const },
+      'expired': { color: 'orange' as const, variant: 'outline' as const },
+      'build failed': { color: 'red' as const, variant: 'outline' as const }
     };
     
     const config = statusMap[status as keyof typeof statusMap] || statusMap.expired;
+    
+    if (status === 'expired') {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{ color: '#f0ab00' }}>⚠️</span>
+          <Label color={config.color} variant={config.variant}>
+            {capitalizeWords(status)}
+          </Label>
+        </div>
+      );
+    }
+    
     return (
       <Label color={config.color} variant={config.variant}>
         {capitalizeWords(status)}
@@ -373,7 +392,7 @@ const Dashboard: React.FunctionComponent = () => {
         case 'target environment':
           filtered = filtered.filter(image => image.targetEnvironment === secondaryFilter);
           break;
-        case 'release':
+        case 'os':
           filtered = filtered.filter(image => image.currentRelease === secondaryFilter);
           break;
         case 'status':
@@ -412,7 +431,7 @@ const Dashboard: React.FunctionComponent = () => {
             aValue = a.dateUpdated;
             bValue = b.dateUpdated;
             break;
-          case 'release':
+          case 'os':
             aValue = a.currentRelease;
             bValue = b.currentRelease;
             break;
@@ -486,7 +505,7 @@ const Dashboard: React.FunctionComponent = () => {
   const getPrimaryFilterOptions = () => [
     'name',
     'target environment', 
-    'release',
+    'os',
     'status',
     'last update'
   ];
@@ -497,8 +516,8 @@ const Dashboard: React.FunctionComponent = () => {
         return ['all', 'favorites', 'non-favorites'];
       case 'target environment':
         return ['AWS', 'GCP', 'Azure', 'Bare metal', 'VMWare'];
-      case 'release':
-        return ['Red Hat Enterprise Linux 10', 'Red Hat Enterprise Linux 9', 'Red Hat Enterprise Linux 8'];
+      case 'os':
+        return ['RHEL 10', 'RHEL 9', 'RHEL 8'];
       case 'status':
         return ['ready', 'expired', 'build failed'];
       case 'last update':
@@ -516,8 +535,8 @@ const Dashboard: React.FunctionComponent = () => {
           : 'Search image names...';
       case 'target environment':
         return 'Select target environment';
-      case 'release':
-        return 'Select release';
+      case 'os':
+        return 'Select OS';
       case 'status':
         return 'Select status';
       case 'last update':
@@ -783,7 +802,8 @@ const Dashboard: React.FunctionComponent = () => {
       owner: 'System',
       isFavorited: false,
       uuid: uuid,
-      architecture: 'x86_64'
+      architecture: 'x86_64',
+      fileExtension: '.iso'
     };
     
     // Add the new image to the table
@@ -1204,14 +1224,14 @@ const Dashboard: React.FunctionComponent = () => {
                   </th>
                   <th 
                     style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600, cursor: 'pointer' }}
-                    onClick={() => handleSort('release')}
+                    onClick={() => handleSort('os')}
                   >
-                    {sortField === 'release' ? (
-                      <Tooltip content={getSortTooltipText('release', sortDirection)}>
-                        <span>Release{getSortIcon('release')}</span>
+                    {sortField === 'os' ? (
+                      <Tooltip content={getSortTooltipText('os', sortDirection)}>
+                        <span>OS{getSortIcon('os')}</span>
                       </Tooltip>
                     ) : (
-                      <>Release{getSortIcon('release')}</>
+                      <>OS{getSortIcon('os')}</>
                     )}
                   </th>
                   <th 
@@ -1251,16 +1271,9 @@ const Dashboard: React.FunctionComponent = () => {
                     )}
                   </th>
                   <th 
-                    style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600, cursor: 'pointer' }}
-                    onClick={() => handleSort('owner')}
+                    style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600 }}
                   >
-                    {sortField === 'owner' ? (
-                      <Tooltip content={getSortTooltipText('owner', sortDirection)}>
-                        <span>Owner{getSortIcon('owner')}</span>
-                      </Tooltip>
-                    ) : (
-                      <>Owner{getSortIcon('owner')}</>
-                    )}
+                    Instance
                   </th>
                   <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600 }}> </th>
                 </tr>
@@ -1330,7 +1343,17 @@ const Dashboard: React.FunctionComponent = () => {
                       </code>
                     </td>
                     <td style={{ padding: '1rem 1.5rem' }}>{getStatusBadge(image.status)}</td>
-                    <td style={{ padding: '1rem 1.5rem' }}>{image.owner}</td>
+                    <td style={{ padding: '1rem 1.5rem' }}>
+                      <code style={{ 
+                        backgroundColor: '#e8f5e8', 
+                        color: '#2e7d32',
+                        padding: '0.25rem 0.5rem', 
+                        borderRadius: '3px',
+                        fontSize: '0.9em'
+                      }}>
+                        {image.fileExtension}
+                      </code>
+                    </td>
                     <td style={{ padding: '1rem 1.5rem' }} onClick={(e) => e.stopPropagation()}>
                       <Dropdown
                         toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
