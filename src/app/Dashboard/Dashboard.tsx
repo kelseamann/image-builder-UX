@@ -39,7 +39,7 @@ import {
   ClipboardCopy,
   Tooltip
 } from '@patternfly/react-core';
-import { EllipsisVIcon, FilterIcon, BuilderImageIcon, MigrationIcon, StarIcon, OutlinedStarIcon, CopyIcon, BuildIcon, DownloadIcon, TrashIcon, TimesIcon, AngleRightIcon, AngleDownIcon, EditIcon } from '@patternfly/react-icons';
+import { EllipsisVIcon, FilterIcon, BuilderImageIcon, MigrationIcon, StarIcon, OutlinedStarIcon, CopyIcon, BuildIcon, DownloadIcon, TrashIcon, TimesIcon, AngleRightIcon, AngleDownIcon, EditIcon, PlayIcon } from '@patternfly/react-icons';
 import { ImageMigrationModal, ImageInfo, MigrationData } from './ImageMigrationModal';
 import { UseBaseImageModal, type ImageItem } from './UseBaseImageModal';
 import BuildImageModal from './BuildImageModal';
@@ -93,6 +93,14 @@ const Dashboard: React.FunctionComponent = () => {
     targetRelease?: string;
     targetEnvironment?: string;
   }>({});
+  const [showDemoAlert, setShowDemoAlert] = React.useState(true);
+  
+  // Only show demo alert on GitHub Pages, not on localhost
+  const isGitHubPages = React.useMemo(() => {
+    return typeof window !== 'undefined' && 
+           (window.location.hostname.includes('github.io') || 
+            window.location.hostname === 'kelseamann.github.io');
+  }, []);
 
   // Reset pagination when filters change
   React.useEffect(() => {
@@ -836,6 +844,74 @@ const Dashboard: React.FunctionComponent = () => {
       )}
 
   <PageSection hasBodyWrapper={false} style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Demo Showcase Section */}
+        {showDemoAlert && isGitHubPages && (
+          <Card style={{ 
+            marginBottom: '1.5rem',
+            background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+            border: '1px solid #dee2e6',
+            borderRadius: '8px'
+          }}>
+            <CardBody style={{ padding: '1.5rem' }}>
+              <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
+                <FlexItem flex={{ default: 'flex_1' }}>
+                  <div>
+                    <Title headingLevel="h3" size="md" style={{ 
+                      marginBottom: '0.5rem',
+                      color: '#495057',
+                      fontWeight: 600
+                    }}>
+                      🎬 Behind the Scenes
+                    </Title>
+                    <p style={{ 
+                      margin: 0,
+                      color: '#6c757d',
+                      fontSize: '0.95rem',
+                      lineHeight: '1.4'
+                    }}>
+                      See how this Image Builder demo is being created with Cursor AI. 
+                      Watch the development process in real-time!
+                    </p>
+                  </div>
+                </FlexItem>
+                <FlexItem>
+                  <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
+                    <FlexItem>
+                      <Button 
+                        variant="primary" 
+                        icon={<PlayIcon />}
+                        onClick={() => window.open('https://youtu.be/uriJXKvVoi8', '_blank')}
+                        style={{ 
+                          background: 'linear-gradient(135deg, #ff0000 0%, #cc0000 100%)',
+                          border: 'none',
+                          color: 'white',
+                          fontWeight: 600,
+                          padding: '0.75rem 1.5rem'
+                        }}
+                      >
+                        Watch Demo (Jul 7, 2025)
+                      </Button>
+                    </FlexItem>
+                    <FlexItem>
+                      <Button
+                        variant="plain"
+                        onClick={() => setShowDemoAlert(false)}
+                        style={{ 
+                          padding: '0.5rem',
+                          color: '#6c757d'
+                        }}
+                        aria-label="Close demo section"
+                      >
+                        <TimesIcon style={{ fontSize: '1rem' }} />
+                      </Button>
+                    </FlexItem>
+                  </Flex>
+                </FlexItem>
+              </Flex>
+            </CardBody>
+          </Card>
+        )}
+
         {/* Header */}
         <div style={{ 
           marginBottom: '1.5rem', 
@@ -854,9 +930,9 @@ const Dashboard: React.FunctionComponent = () => {
             <FlexItem>
               <Flex spaceItems={{ default: 'spaceItemsSm' }}>
                 <FlexItem>
-                                <Button variant="secondary" onClick={() => setIsBuildImageModalOpen(true)}>
-                Build Image
-              </Button>
+                  <Button variant="secondary" onClick={() => setIsBuildImageModalOpen(true)}>
+                    Build Image
+                  </Button>
                 </FlexItem>
                 <FlexItem>
                   <Button variant="secondary" onClick={() => setIsUseBaseImageModalOpen(true)}>

@@ -3,7 +3,7 @@
   "version": "0.0.2",
   "description": "An open source build scaffolding utility for web apps.",
   "repository": "https://github.com/kelseamann/image-builder-UX.git",
-  "homepage": "https://smckinno.github.io/image-builder-UX",
+  "homepage": "https://kelseamann.github.io/image-builder-UX",
   "license": "MIT",
   "private": true,
   "scripts": {
