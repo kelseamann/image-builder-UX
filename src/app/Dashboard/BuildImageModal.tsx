@@ -27,7 +27,7 @@ import {
   Title,
   Split,
   SplitItem,
-
+  Content,
   Card,
   CardBody,
   Gallery,
@@ -52,7 +52,8 @@ import {
   StackItem,
   Badge,
   Tooltip,
-  Switch
+  Switch,
+  Divider
 } from '@patternfly/react-core';
 import { 
   InfoCircleIcon, 
@@ -1177,7 +1178,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               <div style={{ 
                 height: '1px', 
                 backgroundColor: '#d2d2d2', 
-                margin: '0px 0 24px 0' 
+                margin: '0px 0 0px 0' 
               }} />
 
               {/* Image Output Section */}
@@ -1636,48 +1637,116 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 }} />
                 
                 {/* Enable repeatable build Section */}
-                <div style={{ marginBottom: '2rem' }}>
-                  <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                    Enable repeatable build
-                  </Title>
-                  <p style={{ fontSize: '14px', color: '#666', marginBottom: '1rem' }}>
-                    Create images that can be reproduced consistently with the same package versions and configurations.
-                  </p>
+                <Stack hasGutter className="pf-v6-u-mb-md">
+                  <StackItem>
+                    <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                      Enable repeatable build
+                    </Title>
+                    <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                      Create images that can be reproduced consistently with the same package versions and configurations.
+                    </Content>
+                  </StackItem>
                   
-                  <FormGroup
-                    label="Snapshot date"
-                    fieldId="snapshot-date"
-                    style={{ marginBottom: '1rem' }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <TextInput
-                        id="snapshot-date"
-                        value={snapshotDate}
-                        onChange={(_event, value) => setSnapshotDate(value)}
-                        placeholder="YYYY-MM-DD"
-                        type="date"
-                        style={{ width: '200px' }}
+                  <StackItem>
+                    <FormGroup
+                      label="Snapshot date"
+                      fieldId="snapshot-date"
+                    >
+                      <Split hasGutter>
+                        <SplitItem>
+                          <DatePicker
+                            id="snapshot-date"
+                            value={snapshotDate}
+                            onChange={(_event, value) => setSnapshotDate(value)}
+                            placeholder="MM-DD-YYYY"
+                            dateFormat={(date: Date) => {
+                              const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                              const day = date.getDate().toString().padStart(2, '0');
+                              const year = date.getFullYear();
+                              return `${month}-${day}-${year}`;
+                            }}
+                            dateParse={(value: string) => {
+                              const parts = value.split('-');
+                              if (parts.length === 3) {
+                                const month = parseInt(parts[0], 10) - 1;
+                                const day = parseInt(parts[1], 10);
+                                const year = parseInt(parts[2], 10);
+                                return new Date(year, month, day);
+                              }
+                              return new Date(NaN);
+                            }}
+                            className="pf-v6-u-width-200px"
+                          />
+                        </SplitItem>
+                        <SplitItem>
+                          <Button
+                            variant="secondary"
+                            onClick={() => {
+                              const today = new Date();
+                              const month = (today.getMonth() + 1).toString().padStart(2, '0');
+                              const day = today.getDate().toString().padStart(2, '0');
+                              const year = today.getFullYear();
+                              setSnapshotDate(`${month}-${day}-${year}`);
+                            }}
+                            className="pf-v6-u-font-size-sm"
+                          >
+                            Today's date
+                          </Button>
+                        </SplitItem>
+                        <SplitItem>
+                          <Button
+                            variant="secondary"
+                            onClick={() => setSnapshotDate('')}
+                            className="pf-v6-u-font-size-sm"
+                          >
+                            Clear date
+                          </Button>
+                        </SplitItem>
+                      </Split>
+                      <div style={{ marginTop: '0.5rem', marginBottom: '1rem' ,fontSize: '0.875rem', color: '#666' }}>
+                        Use packages from this date to ensure reproducible builds
+                      </div>
+                    </FormGroup>
+                  </StackItem>
+                  
+                                    {/* Kickstart File Section - directly under Enable repeatable build */}
+                  <StackItem>
+                     {/* Divider between sections */}
+               <div style={{ 
+                 height: '1px', 
+                 backgroundColor: '#d2d2d2', 
+                 margin: '0rem 0 2rem 0' 
+               }} />
+                    <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                      Kickstart File
+                    </Title>
+                    
+                    <div style={{
+                      '--pf-v5-c-file-upload__file-details-textarea--FontFamily': '"Red Hat Mono", "Monaco", "Menlo", "Ubuntu Mono", monospace'
+                    } as React.CSSProperties}>
+                      <FileUpload
+                        id="kickstart-file"
+                        type="text"
+                        value={kickstartFile}
+                        filename={kickstartFilename}
+                        onTextChange={(event: React.ChangeEvent<HTMLTextAreaElement>, text: string) => {
+                          setKickstartFile(text);
+                          setKickstartFilename('');
+                        }}
+                        onClearClick={() => {
+                          setKickstartFile('');
+                          setKickstartFilename('');
+                        }}
+                        isLoading={isKickstartLoading}
+                        browseButtonText="Upload"
+                        clearButtonText="Clear"
                       />
-                      <Button
-                        variant="secondary"
-                        onClick={() => setSnapshotDate(new Date().toISOString().split('T')[0])}
-                        style={{ padding: '0.25rem 0.5rem' }}
-                      >
-                        Today's date
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        onClick={() => setSnapshotDate('')}
-                        style={{ padding: '0.25rem 0.5rem' }}
-                      >
-                        Clear date
-                      </Button>
+                      <div className="pf-v6-u-font-size-sm pf-v6-u-color-200 pf-v6-u-mt-xs">
+                        Upload a CSV file
+                      </div>
                     </div>
-                    <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
-                      Use packages from this date to ensure reproducible builds
-                    </div>
-                  </FormGroup>
-                </div>
+                  </StackItem>
+                </Stack>
               </div>
             </Form>
           </div>
@@ -2737,14 +2806,17 @@ ${config.kernel.arguments.length > 0 ? `  arguments:\n${config.kernel.arguments.
                 <div style={{
                   flex: 1,
                   backgroundColor: '#2d2d30',
-                  overflow: 'hidden'
+                  overflow: 'auto'
                 }}>
                   <TextArea
                     value={editableYaml}
                     onChange={(_event, value) => setEditableYaml(value)}
+                    readOnly={false}
+                    disabled={false}
                     style={{
                       width: '100%',
                       height: '100%',
+                      minHeight: '100%',
                       margin: 0,
                       padding: '12px 16px',
                       fontSize: '12px',
@@ -2756,10 +2828,14 @@ ${config.kernel.arguments.length > 0 ? `  arguments:\n${config.kernel.arguments.
                       outline: 'none',
                       resize: 'none',
                       whiteSpace: 'pre',
-                      wordBreak: 'normal'
+                      wordBreak: 'normal',
+                      boxSizing: 'border-box',
+                      cursor: 'text'
                     }}
-                    rows={editableYaml.split('\n').length}
                     aria-label="YAML configuration editor"
+                    spellCheck={false}
+                    autoComplete="off"
+                    tabIndex={0}
                   />
                 </div>
               </div>
