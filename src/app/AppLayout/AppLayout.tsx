@@ -20,7 +20,7 @@ import {
   FlexItem,
 } from '@patternfly/react-core';
 import { IAppRoute, IAppRouteGroup, routes } from '@app/routes';
-import { BarsIcon, StarIcon } from '@patternfly/react-icons';
+import { BarsIcon } from '@patternfly/react-icons';
 
 interface IAppLayout {
   children: React.ReactNode;
@@ -28,32 +28,20 @@ interface IAppLayout {
 
 const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
+  const [hasVisitedHMS, setHasVisitedHMS] = React.useState(() => {
+    return localStorage.getItem('hasVisitedHMS') === 'true';
+  });
   
-  // Add CSS animation for HMS-8807 attention-grabbing effect
+  const location = useLocation();
+
+  // Track when user visits HMS page
   React.useEffect(() => {
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes pulse {
-        0% {
-          box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
-          transform: scale(1);
-        }
-        50% {
-          box-shadow: 0 4px 16px rgba(255, 107, 107, 0.6);
-          transform: scale(1.02);
-        }
-        100% {
-          box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
-          transform: scale(1);
-        }
-      }
-    `;
-    document.head.appendChild(style);
-    
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
+    if (location.pathname === '/images' && !hasVisitedHMS) {
+      setHasVisitedHMS(true);
+      localStorage.setItem('hasVisitedHMS', 'true');
+    }
+  }, [location.pathname, hasVisitedHMS]);
+
   const masthead = (
     <Masthead>
       <MastheadMain>
@@ -115,39 +103,21 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
     </Masthead>
   );
 
-  const location = useLocation();
-
   const renderNavItem = (route: IAppRoute, index: number) => (
     <NavItem key={`${route.label}-${index}`} id={`${route.label}-${index}`} isActive={route.path === location.pathname}>
-      <NavLink
-        to={route.path}
-        style={route.label === 'HMS-8807' ? {
-          background: 'linear-gradient(45deg, #ff6b6b, #ffa500)',
-          borderRadius: '6px',
-          padding: '8px 12px',
-          color: 'white',
-          fontWeight: 'bold',
-          textDecoration: 'none',
-          boxShadow: '0 2px 8px rgba(255, 107, 107, 0.3)',
-          animation: 'pulse 2s infinite'
-        } : {}}
-      >
-        {route.label === 'HMS-8807' ? (
+      <NavLink to={route.path}>
+        {route.label === 'HMS-8807' && !hasVisitedHMS ? (
           <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
-            <FlexItem>
-              <StarIcon style={{ color: '#ffef5c', fontSize: '1rem' }} />
-            </FlexItem>
             <FlexItem>
               {route.label}
             </FlexItem>
             <FlexItem>
               <Badge isRead={false} style={{ 
-                backgroundColor: '#ffef5c', 
-                color: '#333', 
-                fontSize: '0.7rem',
-                fontWeight: 'bold'
+                backgroundColor: '#2B9AF3', 
+                color: 'white', 
+                fontSize: '0.7rem'
               }}>
-                NEW
+                New
               </Badge>
             </FlexItem>
           </Flex>
