@@ -38,13 +38,13 @@
    - Always-visible favorites filter (All/Favorites Only/Non-favorites Only)
    - Real-time name search input
 
-2. **Bulk Operations**
+2. **Bulk Operations (inactive placeholder buttons)**
    - Migrate selected images
-   - Duplicate selected images  
+   - Duplicate selected images
    - Rebuild selected images
    - Master checkbox for select/deselect all
 
-3. **Individual Actions (Kebab Menu)**
+3. **Individual Actions (Kebab Menu- inactive placeholders)**
    - Edit (disabled placeholder)
    - Migrate 
    - Duplicate
@@ -83,7 +83,7 @@ interface ImageTableRow extends ImageInfo {
   - Ready: Green
   - Expired: Orange with warning icon  
   - Build Failed: Red
-- **Toast notifications** positioned at top-right
+- **Toast notifications** positioned at top-right; these are only implemented to tell you migrate is disabled
 - **Consistent spacing** and typography
 - **Accessible** color contrasts and focus states
 
