@@ -1057,28 +1057,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 </Select>
               </FormGroup>
 
-              <FormGroup
-                label="Kernel arguments"
-                fieldId="kernel-arguments"
-                style={{ marginBottom: '1rem' }}
-              >
-                <LabelGroup>
-                  {kernelArguments.map((arg, index) => (
-                    <Label key={index} onClose={() => {
-                      setKernelArguments(kernelArguments.filter((_, i) => i !== index));
-                    }}>
-                      {arg}
-                    </Label>
-                  ))}
-                </LabelGroup>
-                <Button
-                  variant="link"
-                  icon={<PlusIcon />}
-                  style={{ marginTop: '0.5rem', padding: 0 }}
-                >
-                  Add kernel argument
-                </Button>
-              </FormGroup>
+
             </div>
 
             {/* Divider */}
@@ -1151,7 +1130,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       case 0:
         return (
           <div>
-            <Title headingLevel="h2" size="xl" style={{ marginBottom: '1rem' }}>
+            <Title headingLevel="h2" size="xl" style={{ marginBottom: '0rem' }}>
               Base Image Selection
             </Title>
             <p style={{ fontSize: '16px', color: '#666', marginBottom: '2rem' }}>
@@ -1183,7 +1162,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 <FormGroup
                   label="Details"
                   fieldId="image-details"
-                  style={{ marginBottom: '1rem' }}
+                  style={{ marginTop: '12px', marginBottom: '1rem' }}
                 >
                   <TextInput
                     id="image-details"
@@ -1198,7 +1177,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               <div style={{ 
                 height: '1px', 
                 backgroundColor: '#d2d2d2', 
-                margin: '1rem 0' 
+                margin: '0px 0 24px 0' 
               }} />
 
               {/* Image Output Section */}
@@ -1706,7 +1685,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       case 1:
         return (
           <div>
-            <Title headingLevel="h2" size="xl" style={{ marginBottom: '1rem' }}>
+            <Title headingLevel="h2" size="xl" style={{ marginBottom: '0rem' }}>
               Repositories and Packages
             </Title>
             <p style={{ fontSize: '16px', color: '#666', marginBottom: '2rem' }}>
@@ -2173,7 +2152,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       case 2:
         return (
           <div>
-            <Title headingLevel="h2" size="xl" style={{ marginBottom: '1rem' }}>
+            <Title headingLevel="h2" size="xl" style={{ marginBottom: '0rem' }}>
               Advanced Settings
             </Title>
             <p style={{ fontSize: '16px', color: '#666', marginBottom: '2rem' }}>
@@ -2251,7 +2230,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       case 3:
         return (
           <div>
-            <Title headingLevel="h2" size="xl" style={{ marginBottom: '1rem' }}>
+            <Title headingLevel="h2" size="xl" style={{ marginBottom: '0rem' }}>
               Review Image Configuration
             </Title>
             <p style={{ fontSize: '16px', color: '#666', marginBottom: '2rem' }}>
@@ -2641,7 +2620,7 @@ ${config.kernel.arguments.length > 0 ? `  arguments:\n${config.kernel.arguments.
       <div style={{ height: 'calc(90vh - 80px)', display: 'flex', flexDirection: 'column' }}>
         {/* Header Section */}
         <div style={{ 
-          padding: '24px 24px 0 24px',
+          padding: '32px 24px 0 32px',
           borderBottom: '1px solid #d2d2d2'
         }}>
           <Title headingLevel="h1" size="xl" style={{ marginBottom: '8px' }}>
@@ -2691,7 +2670,7 @@ ${config.kernel.arguments.length > 0 ? `  arguments:\n${config.kernel.arguments.
             /* GUI View - Form Content */
             <div style={{ 
               height: '100%',
-              padding: '24px',
+              padding: '24px 24px 24px 32px',
               overflowY: 'auto'
             }}>
               {renderTabContent()}
