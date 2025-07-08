@@ -12,7 +12,7 @@
 
 ### 🚀 Live Demo
 
-**[➤ Main Application](https://kelseamann.github.io/image-builder-UX)** (go to images on the right hand navigation)
+**[➤ Main Application](https://kelseamann.github.io/image-builder-UX)** (go to images on the left hand navigation)
 
 ### ✨ What's Included
 
