@@ -6,6 +6,8 @@ import { stylePaths } from './stylePaths.js';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';
 import TerserJSPlugin from 'terser-webpack-plugin';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import path from 'path';
 
 export default merge(common('production'), {
   mode: 'production',
@@ -24,6 +26,11 @@ export default merge(common('production'), {
     new MiniCssExtractPlugin({
       filename: '[name].css',
       chunkFilename: '[name].bundle.css',
+    }),
+    // Generate 404.html for GitHub Pages SPA routing fallback
+    new HtmlWebpackPlugin({
+      template: path.resolve('./src', 'index.html'),
+      filename: '404.html',
     }),
   ],
   module: {
