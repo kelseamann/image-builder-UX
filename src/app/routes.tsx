@@ -34,9 +34,9 @@ const routes: AppRouteConfig[] = [
   {
     element: <Images />,
     exact: true,
-    label: 'Images',
+    label: 'HMS-8807',
     path: '/images',
-    title: 'PatternFly Seed | Images',
+    title: 'PatternFly Seed | HMS-8807',
   },
   {
     element: <Support />,

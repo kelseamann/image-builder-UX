@@ -608,7 +608,7 @@ const Images: React.FunctionComponent = () => {
             <FlexItem>
               <Title headingLevel="h1" size="lg">
                 <TableIcon style={{ marginRight: '0.5rem' }} />
-                Images
+                HMS-8807
               </Title>
               <p style={{ marginTop: '0.5rem', color: '#666' }}>
                 View and manage your system images
