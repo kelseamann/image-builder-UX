@@ -12,8 +12,8 @@
 
 ### 🚀 Live Demo
 
-**[➤ Try the Images Table Live](https://kelseamann.github.io/image-builder-UX/images)**  
-**[➤ Main Application](https://kelseamann.github.io/image-builder-UX)**
+**[➤ Try the Images Table Live](https://kelseamann.github.io/image-builder-UX/images)**  (fixing this)
+**[➤ Main Application](https://kelseamann.github.io/image-builder-UX)** (go to images on the right hand side)
 
 ### ✨ What's Included
 
