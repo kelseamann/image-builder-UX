@@ -68,7 +68,7 @@ const Images: React.FunctionComponent = () => {
   const [imageData, setImageData] = React.useState<ImageTableRow[]>([
     {
       id: '1',
-      name: 'web-frontend',
+      name: 'sample-image-1',
       tag: 'v2.1.0',
       currentRelease: 'RHEL 9',
       currentEnvironment: 'AWS',
@@ -85,7 +85,7 @@ const Images: React.FunctionComponent = () => {
     },
     {
       id: '2', 
-      name: 'api-backend',
+      name: 'sample-image-2',
       tag: 'v1.8.2',
       currentRelease: 'RHEL 8',
       currentEnvironment: 'GCP',
@@ -102,7 +102,7 @@ const Images: React.FunctionComponent = () => {
     },
     {
       id: '3',
-      name: 'data-processor',
+      name: 'sample-image-3',
       tag: 'v3.0.0-beta',
       currentRelease: 'RHEL 10',
       currentEnvironment: 'Azure',
@@ -119,7 +119,7 @@ const Images: React.FunctionComponent = () => {
     },
     {
       id: '4',
-      name: 'auth-service',
+      name: 'sample-image-4',
       tag: 'v1.5.3',
       currentRelease: 'RHEL 9',
       currentEnvironment: 'Bare metal',
@@ -136,7 +136,7 @@ const Images: React.FunctionComponent = () => {
     },
     {
       id: '5',
-      name: 'monitoring-dashboard',
+      name: 'sample-image-5',
       tag: 'v2.3.1',
       currentRelease: 'RHEL 8',
       currentEnvironment: 'VMWare',
@@ -153,7 +153,7 @@ const Images: React.FunctionComponent = () => {
     },
     {
       id: '6',
-      name: 'notification-service',
+      name: 'sample-image-6',
       tag: 'v1.2.0',
       currentRelease: 'RHEL 9',
       currentEnvironment: 'AWS',
@@ -906,9 +906,16 @@ const Images: React.FunctionComponent = () => {
                       )}
                     </th>
                     <th 
-                      style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600 }}
+                      style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600, cursor: 'pointer' }}
+                      onClick={() => handleSort('owner')}
                     >
-                      Instance
+                      {sortField === 'owner' ? (
+                        <Tooltip content={getSortTooltipText('owner', sortDirection)}>
+                          <span>Owner{getSortIcon('owner')}</span>
+                        </Tooltip>
+                      ) : (
+                        <>Owner{getSortIcon('owner')}</>
+                      )}
                     </th>
                     <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600 }}> </th>
                   </tr>
@@ -978,17 +985,7 @@ const Images: React.FunctionComponent = () => {
                         </code>
                       </td>
                       <td style={{ padding: '1rem 1.5rem' }}>{getStatusBadge(image.status)}</td>
-                      <td style={{ padding: '1rem 1.5rem' }}>
-                        <code style={{ 
-                          backgroundColor: '#e8f5e8', 
-                          color: '#2e7d32',
-                          padding: '0.25rem 0.5rem', 
-                          borderRadius: '3px',
-                          fontSize: '0.9em'
-                        }}>
-                          {image.fileExtension}
-                        </code>
-                      </td>
+                      <td style={{ padding: '1rem 1.5rem' }}>{image.owner}</td>
                       <td style={{ padding: '1rem 1.5rem' }} onClick={(e) => e.stopPropagation()}>
                         <Dropdown
                           toggle={(toggleRef: React.Ref<MenuToggleElement>) => (

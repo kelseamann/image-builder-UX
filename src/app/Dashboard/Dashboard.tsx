@@ -1271,9 +1271,16 @@ const Dashboard: React.FunctionComponent = () => {
                     )}
                   </th>
                   <th 
-                    style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600 }}
+                    style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600, cursor: 'pointer' }}
+                    onClick={() => handleSort('owner')}
                   >
-                    Instance
+                    {sortField === 'owner' ? (
+                      <Tooltip content={getSortTooltipText('owner', sortDirection)}>
+                        <span>Owner{getSortIcon('owner')}</span>
+                      </Tooltip>
+                    ) : (
+                      <>Owner{getSortIcon('owner')}</>
+                    )}
                   </th>
                   <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600 }}> </th>
                 </tr>
@@ -1343,17 +1350,7 @@ const Dashboard: React.FunctionComponent = () => {
                       </code>
                     </td>
                     <td style={{ padding: '1rem 1.5rem' }}>{getStatusBadge(image.status)}</td>
-                    <td style={{ padding: '1rem 1.5rem' }}>
-                      <code style={{ 
-                        backgroundColor: '#e8f5e8', 
-                        color: '#2e7d32',
-                        padding: '0.25rem 0.5rem', 
-                        borderRadius: '3px',
-                        fontSize: '0.9em'
-                      }}>
-                        {image.fileExtension}
-                      </code>
-                    </td>
+                    <td style={{ padding: '1rem 1.5rem' }}>{image.owner}</td>
                     <td style={{ padding: '1rem 1.5rem' }} onClick={(e) => e.stopPropagation()}>
                       <Dropdown
                         toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
