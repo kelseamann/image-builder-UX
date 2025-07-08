@@ -29,7 +29,7 @@ export default merge(common('production'), {
     }),
     // Generate 404.html for GitHub Pages SPA routing fallback
     new HtmlWebpackPlugin({
-      template: path.resolve('./src', 'index.html'),
+      template: path.resolve('./src', '404.html'),
       filename: '404.html',
     }),
   ],
