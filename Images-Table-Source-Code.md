@@ -1,5 +1,10 @@
 # 📄 Images Table Source Code
 
+## 🎫 Related Jira Ticket
+**[HMS-8807 - Image Builder Table + Filtering](https://issues.redhat.com/browse/HMS-8807)**
+
+*Feature request to replace current blueprints card-sort + filter experience with a first-class table view including column-level search & sort, favorites functionality, bulk multi-select, and PatternFly v6 table components.*
+
 ## Complete PatternFly React Component
 
 **File**: `src/app/Images/Images.tsx`  
