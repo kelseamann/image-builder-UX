@@ -52,7 +52,6 @@ import {
   StackItem,
   Badge,
   Tooltip,
-  Switch,
   Divider
 } from '@patternfly/react-core';
 import { 
@@ -140,8 +139,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   // Public cloud state
   const [selectedCloudProvider, setSelectedCloudProvider] = React.useState<string>('');
   
-  // View mode state
-  const [viewMode, setViewMode] = React.useState<'gui' | 'code'>('gui');
+
   
   // AWS integration state
   const [selectedIntegration, setSelectedIntegration] = React.useState<string>('');
@@ -183,7 +181,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
 
   // Compliance state
-  const [complianceType, setComplianceType] = React.useState<string>('custom');
+  const [complianceType, setComplianceType] = React.useState<string>('');
   const [customCompliancePolicy, setCustomCompliancePolicy] = React.useState<string>('');
   const [isCustomCompliancePolicyOpen, setIsCustomCompliancePolicyOpen] = React.useState<boolean>(false);
   const [openscapProfile, setOpenscapProfile] = React.useState<string>('');
@@ -195,8 +193,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   // Organization ID state
   const [organizationId, setOrganizationId] = React.useState<string>('11009103');
 
-  // YAML editor state
-  const [editableYaml, setEditableYaml] = React.useState<string>('');
+
   
   // Track what the user has modified to detect migration-only changes
   const [modifiedFields, setModifiedFields] = React.useState<Set<string>>(new Set());
@@ -218,12 +215,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     setModifiedFields(prev => new Set(prev.add('targetEnvironment')));
   };
 
-  // Update editable YAML when switching to code view or when form data changes
-  React.useEffect(() => {
-    if (viewMode === 'code') {
-      setEditableYaml(generateYAML());
-    }
-  }, [viewMode, imageName, imageDetails, baseImageRelease, baseImageArchitecture, selectedCloudProvider, registrationMethod, organizationId, selectedActivationKey, users]);
+
 
   // Selected packages state
   const [selectedPackages, setSelectedPackages] = React.useState<string[]>([]);
@@ -515,6 +507,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   ) => {
     if (typeof selection === 'string') {
       setCustomCompliancePolicy(selection);
+      setComplianceType('custom'); // Auto-select the custom radio button
       setIsCustomCompliancePolicyOpen(false);
     }
   };
@@ -525,6 +518,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   ) => {
     if (typeof selection === 'string') {
       setOpenscapProfile(selection);
+      setComplianceType('openscap'); // Auto-select the OpenSCAP radio button
       setIsOpenscapProfileOpen(false);
     }
   };
@@ -1637,116 +1631,341 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 }} />
                 
                 {/* Enable repeatable build Section */}
-                <Stack hasGutter className="pf-v6-u-mb-md">
-                  <StackItem>
-                    <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
-                      Enable repeatable build
-                    </Title>
-                    <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
-                      Create images that can be reproduced consistently with the same package versions and configurations.
-                    </Content>
-                  </StackItem>
+                <div style={{ marginBottom: '2rem' }}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                    Enable repeatable build
+                  </Title>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                    Create images that can be reproduced consistently with the same package versions and configurations.
+                  </Content>
+                
+                  <FormGroup
+                    label="Snapshot date"
+                    fieldId="snapshot-date"
+                  >
+                    <Split hasGutter>
+                      <SplitItem>
+                        <DatePicker
+                          id="snapshot-date"
+                          value={snapshotDate}
+                          onChange={(_event, value) => setSnapshotDate(value)}
+                          placeholder="MM-DD-YYYY"
+                          dateFormat={(date: Date) => {
+                            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                            const day = date.getDate().toString().padStart(2, '0');
+                            const year = date.getFullYear();
+                            return `${month}-${day}-${year}`;
+                          }}
+                          dateParse={(value: string) => {
+                            const parts = value.split('-');
+                            if (parts.length === 3) {
+                              const month = parseInt(parts[0], 10) - 1;
+                              const day = parseInt(parts[1], 10);
+                              const year = parseInt(parts[2], 10);
+                              return new Date(year, month, day);
+                            }
+                            return new Date(NaN);
+                          }}
+                          className="pf-v6-u-width-200px"
+                        />
+                      </SplitItem>
+                      <SplitItem>
+                        <Button
+                          variant="secondary"
+                          onClick={() => {
+                            const today = new Date();
+                            const month = (today.getMonth() + 1).toString().padStart(2, '0');
+                            const day = today.getDate().toString().padStart(2, '0');
+                            const year = today.getFullYear();
+                            setSnapshotDate(`${month}-${day}-${year}`);
+                          }}
+                          className="pf-v6-u-font-size-sm"
+                        >
+                          Today's date
+                        </Button>
+                      </SplitItem>
+                      <SplitItem>
+                        <Button
+                          variant="secondary"
+                          onClick={() => setSnapshotDate('')}
+                          className="pf-v6-u-font-size-sm"
+                        >
+                          Clear date
+                        </Button>
+                      </SplitItem>
+                    </Split>
+                    <div style={{ marginTop: '0.5rem', marginBottom: '1rem' ,fontSize: '0.875rem', color: '#666' }}>
+                      Use packages from this date to ensure reproducible builds
+                    </div>
+                  </FormGroup>
+                </div>
+                
+                {/* Kickstart File Section */}
+                <div style={{ marginBottom: '2rem' }}>
+                  {/* Divider between sections */}
+                  <div style={{ 
+                    height: '1px', 
+                    backgroundColor: '#d2d2d2', 
+                    margin: '0rem 0 2rem 0' 
+                  }} />
                   
-                  <StackItem>
-                    <FormGroup
-                      label="Snapshot date"
-                      fieldId="snapshot-date"
-                    >
-                      <Split hasGutter>
-                        <SplitItem>
-                          <DatePicker
-                            id="snapshot-date"
-                            value={snapshotDate}
-                            onChange={(_event, value) => setSnapshotDate(value)}
-                            placeholder="MM-DD-YYYY"
-                            dateFormat={(date: Date) => {
-                              const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                              const day = date.getDate().toString().padStart(2, '0');
-                              const year = date.getFullYear();
-                              return `${month}-${day}-${year}`;
-                            }}
-                            dateParse={(value: string) => {
-                              const parts = value.split('-');
-                              if (parts.length === 3) {
-                                const month = parseInt(parts[0], 10) - 1;
-                                const day = parseInt(parts[1], 10);
-                                const year = parseInt(parts[2], 10);
-                                return new Date(year, month, day);
-                              }
-                              return new Date(NaN);
-                            }}
-                            className="pf-v6-u-width-200px"
-                          />
-                        </SplitItem>
-                        <SplitItem>
-                          <Button
-                            variant="secondary"
-                            onClick={() => {
-                              const today = new Date();
-                              const month = (today.getMonth() + 1).toString().padStart(2, '0');
-                              const day = today.getDate().toString().padStart(2, '0');
-                              const year = today.getFullYear();
-                              setSnapshotDate(`${month}-${day}-${year}`);
-                            }}
-                            className="pf-v6-u-font-size-sm"
-                          >
-                            Today's date
-                          </Button>
-                        </SplitItem>
-                        <SplitItem>
-                          <Button
-                            variant="secondary"
-                            onClick={() => setSnapshotDate('')}
-                            className="pf-v6-u-font-size-sm"
-                          >
-                            Clear date
-                          </Button>
-                        </SplitItem>
-                      </Split>
-                      <div style={{ marginTop: '0.5rem', marginBottom: '1rem' ,fontSize: '0.875rem', color: '#666' }}>
-                        Use packages from this date to ensure reproducible builds
-                      </div>
-                    </FormGroup>
-                  </StackItem>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-xs">
+                    Kickstart File
+                  </Title>
                   
-                                    {/* Kickstart File Section - directly under Enable repeatable build */}
-                  <StackItem>
-                     {/* Divider between sections */}
-               <div style={{ 
-                 height: '1px', 
-                 backgroundColor: '#d2d2d2', 
-                 margin: '0rem 0 2rem 0' 
-               }} />
-                    <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
-                      Kickstart File
-                    </Title>
-                    
-                    <div style={{
-                      '--pf-v5-c-file-upload__file-details-textarea--FontFamily': '"Red Hat Mono", "Monaco", "Menlo", "Ubuntu Mono", monospace'
-                    } as React.CSSProperties}>
-                      <FileUpload
-                        id="kickstart-file"
-                        type="text"
-                        value={kickstartFile}
-                        filename={kickstartFilename}
-                        onTextChange={(event: React.ChangeEvent<HTMLTextAreaElement>, text: string) => {
-                          setKickstartFile(text);
-                          setKickstartFilename('');
-                        }}
-                        onClearClick={() => {
-                          setKickstartFile('');
-                          setKickstartFilename('');
-                        }}
-                        isLoading={isKickstartLoading}
-                        browseButtonText="Upload"
-                        clearButtonText="Clear"
+                  <div style={{
+                    '--pf-v5-c-file-upload__file-details-textarea--FontFamily': '"Red Hat Mono", "Monaco", "Menlo", "Ubuntu Mono", monospace'
+                  } as React.CSSProperties}>
+                    <FileUpload
+                      id="kickstart-file"
+                      type="text"
+                      value={kickstartFile}
+                      filename={kickstartFilename}
+                      onTextChange={(event: React.ChangeEvent<HTMLTextAreaElement>, text: string) => {
+                        setKickstartFile(text);
+                        setKickstartFilename('');
+                      }}
+                      onClearClick={() => {
+                        setKickstartFile('');
+                        setKickstartFilename('');
+                      }}
+                      isLoading={isKickstartLoading}
+                      browseButtonText="Upload"
+                      clearButtonText="Clear"
+                    />
+                    <div className="pf-v6-u-font-size-sm pf-v6-u-color-200 pf-v6-u-mt-xs">
+                      Upload a CSV file
+                    </div>
+                  </div>
+                </div>
+
+                {/* Compliance Section */}
+                <div style={{ marginBottom: '2rem' }}>
+                  {/* Divider after Kickstart File section */}
+                  <div style={{ 
+                    height: '1px', 
+                    backgroundColor: '#d2d2d2', 
+                    margin: '0rem 0 2rem 0' 
+                  }} />
+                  
+                  <Title headingLevel="h3" size="lg" style={{ marginBottom: '0rem' }}>
+                    Compliance
+                  </Title>
+                  <p style={{ 
+                    fontSize: '14px', 
+                    lineHeight: '1.5',
+                    marginBottom: '1.5rem', marginTop: '1rem',
+                    color: '#666'
+                  }}>
+                    Below you can select which Insights compliance policy or OpenSCAP profile your image will be compliant to. Insights compliance allows the use of tailored policies, whereas OpenSCAP gives you the default versions. This will automatically help monitor the adherence of your registered RHEL systems to a selected policy or profile.
+                  </p>
+
+                  {/* Custom Compliance Policy */}
+                  <FormGroup
+                    style={{ marginBottom: '1.5rem' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                      <Radio
+                        isChecked={complianceType === 'custom'}
+                        name="compliance-type"
+                        onChange={() => setComplianceType('custom')}
+                        label=""
+                        id="compliance-custom"
                       />
-                      <div className="pf-v6-u-font-size-sm pf-v6-u-color-200 pf-v6-u-mt-xs">
-                        Upload a CSV file
+                      <label htmlFor="compliance-custom" style={{ fontWeight: 600, fontSize: '14px' }}>
+                        Use a custom Compliance policy
+                      </label>
+                    </div>
+                    
+                    <div style={{ marginLeft: '1.75rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Select
+                          id="custom-compliance-policy-select"
+                          isOpen={isCustomCompliancePolicyOpen}
+                          selected={customCompliancePolicy}
+                          onSelect={onCustomCompliancePolicySelect}
+                          onOpenChange={(isOpen) => setIsCustomCompliancePolicyOpen(isOpen)}
+                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                            <MenuToggle 
+                              ref={toggleRef} 
+                              onClick={() => setIsCustomCompliancePolicyOpen(!isCustomCompliancePolicyOpen)}
+                              isExpanded={isCustomCompliancePolicyOpen}
+                              style={{ width: '400px' }}
+                            >
+                              {customCompliancePolicy || 'Select a compliance policy'}
+                            </MenuToggle>
+                          )}
+                        >
+                          <SelectList>
+                            {customCompliancePolicyOptions.map((policy) => (
+                              <SelectOption key={policy} value={policy}>
+                                {policy}
+                              </SelectOption>
+                            ))}
+                          </SelectList>
+                        </Select>
+                        
+                        {complianceType === 'custom' && (
+                          <Popover
+                            aria-label="Custom compliance policy details"
+                            position={PopoverPosition.right}
+                            bodyContent={
+                              <div style={{ minWidth: '300px' }}>
+                                <div style={{ marginBottom: '1rem' }}>
+                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Policy type</div>
+                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                    {customCompliancePolicy ? 'Custom Insights Compliance Policy' : 'No policy selected'}
+                                  </div>
+                                </div>
+                                
+                                <div style={{ marginBottom: '1rem' }}>
+                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Policy description</div>
+                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                    {customCompliancePolicy 
+                                      ? 'This policy provides comprehensive security controls and compliance requirements tailored for enterprise environments.'
+                                      : 'Select a policy to view description'
+                                    }
+                                  </div>
+                                </div>
+                                
+                                <div style={{ marginBottom: '1rem' }}>
+                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Compliance score</div>
+                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                    {customCompliancePolicy ? '85% compliant' : 'N/A'}
+                                  </div>
+                                </div>
+                                
+                                <div>
+                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Business objective</div>
+                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                    {customCompliancePolicy 
+                                      ? 'Maintain security standards and regulatory compliance for critical business systems.'
+                                      : 'Select a policy to view objective'
+                                    }
+                                  </div>
+                                </div>
+                              </div>
+                            }
+                          >
+                            <Button variant="secondary" icon={<InfoCircleIcon />}>
+                              View details
+                            </Button>
+                          </Popover>
+                        )}
+                      </div>
+                      
+                      <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                        <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
+                          <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
+                          Manage with Insights Compliance
+                        </a>
                       </div>
                     </div>
-                  </StackItem>
-                </Stack>
+                  </FormGroup>
+
+                  {/* OpenSCAP Profile */}
+                  <FormGroup
+                    style={{ marginBottom: '1.5rem' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                      <Radio
+                        isChecked={complianceType === 'openscap'}
+                        name="compliance-type"
+                        onChange={() => setComplianceType('openscap')}
+                        label=""
+                        id="compliance-openscap"
+                      />
+                      <label htmlFor="compliance-openscap" style={{ fontWeight: 600, fontSize: '14px' }}>
+                        Use a default OpenSCAP profile
+                      </label>
+                    </div>
+                    
+                    <div style={{ marginLeft: '1.75rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Select
+                          id="openscap-profile-select"
+                          isOpen={isOpenscapProfileOpen}
+                          selected={openscapProfile}
+                          onSelect={onOpenscapProfileSelect}
+                          onOpenChange={(isOpen) => setIsOpenscapProfileOpen(isOpen)}
+                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                            <MenuToggle 
+                              ref={toggleRef} 
+                              onClick={() => setIsOpenscapProfileOpen(!isOpenscapProfileOpen)}
+                              isExpanded={isOpenscapProfileOpen}
+                              style={{ width: '400px' }}
+                            >
+                              {openscapProfile || 'Select an OpenSCAP profile'}
+                            </MenuToggle>
+                          )}
+                        >
+                          <SelectList>
+                            {openscapProfileOptions.map((profile) => (
+                              <SelectOption key={profile} value={profile}>
+                                {profile}
+                              </SelectOption>
+                            ))}
+                          </SelectList>
+                        </Select>
+                        
+                        {complianceType === 'openscap' && (
+                          <Popover
+                            aria-label="OpenSCAP profile details"
+                            position={PopoverPosition.right}
+                            bodyContent={
+                              <div style={{ minWidth: '300px' }}>
+                                <div style={{ marginBottom: '1rem' }}>
+                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Policy type</div>
+                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                    {openscapProfile ? 'Default OpenSCAP Security Profile' : 'No profile selected'}
+                                  </div>
+                                </div>
+                                
+                                <div style={{ marginBottom: '1rem' }}>
+                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Policy description</div>
+                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                    {openscapProfile 
+                                      ? 'Standard security configuration profile based on industry best practices and security benchmarks.'
+                                      : 'Select a profile to view description'
+                                    }
+                                  </div>
+                                </div>
+                                
+                                <div style={{ marginBottom: '1rem' }}>
+                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Compliance score</div>
+                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                    {openscapProfile ? '92% compliant' : 'N/A'}
+                                  </div>
+                                </div>
+                                
+                                <div>
+                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Business objective</div>
+                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                    {openscapProfile 
+                                      ? 'Implement standardized security configurations to reduce vulnerabilities and ensure baseline protection.'
+                                      : 'Select a profile to view objective'
+                                    }
+                                  </div>
+                                </div>
+                              </div>
+                            }
+                          >
+                            <Button variant="secondary" icon={<InfoCircleIcon />}>
+                              View details
+                            </Button>
+                          </Popover>
+                        )}
+                      </div>
+                      
+                      <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                        <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
+                          <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
+                          Learn more about OpenSCAP profiles
+                        </a>
+                      </div>
+                    </div>
+                  </FormGroup>
+                </div>
               </div>
             </Form>
           </div>
@@ -2624,58 +2843,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   };
 
   // Generate YAML based on current form state
-  const generateYAML = () => {
-    const config = {
-      name: imageName || 'untitled-image',
-      details: imageDetails || '',
-      baseRelease: baseImageRelease || '',
-      baseArchitecture: baseImageArchitecture || '',
-      outputRelease: outputRelease || '',
-      registration: {
-        method: registrationMethod,
-        organizationId: organizationId,
-        ...(registrationMethod === 'auto' && { activationKey: selectedActivationKey })
-      },
-      timezone: timezone || '',
-      ntpServers: ntpServers || '',
-      languages: languages,
-      keyboard: suggestedKeyboard || '',
-      hostname: hostname || '',
-      kernel: {
-        package: kernelPackage || '',
-        arguments: kernelArguments
-      }
-    };
-    
-    return `# Image Builder Configuration
-name: "${config.name}"
-${config.details ? `details: "${config.details}"` : ''}
-${config.baseRelease ? `baseRelease: "${config.baseRelease}"` : ''}
-${config.baseArchitecture ? `baseArchitecture: "${config.baseArchitecture}"` : ''}
-${config.outputRelease ? `outputRelease: "${config.outputRelease}"` : ''}
 
-registration:
-  method: ${config.registration.method}
-  organizationId: "${config.registration.organizationId}"
-${config.registration.activationKey ? `  activationKey: "${config.registration.activationKey}"` : ''}
-
-${config.timezone ? `timezone: "${config.timezone}"` : ''}
-${config.ntpServers ? `ntpServers: "${config.ntpServers}"` : ''}
-
-locale:
-  languages:
-${config.languages.filter(lang => lang.value).map(lang => `    - "${lang.value}"`).join('\n')}
-${config.keyboard ? `  keyboard: "${config.keyboard}"` : ''}
-
-${config.hostname ? `hostname: "${config.hostname}"` : ''}
-
-kernel:
-${config.kernel.package ? `  package: "${config.kernel.package}"` : ''}
-${config.kernel.arguments.length > 0 ? `  arguments:\n${config.kernel.arguments.map(arg => `    - "${arg}"`).join('\n')}` : ''}
-
-# Additional configuration sections will appear here as you fill out the form
-`;
-  };
 
   return (
     <Modal
@@ -2684,11 +2852,17 @@ ${config.kernel.arguments.length > 0 ? `  arguments:\n${config.kernel.arguments.
       isOpen={isOpen}
       onClose={onClose}
       width="min(1400px, 95vw)"
-      height="90vh"
+      height="80vh"
     >
-      <div style={{ height: 'calc(90vh - 80px)', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ 
+        height: '100%',
+        display: 'flex', 
+        flexDirection: 'column',
+        minHeight: 0
+      }}>
         {/* Header Section */}
         <div style={{ 
+          flexShrink: 0,
           padding: '32px 24px 0 32px',
           borderBottom: '1px solid #d2d2d2'
         }}>
@@ -2704,8 +2878,8 @@ ${config.kernel.arguments.length > 0 ? `  arguments:\n${config.kernel.arguments.
             Create custom system images with your preferred configurations, packages, and settings. Build images for different target environments and deployment scenarios.
           </p>
           
-          {/* Tabs and View Toggle */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {/* Tabs */}
+          <div>
             <Tabs
               activeKey={activeTabKey}
               onSelect={handleTabClick}
@@ -2716,156 +2890,23 @@ ${config.kernel.arguments.length > 0 ? `  arguments:\n${config.kernel.arguments.
               <Tab eventKey={2} title={<TabTitleText>Advanced settings</TabTitleText>} />
               <Tab eventKey={3} title={<TabTitleText>Review image</TabTitleText>} />
             </Tabs>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '14px', color: '#666' }}>GUI</span>
-              <Switch
-                id="view-mode-toggle"
-                isChecked={viewMode === 'code'}
-                onChange={(_event, checked) => setViewMode(checked ? 'code' : 'gui')}
-                aria-label="Toggle between GUI and code view"
-              />
-              <span style={{ fontSize: '14px', color: '#666' }}>Code</span>
-            </div>
           </div>
         </div>
 
         {/* Content Area */}
         <div style={{ 
           flex: 1,
-          overflow: 'hidden'
+          minHeight: 0,
+          padding: '24px 24px 24px 32px',
+          overflowY: 'auto',
+          overflowX: 'hidden'
         }}>
-          {viewMode === 'gui' ? (
-            /* GUI View - Form Content */
-            <div style={{ 
-              height: '100%',
-              padding: '24px 24px 24px 32px',
-              overflowY: 'auto'
-            }}>
-              {renderTabContent()}
-            </div>
-          ) : (
-            /* Code View - Enhanced Editor Experience */
-            <div style={{ 
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              backgroundColor: '#2d2d30', // Grey editor background
-              overflow: 'hidden'
-            }}>
-              {/* Code Editor Header */}
-              <div style={{
-                padding: '8px 16px',
-                backgroundColor: '#2d2d30',
-                borderBottom: '1px solid #3e3e42',
-                fontSize: '13px',
-                color: '#cccccc',
-                fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                <span style={{ color: '#569cd6' }}>📄</span>
-                <span>image-config.yaml</span>
-                <span style={{ marginLeft: 'auto', color: '#858585', fontSize: '11px' }}>
-                  Configuration Preview
-                </span>
-              </div>
-              
-              {/* Line Numbers and Code Content */}
-              <div style={{ 
-                flex: 1,
-                display: 'flex',
-                overflow: 'hidden'
-              }}>
-                {/* Line Numbers */}
-                <div style={{
-                  width: '60px',
-                  backgroundColor: '#2d2d30',
-                  borderRight: '1px solid #3e3e42',
-                  padding: '12px 8px',
-                  fontSize: '12px',
-                  fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
-                  color: '#858585',
-                  textAlign: 'right',
-                  lineHeight: '1.5',
-                  overflowY: 'hidden',
-                  userSelect: 'none'
-                }}>
-                  {editableYaml.split('\n').map((_, index) => (
-                    <div key={index} style={{ 
-                      minHeight: '18px',
-                      paddingRight: '8px'
-                    }}>
-                      {index + 1}
-                    </div>
-                  ))}
-                </div>
-                
-                {/* Editable Code Content */}
-                <div style={{
-                  flex: 1,
-                  backgroundColor: '#2d2d30',
-                  overflow: 'auto'
-                }}>
-                  <TextArea
-                    value={editableYaml}
-                    onChange={(_event, value) => setEditableYaml(value)}
-                    readOnly={false}
-                    disabled={false}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      minHeight: '100%',
-                      margin: 0,
-                      padding: '12px 16px',
-                      fontSize: '12px',
-                      fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
-                      lineHeight: '1.5',
-                      color: '#d4d4d4',
-                      backgroundColor: '#2d2d30',
-                      border: 'none',
-                      outline: 'none',
-                      resize: 'none',
-                      whiteSpace: 'pre',
-                      wordBreak: 'normal',
-                      boxSizing: 'border-box',
-                      cursor: 'text'
-                    }}
-                    aria-label="YAML configuration editor"
-                    spellCheck={false}
-                    autoComplete="off"
-                    tabIndex={0}
-                  />
-                </div>
-              </div>
-              
-              {/* Status Bar */}
-              <div style={{
-                padding: '4px 16px',
-                backgroundColor: '#007acc',
-                fontSize: '11px',
-                color: '#ffffff',
-                fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <div style={{ display: 'flex', gap: '16px' }}>
-                  <span>YAML</span>
-                  <span>UTF-8</span>
-                </div>
-                <div style={{ display: 'flex', gap: '16px' }}>
-                  <span>Lines: {editableYaml.split('\n').length}</span>
-                  <span>Ln 1, Col 1</span>
-                </div>
-              </div>
-            </div>
-          )}
+          {renderTabContent()}
         </div>
 
         {/* Footer Section */}
         <div style={{ 
+          flexShrink: 0,
           padding: '16px 24px',
           borderTop: '1px solid #d2d2d2'
         }}>
