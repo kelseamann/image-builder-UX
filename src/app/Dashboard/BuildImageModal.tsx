@@ -1718,8 +1718,8 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   } as React.CSSProperties}>
                     <FileUpload
                       id="kickstart-file"
-                      type="text"
-                      value={kickstartFile}
+                      type="text" 
+                      value={kickstartFile || 'Manually enter the kickstart CSV data here.'} style={{color: 'blue' }}
                       filename={kickstartFilename}
                       onTextChange={(event: React.ChangeEvent<HTMLTextAreaElement>, text: string) => {
                         setKickstartFile(text);
