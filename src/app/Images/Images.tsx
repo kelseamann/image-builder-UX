@@ -26,7 +26,7 @@ import {
   Tooltip,
   Divider
 } from '@patternfly/react-core';
-import { EllipsisVIcon, FilterIcon, TableIcon, MigrationIcon, CopyIcon, BuildIcon, StarIcon, OutlinedStarIcon, AngleRightIcon, AngleDownIcon, ExclamationTriangleIcon, InfoCircleIcon } from '@patternfly/react-icons';
+import { EllipsisVIcon, FilterIcon, TableIcon, MigrationIcon, CopyIcon, BuildIcon, StarIcon, OutlinedStarIcon, AngleRightIcon, AngleDownIcon, ExclamationTriangleIcon, InfoCircleIcon, CheckCircleIcon, ExclamationCircleIcon } from '@patternfly/react-icons';
 import { ImageInfo, MigrationData } from '../Dashboard/ImageMigrationModal';
 
 interface ImageTableRow extends ImageInfo {
@@ -192,26 +192,40 @@ const Images: React.FunctionComponent = () => {
   const getStatusBadge = (status: string) => {
     const statusMap = {
       'ready': { color: 'green' as const, variant: 'outline' as const },
-      'expired': { color: 'orange' as const, variant: 'outline' as const },
+      'expired': { color: 'yellow' as const, variant: 'outline' as const },
       'build failed': { color: 'red' as const, variant: 'outline' as const }
     };
     
     const config = statusMap[status as keyof typeof statusMap] || statusMap.expired;
     
-    if (status === 'expired') {
-      return (
-        <Label color={config.color} variant={config.variant}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <ExclamationTriangleIcon style={{ fontSize: '0.875rem', color: '#f0ab00' }} />
-            <span>{capitalizeWords(status)}</span>
-          </span>
-        </Label>
-      );
-    }
+    const getIconAndColor = (status: string) => {
+      switch (status) {
+        case 'ready':
+          return { icon: CheckCircleIcon, color: '#3D7317' }; // Success green
+        case 'expired':
+          return { icon: ExclamationTriangleIcon, color: '#FFCC17' }; // Warning yellow
+        case 'build failed':
+          return { icon: ExclamationCircleIcon, color: '#B1380B' }; // Danger red
+        default:
+          return { icon: ExclamationTriangleIcon, color: '#FFCC17' };
+      }
+    };
+    
+    const { icon: IconComponent, color } = getIconAndColor(status);
     
     return (
-      <Label color={config.color} variant={config.variant}>
-        {capitalizeWords(status)}
+      <Label 
+        color={config.color} 
+        variant={config.variant}
+        style={{
+          '--pf-v5-c-label--m-outline__content--before--BorderColor': color,
+          '--pf-v5-c-label--m-outline__content--Color': color
+        } as React.CSSProperties}
+      >
+        <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+          <IconComponent style={{ fontSize: '0.875rem', color }} />
+          <span>{capitalizeWords(status)}</span>
+        </span>
       </Label>
     );
   };
