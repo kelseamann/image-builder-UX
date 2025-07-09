@@ -2671,6 +2671,366 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             </Stack>
           </div>
         );
+      case 4:
+        return (
+          <div>
+            <Title headingLevel="h2" size="xl" style={{ marginBottom: '1rem' }}>
+              Packages and Repos Ideation
+            </Title>
+            <p style={{ fontSize: '16px', color: '#666', marginBottom: '2rem' }}>
+              Design exploration for a comprehensive repository and package management system.
+            </p>
+
+            {/* Design Requirements */}
+            <Card style={{ marginBottom: '2rem' }}>
+              <CardBody>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  📋 Design Requirements
+                </Title>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                  <div>
+                    <Title headingLevel="h4" size="md" style={{ marginBottom: '0.5rem', color: '#0066cc' }}>
+                      Repository Management
+                    </Title>
+                    <ul style={{ margin: 0, paddingLeft: '1.2rem', lineHeight: '1.6' }}>
+                      <li>Red Hat repository always available</li>
+                      <li>Add third-party repositories</li>
+                      <li>Select some or all packages from a repository</li>
+                      <li>Search for repositories to add them</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <Title headingLevel="h4" size="md" style={{ marginBottom: '0.5rem', color: '#0066cc' }}>
+                      Package Discovery
+                    </Title>
+                    <ul style={{ margin: 0, paddingLeft: '1.2rem', lineHeight: '1.6' }}>
+                      <li>Search packages by name</li>
+                      <li>Individual packages vs package groups</li>
+                      <li>Add repository + package simultaneously</li>
+                      <li>Show package repository source</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <Title headingLevel="h4" size="md" style={{ marginBottom: '0.5rem', color: '#0066cc' }}>
+                      Smart Features
+                    </Title>
+                    <ul style={{ margin: 0, paddingLeft: '1.2rem', lineHeight: '1.6' }}>
+                      <li>Package recommendations</li>
+                      <li>Common package combinations</li>
+                      <li>User behavior insights</li>
+                      <li>Dependency suggestions</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <Title headingLevel="h4" size="md" style={{ marginBottom: '0.5rem', color: '#0066cc' }}>
+                      User Experience
+                    </Title>
+                    <ul style={{ margin: 0, paddingLeft: '1.2rem', lineHeight: '1.6' }}>
+                      <li>Consistent form styling</li>
+                      <li>Clear selection summary</li>
+                      <li>Flexible workflow order</li>
+                      <li>Selection transparency</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardBody>
+            </Card>
+
+            {/* Approach 1: Repository-First */}
+            <Card style={{ marginBottom: '2rem' }}>
+              <CardBody>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  🎯 Approach 1: Repository-First Workflow
+                </Title>
+                <p style={{ marginBottom: '1.5rem', color: '#666' }}>
+                  Users start by selecting repositories, then browse packages within each repository.
+                </p>
+                
+                <div style={{ border: '2px dashed #0066cc', borderRadius: '8px', padding: '1.5rem', backgroundColor: '#f8f9fa' }}>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
+                      1. Repository Selection
+                    </Title>
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                      <div style={{ flex: 1, padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px', backgroundColor: 'white' }}>
+                        <strong>Red Hat Repository</strong>
+                        <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                          ✅ Always included • BaseOS, AppStream, etc.
+                        </div>
+                      </div>
+                      <div style={{ flex: 1, padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px', backgroundColor: 'white' }}>
+                        <strong>Third-Party Repositories</strong>
+                        <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                          + Add EPEL, CentOS Stream, Custom...
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
+                      2. Package Selection Within Repository
+                    </Title>
+                    <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px', backgroundColor: 'white' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                        <span><strong>Red Hat Repository</strong> • 2,847 packages</span>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <Button variant="link" size="sm">Select All</Button>
+                          <Button variant="link" size="sm">Select None</Button>
+                        </div>
+                      </div>
+                                              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                          <TextInput placeholder="Search packages..." style={{ flex: 1 }} />
+                          <div style={{ width: '150px', padding: '0.5rem', border: '1px solid #d2d2d2', borderRadius: '4px', fontSize: '0.875rem', color: '#666' }}>
+                            Package type ▼
+                          </div>
+                        </div>
+                      <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                        📦 Individual packages: httpd, nginx, postgresql...<br/>
+                        📚 Package groups: Development Tools, Web Server...
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
+                      3. Smart Recommendations
+                    </Title>
+                    <div style={{ padding: '1rem', border: '1px solid #ffc107', borderRadius: '4px', backgroundColor: '#fff3cd' }}>
+                      <strong>💡 Suggested packages for "httpd"</strong>
+                      <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                        Users who selected httpd also commonly add: mod_ssl, httpd-tools, certbot
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#e8f5e8', borderRadius: '4px' }}>
+                  <strong>✅ Pros:</strong> Clear hierarchy, easy to understand repository structure, bulk operations
+                </div>
+                <div style={{ marginTop: '0.5rem', padding: '1rem', backgroundColor: '#ffe8e8', borderRadius: '4px' }}>
+                  <strong>❌ Cons:</strong> Requires knowing which repository contains desired packages, more steps
+                </div>
+              </CardBody>
+            </Card>
+
+            {/* Approach 2: Search-First */}
+            <Card style={{ marginBottom: '2rem' }}>
+              <CardBody>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  🔍 Approach 2: Search-First Workflow
+                </Title>
+                <p style={{ marginBottom: '1.5rem', color: '#666' }}>
+                  Users search for packages by name, system handles repository management automatically.
+                </p>
+                
+                <div style={{ border: '2px dashed #28a745', borderRadius: '8px', padding: '1.5rem', backgroundColor: '#f8f9fa' }}>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
+                      1. Universal Search
+                    </Title>
+                    <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px', backgroundColor: 'white' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                        <TextInput placeholder="Search for any package or repository..." style={{ flex: 1 }} />
+                                                 <div style={{ width: '120px', padding: '0.5rem', border: '1px solid #d2d2d2', borderRadius: '4px', fontSize: '0.875rem', color: '#666' }}>
+                           All types ▼
+                         </div>
+                        <Button variant="primary">Search</Button>
+                      </div>
+                      <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                        Search across all available repositories simultaneously
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
+                      2. Results with Repository Context
+                    </Title>
+                    <div style={{ border: '1px solid #d2d2d2', borderRadius: '4px', backgroundColor: 'white' }}>
+                      <div style={{ padding: '0.75rem', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <strong>httpd</strong> <span style={{ color: '#666' }}>• Web server</span>
+                          <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                            📍 Red Hat Repository (BaseOS)
+                          </div>
+                        </div>
+                        <Button variant="secondary" size="sm">+ Add</Button>
+                      </div>
+                      <div style={{ padding: '0.75rem', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <strong>nginx</strong> <span style={{ color: '#666' }}>• Web server</span>
+                          <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                            📍 EPEL Repository
+                          </div>
+                        </div>
+                        <Button variant="secondary" size="sm">+ Add</Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
+                      3. Auto-Repository Addition
+                    </Title>
+                    <div style={{ padding: '1rem', border: '1px solid #17a2b8', borderRadius: '4px', backgroundColor: '#d1ecf1' }}>
+                      <strong>🔄 Adding "nginx" from EPEL Repository</strong>
+                      <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                        EPEL repository will be automatically added to your image configuration.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#e8f5e8', borderRadius: '4px' }}>
+                  <strong>✅ Pros:</strong> Fast discovery, no need to know repository structure, automatic dependency management
+                </div>
+                <div style={{ marginTop: '0.5rem', padding: '1rem', backgroundColor: '#ffe8e8', borderRadius: '4px' }}>
+                  <strong>❌ Cons:</strong> Less control over repositories, potential for unexpected additions
+                </div>
+              </CardBody>
+            </Card>
+
+            {/* Approach 3: Hybrid Dashboard */}
+            <Card style={{ marginBottom: '2rem' }}>
+              <CardBody>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  ⚡ Approach 3: Hybrid Dashboard
+                </Title>
+                <p style={{ marginBottom: '1.5rem', color: '#666' }}>
+                  Combined approach with clear selection overview and multiple discovery methods.
+                </p>
+                
+                <div style={{ border: '2px dashed #6f42c1', borderRadius: '8px', padding: '1.5rem', backgroundColor: '#f8f9fa' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                    {/* Left Side: Search & Add */}
+                    <div>
+                      <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
+                        🔍 Discovery & Search
+                      </Title>
+                      <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px', backgroundColor: 'white' }}>
+                        <div style={{ marginBottom: '1rem' }}>
+                          <TextInput placeholder="Search packages or repositories..." />
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                          <Button variant="tertiary" size="sm">Packages</Button>
+                          <Button variant="tertiary" size="sm">Package Groups</Button>
+                          <Button variant="tertiary" size="sm">Repositories</Button>
+                        </div>
+                        <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                          💡 Popular: Development Tools, Web Server, Database
+                        </div>
+                      </div>
+
+                      <div style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #ffc107', borderRadius: '4px', backgroundColor: '#fff3cd' }}>
+                        <strong>🎯 Recommendations</strong>
+                        <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                          Based on "Web Server" selection:<br/>
+                          • SSL certificates (certbot)<br/>
+                          • Performance monitoring (mod_status)<br/>
+                          • Security tools (mod_security)
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Side: Selection Summary */}
+                    <div>
+                      <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
+                        📋 Current Selection
+                      </Title>
+                      <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px', backgroundColor: 'white' }}>
+                        <div style={{ marginBottom: '1rem' }}>
+                          <strong>Repositories (2)</strong>
+                          <div style={{ marginTop: '0.5rem' }}>
+                            <Badge style={{ marginRight: '0.5rem' }}>Red Hat</Badge>
+                            <Badge style={{ marginRight: '0.5rem' }}>EPEL</Badge>
+                          </div>
+                        </div>
+                        <div style={{ marginBottom: '1rem' }}>
+                          <strong>Packages (5)</strong>
+                          <div style={{ marginTop: '0.5rem' }}>
+                            <Badge style={{ marginRight: '0.5rem' }}>httpd</Badge>
+                            <Badge style={{ marginRight: '0.5rem' }}>nginx</Badge>
+                            <Badge style={{ marginRight: '0.5rem' }}>+3 more</Badge>
+                          </div>
+                        </div>
+                        <div>
+                          <strong>Package Groups (1)</strong>
+                          <div style={{ marginTop: '0.5rem' }}>
+                            <Badge>Development Tools</Badge>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #28a745', borderRadius: '4px', backgroundColor: '#d4edda' }}>
+                        <strong>📊 Summary</strong>
+                        <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                          • 2 repositories enabled<br/>
+                          • 47 total packages (5 + 42 from groups)<br/>
+                          • ~127 MB additional size
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#e8f5e8', borderRadius: '4px' }}>
+                  <strong>✅ Pros:</strong> Best of both worlds, clear overview, flexible workflow, smart recommendations
+                </div>
+                <div style={{ marginTop: '0.5rem', padding: '1rem', backgroundColor: '#ffe8e8', borderRadius: '4px' }}>
+                  <strong>❌ Cons:</strong> More complex UI, potential information overload
+                </div>
+              </CardBody>
+            </Card>
+
+            {/* Implementation Considerations */}
+            <Card>
+              <CardBody>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  🔧 Implementation Considerations
+                </Title>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
+                  <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px' }}>
+                    <strong>🎨 UI Consistency</strong>
+                    <ul style={{ margin: '0.5rem 0 0 1.2rem', fontSize: '0.875rem' }}>
+                      <li>Same Select components</li>
+                      <li>Consistent Button styles</li>
+                      <li>PatternFly Table patterns</li>
+                      <li>Standard form layouts</li>
+                    </ul>
+                  </div>
+                  <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px' }}>
+                    <strong>⚡ Performance</strong>
+                    <ul style={{ margin: '0.5rem 0 0 1.2rem', fontSize: '0.875rem' }}>
+                      <li>Virtual scrolling for large lists</li>
+                      <li>Debounced search inputs</li>
+                      <li>Lazy loading of package data</li>
+                      <li>Efficient state management</li>
+                    </ul>
+                  </div>
+                  <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px' }}>
+                    <strong>🔄 State Management</strong>
+                    <ul style={{ margin: '0.5rem 0 0 1.2rem', fontSize: '0.875rem' }}>
+                      <li>Repository selection state</li>
+                      <li>Package selection tracking</li>
+                      <li>Search result caching</li>
+                      <li>Recommendation engine</li>
+                    </ul>
+                  </div>
+                  <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px' }}>
+                    <strong>📱 Accessibility</strong>
+                    <ul style={{ margin: '0.5rem 0 0 1.2rem', fontSize: '0.875rem' }}>
+                      <li>Keyboard navigation</li>
+                      <li>Screen reader support</li>
+                      <li>High contrast modes</li>
+                      <li>Focus management</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardBody>
+            </Card>
+          </div>
+        );
       default:
         return null;
     }
@@ -2723,6 +3083,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               <Tab eventKey={1} title={<TabTitleText>Repositories and packages</TabTitleText>} />
               <Tab eventKey={2} title={<TabTitleText>Advanced settings</TabTitleText>} />
               <Tab eventKey={3} title={<TabTitleText>Review image</TabTitleText>} />
+              <Tab eventKey={4} title={<TabTitleText>Packages and repos ideation</TabTitleText>} />
             </Tabs>
           </div>
         </div>
