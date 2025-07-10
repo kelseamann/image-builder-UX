@@ -2373,21 +2373,17 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 style={{ marginBottom: '2rem' }}
               >
                 <p>
-                  You have selected <strong>
+                  You are seeing this notice because you selected <strong>
                   {selectedCloudProvider === 'aws' ? 'Amazon Web Services' : 
                    selectedCloudProvider === 'gcp' ? 'Google Cloud Platform' : 
                    'Microsoft Azure'}
-                  </strong> as your target cloud environment.
-                </p>
-                <p style={{ marginTop: '0.5rem' }}>
-                  <strong>⚠️ The image will expire in 2 weeks</strong> after it's built. To ensure continued access, 
-                  you must copy the image to your own cloud provider account before it expires.
+                  </strong> as your target environment.
                 </p>
                 <p style={{ marginTop: '0.5rem', marginBottom: 0 }}>
-                  After the build completes, follow the deployment instructions to copy the image to your 
+                  <strong>The image will expire in 2 weeks</strong> after it's built. You must copy it to your own 
                   {selectedCloudProvider === 'aws' ? ' AWS' : 
                    selectedCloudProvider === 'gcp' ? ' GCP' : 
-                   ' Azure'} account.
+                   ' Azure'} account to ensure continued access.
                 </p>
               </Alert>
             )}
