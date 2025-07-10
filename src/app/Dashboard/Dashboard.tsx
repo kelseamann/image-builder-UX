@@ -380,7 +380,13 @@ const Dashboard: React.FunctionComponent = () => {
             }
             position="top"
           >
-            {statusLabel}
+            <span style={{ 
+              borderBottom: '1px dotted #f0ab00', 
+              cursor: 'help',
+              display: 'inline-block'
+            }}>
+              {statusLabel}
+            </span>
           </Tooltip>
         );
       }
