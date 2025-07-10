@@ -351,6 +351,42 @@ const Dashboard: React.FunctionComponent = () => {
     
     if (status === 'expired') {
       const isCloudEnvironment = targetEnvironment && ['AWS', 'GCP', 'Azure'].includes(targetEnvironment);
+      if (isCloudEnvironment) {
+        const statusLabelWithTooltip = (
+          <Label color={config.color} variant={config.variant}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <ExclamationTriangleIcon style={{ fontSize: '0.875rem', color: '#f0ab00' }} />
+              <Tooltip
+                content={
+                  <div style={{ maxWidth: '300px' }}>
+                    <p style={{ marginBottom: '0.5rem' }}>
+                      <strong>Why did this image expire?</strong>
+                    </p>
+                    <p style={{ marginBottom: '0.5rem' }}>
+                      Images built for cloud environments ({targetEnvironment}) expire after 2 weeks 
+                      because they're hosted temporarily in Red Hat's cloud account.
+                    </p>
+                    <p style={{ marginBottom: 0 }}>
+                      <strong>Solution:</strong> Use the toolbar above to rebuild this image, 
+                      then copy it to your own {targetEnvironment} account.
+                    </p>
+                  </div>
+                }
+                position="top"
+              >
+                <span style={{ 
+                  borderBottom: '1px dotted #f0ab00', 
+                  cursor: 'help'
+                }}>
+                  {capitalizeWords(status)}
+                </span>
+              </Tooltip>
+            </span>
+          </Label>
+        );
+        return statusLabelWithTooltip;
+      }
+
       const statusLabel = (
         <Label color={config.color} variant={config.variant}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
@@ -359,37 +395,6 @@ const Dashboard: React.FunctionComponent = () => {
           </span>
         </Label>
       );
-
-      if (isCloudEnvironment) {
-        return (
-          <Tooltip
-            content={
-              <div style={{ maxWidth: '300px' }}>
-                <p style={{ marginBottom: '0.5rem' }}>
-                  <strong>Why did this image expire?</strong>
-                </p>
-                <p style={{ marginBottom: '0.5rem' }}>
-                  Images built for cloud environments ({targetEnvironment}) expire after 2 weeks 
-                  because they're hosted temporarily in Red Hat's cloud account.
-                </p>
-                <p style={{ marginBottom: 0 }}>
-                  <strong>Solution:</strong> Use the toolbar above to rebuild this image, 
-                  then copy it to your own {targetEnvironment} account.
-                </p>
-              </div>
-            }
-            position="top"
-          >
-            <span style={{ 
-              borderBottom: '1px dotted #f0ab00', 
-              cursor: 'help',
-              display: 'inline-block'
-            }}>
-              {statusLabel}
-            </span>
-          </Tooltip>
-        );
-      }
       
       return statusLabel;
     }
