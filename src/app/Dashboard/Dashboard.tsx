@@ -860,7 +860,7 @@ const Dashboard: React.FunctionComponent = () => {
       {alertInfo && (
         <div style={{
           position: 'fixed',
-          top: '20px',
+          top: '100px',
           right: '20px',
           zIndex: 999999,
           maxWidth: '400px',

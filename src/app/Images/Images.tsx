@@ -609,7 +609,7 @@ const Images: React.FunctionComponent = () => {
       {alertInfo && (
         <div style={{
           position: 'fixed',
-          top: '80px',
+          top: '160px',
           right: '20px',
           zIndex: 999999,
           maxWidth: '400px',
