@@ -183,11 +183,11 @@ const Dashboard: React.FunctionComponent = () => {
       name: 'monitoring-dashboard',
       tag: 'v2.3.1',
       currentRelease: 'RHEL 8',
-      currentEnvironment: 'VMWare',
+      currentEnvironment: 'AWS',
       status: 'expired',
       lastUpdate: '2023-10-12 08:45:30',
       dateUpdated: new Date('2023-10-12'),
-      targetEnvironment: 'VMWare',
+      targetEnvironment: 'AWS',
       version: '2',
       owner: 'SRE Team',
       isFavorited: false,
@@ -340,7 +340,7 @@ const Dashboard: React.FunctionComponent = () => {
              .join(' ');
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, targetEnvironment?: string) => {
     const statusMap = {
       'ready': { color: 'green' as const, variant: 'outline' as const },
       'expired': { color: 'orange' as const, variant: 'outline' as const },
@@ -350,7 +350,8 @@ const Dashboard: React.FunctionComponent = () => {
     const config = statusMap[status as keyof typeof statusMap] || statusMap.expired;
     
     if (status === 'expired') {
-      return (
+      const isCloudEnvironment = targetEnvironment && ['AWS', 'GCP', 'Azure'].includes(targetEnvironment);
+      const statusLabel = (
         <Label color={config.color} variant={config.variant}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
             <ExclamationTriangleIcon style={{ fontSize: '0.875rem', color: '#f0ab00' }} />
@@ -358,6 +359,33 @@ const Dashboard: React.FunctionComponent = () => {
           </span>
         </Label>
       );
+
+      if (isCloudEnvironment) {
+        return (
+          <Tooltip
+            content={
+              <div style={{ maxWidth: '300px' }}>
+                <p style={{ marginBottom: '0.5rem' }}>
+                  <strong>Why did this image expire?</strong>
+                </p>
+                <p style={{ marginBottom: '0.5rem' }}>
+                  Images built for cloud environments ({targetEnvironment}) expire after 2 weeks 
+                  because they're hosted temporarily in Red Hat's cloud account.
+                </p>
+                <p style={{ marginBottom: 0 }}>
+                  <strong>Solution:</strong> Use the toolbar above to rebuild this image, 
+                  then copy it to your own {targetEnvironment} account.
+                </p>
+              </div>
+            }
+            position="top"
+          >
+            {statusLabel}
+          </Tooltip>
+        );
+      }
+      
+      return statusLabel;
     }
     
     return (
@@ -1349,7 +1377,7 @@ const Dashboard: React.FunctionComponent = () => {
                         {image.version}
                       </code>
                     </td>
-                    <td style={{ padding: '1rem 1.5rem' }}>{getStatusBadge(image.status)}</td>
+                    <td style={{ padding: '1rem 1.5rem' }}>{getStatusBadge(image.status, image.targetEnvironment)}</td>
                     <td style={{ padding: '1rem 1.5rem' }}>{image.owner}</td>
                     <td style={{ padding: '1rem 1.5rem' }} onClick={(e) => e.stopPropagation()}>
                       <Dropdown
