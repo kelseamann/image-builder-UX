@@ -90,6 +90,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   editingImage,
 }) => {
   const [activeTabKey, setActiveTabKey] = React.useState<string | number>(0);
+  const contentAreaRef = React.useRef<HTMLDivElement>(null);
   const [registrationMethod, setRegistrationMethod] = React.useState<string>('auto');
   const [selectedActivationKey, setSelectedActivationKey] = React.useState<string>('my-default-key');
   const [isActivationKeyOpen, setIsActivationKeyOpen] = React.useState<boolean>(false);
@@ -707,6 +708,11 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
   const handleTabClick = (event: React.MouseEvent | React.KeyboardEvent, tabIndex: string | number) => {
     setActiveTabKey(tabIndex);
+    
+    // Scroll to top when navigating to Review tab to ensure users see the cloud expiration alert
+    if (tabIndex === 3 && contentAreaRef.current) {
+      contentAreaRef.current.scrollTop = 0;
+    }
   };
 
   const handleNext = () => {
@@ -3126,13 +3132,15 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
         </div>
 
         {/* Content Area */}
-        <div style={{ 
-          flex: 1,
-          minHeight: 0,
-          padding: '24px 24px 24px 32px',
-          overflowY: 'auto',
-          overflowX: 'hidden'
-        }}>
+        <div 
+          ref={contentAreaRef}
+          style={{ 
+            flex: 1,
+            minHeight: 0,
+            padding: '24px 24px 24px 32px',
+            overflowY: 'auto',
+            overflowX: 'hidden'
+          }}>
           {renderTabContent()}
         </div>
 
@@ -3153,7 +3161,13 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             {activeTabKey !== 3 && (
               <Button
                 variant="primary"
-                onClick={() => setActiveTabKey(3)}
+                onClick={() => {
+                  setActiveTabKey(3);
+                  // Scroll to top when navigating to Review tab to ensure users see the cloud expiration alert
+                  if (contentAreaRef.current) {
+                    contentAreaRef.current.scrollTop = 0;
+                  }
+                }}
                 isDisabled={false}
               >
                 Review image
