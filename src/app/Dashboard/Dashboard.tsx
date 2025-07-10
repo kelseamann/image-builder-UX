@@ -360,10 +360,10 @@ const Dashboard: React.FunctionComponent = () => {
                 content={
                   <div style={{ maxWidth: '300px' }}>
                     <p style={{ marginBottom: '0.5rem' }}>
-                      Click to select this row and then use rebuild.
+                      Click to select this row and then use Rebuild.
                     </p>
                     <p style={{ marginBottom: 0 }}>
-                      <strong>Warning:</strong> Rebuild will pull latest changes (new package versions for example).
+                      <strong>Tip:</strong> Rebuild will pull latest changes (new package versions for example).
                     </p>
                   </div>
                 }
