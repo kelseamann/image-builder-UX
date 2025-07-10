@@ -90,6 +90,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   editingImage,
 }) => {
   const [activeTabKey, setActiveTabKey] = React.useState<string | number>(0);
+  const contentAreaRef = React.useRef<HTMLDivElement>(null);
   const [registrationMethod, setRegistrationMethod] = React.useState<string>('auto');
   const [selectedActivationKey, setSelectedActivationKey] = React.useState<string>('my-default-key');
   const [isActivationKeyOpen, setIsActivationKeyOpen] = React.useState<boolean>(false);
@@ -707,6 +708,11 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
   const handleTabClick = (event: React.MouseEvent | React.KeyboardEvent, tabIndex: string | number) => {
     setActiveTabKey(tabIndex);
+    
+    // Scroll to top when navigating to Review tab to ensure users see the cloud expiration alert
+    if (tabIndex === 3 && contentAreaRef.current) {
+      contentAreaRef.current.scrollTop = 0;
+    }
   };
 
   const handleNext = () => {
@@ -1382,6 +1388,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                           value={snapshotDate}
                           onChange={(_event, value) => setSnapshotDate(value)}
                           placeholder="MM-DD-YYYY"
+                          popoverProps={{ position: "bottom" }}
                           dateFormat={(date: Date) => {
                             const month = (date.getMonth() + 1).toString().padStart(2, '0');
                             const day = date.getDate().toString().padStart(2, '0');
@@ -1748,173 +1755,6 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     />
                   </div>
                 </FormGroup>
-              </div>
-
-              {/* Divider between sections */}
-              <div style={{ 
-                height: '1px', 
-                backgroundColor: '#d2d2d2', 
-                margin: '2rem 0' 
-              }} />
-
-              {/* Selected Packages Accordion */}
-              <div style={{ marginBottom: '2rem' }}>
-                <Accordion 
-                  asDefinitionList={false}
-                  togglePosition="start"
-                >
-                  <AccordionItem>
-                    <AccordionToggle
-                      onClick={() => setIsPackageAccordionExpanded(!isPackageAccordionExpanded)}
-                      id="packages-accordion-toggle"
-                    >
-                      <h4 style={{ 
-                        fontSize: '1rem', 
-                        fontWeight: 600,
-                        color: '#151515',
-                        margin: 0
-                      }}>
-                        Selected packages
-                      </h4>
-                    </AccordionToggle>
-                    <AccordionContent id="packages-accordion-content" hidden={!isPackageAccordionExpanded}>
-                      <div style={{ padding: '16px 0' }}>
-                        {/* Toolbar with search */}
-                        <Toolbar id="packages-toolbar" style={{ marginBottom: '16px' }}>
-                          <ToolbarContent>
-                            <ToolbarItem>
-                              <SearchInput
-                                placeholder="Search packages..."
-                                value={packageSearchTerm}
-                                onChange={(_event, value) => {
-                                  setPackageSearchTerm(value);
-                                  setPackagePage(1); // Reset to first page when searching
-                                }}
-                                onClear={() => {
-                                  setPackageSearchTerm('');
-                                  setPackagePage(1);
-                                }}
-                                style={{ width: '300px' }}
-                              />
-                            </ToolbarItem>
-                          </ToolbarContent>
-                        </Toolbar>
-
-                        {/* Compact Table */}
-                        <div style={{ 
-                          border: '1px solid #d2d2d2',
-                          borderRadius: '4px',
-                          overflow: 'hidden'
-                        }}>
-                          <table style={{ 
-                            width: '100%', 
-                            borderCollapse: 'collapse',
-                            fontSize: '0.875rem'
-                          }}>
-                            <thead style={{ backgroundColor: '#f5f5f5' }}>
-                              <tr>
-                                <th style={{ 
-                                  padding: '8px 12px',
-                                  textAlign: 'left',
-                                  borderBottom: '1px solid #d2d2d2',
-                                  fontWeight: 600,
-                                  width: '40px'
-                                }}>
-                                  <Checkbox
-                                    id="select-all-packages"
-                                    isChecked={
-                                      getFilteredPackages().length > 0 &&
-                                      getFilteredPackages().every(pkg => selectedPackages.includes(pkg.id))
-                                    }
-                                    onChange={(_event, checked) => handleSelectAllPackages(checked)}
-                                  />
-                                </th>
-                                <th style={{ 
-                                  padding: '8px 12px',
-                                  textAlign: 'left',
-                                  borderBottom: '1px solid #d2d2d2',
-                                  fontWeight: 600
-                                }}>
-                                  Name
-                                </th>
-                                <th style={{ 
-                                  padding: '8px 12px',
-                                  textAlign: 'left',
-                                  borderBottom: '1px solid #d2d2d2',
-                                  fontWeight: 600
-                                }}>
-                                  Application Stream
-                                </th>
-                                <th style={{ 
-                                  padding: '8px 12px',
-                                  textAlign: 'left',
-                                  borderBottom: '1px solid #d2d2d2',
-                                  fontWeight: 600
-                                }}>
-                                  Retirement date
-                                </th>
-                                <th style={{ 
-                                  padding: '8px 12px',
-                                  textAlign: 'left',
-                                  borderBottom: '1px solid #d2d2d2',
-                                  fontWeight: 600
-                                }}>
-                                  Package repository
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {getPaginatedPackages().map((pkg, index) => (
-                                <tr key={pkg.id} style={{ 
-                                  borderBottom: index < getPaginatedPackages().length - 1 ? '1px solid #f0f0f0' : 'none'
-                                }}>
-                                  <td style={{ padding: '8px 12px' }}>
-                                    <Checkbox
-                                      id={`package-${pkg.id}`}
-                                      isChecked={selectedPackages.includes(pkg.id)}
-                                      onChange={(_event, checked) => handlePackageSelection(pkg.id, checked)}
-                                    />
-                                  </td>
-                                  <td style={{ 
-                                    padding: '8px 12px',
-                                    fontWeight: 500
-                                  }}>
-                                    {pkg.name}
-                                  </td>
-                                  <td style={{ padding: '8px 12px' }}>
-                                    {pkg.applicationStream}
-                                  </td>
-                                  <td style={{ padding: '8px 12px' }}>
-                                    {pkg.retirementDate}
-                                  </td>
-                                  <td style={{ padding: '8px 12px' }}>
-                                    {pkg.packageRepository}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-
-                        {/* Pagination */}
-                        <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'flex-end' }}>
-                          <Pagination
-                            itemCount={getFilteredPackages().length}
-                            perPage={packagePerPage}
-                            page={packagePage}
-                            onSetPage={(_event, pageNumber) => setPackagePage(pageNumber)}
-                            onPerPageSelect={(_event, perPage) => {
-                              setPackagePerPage(perPage);
-                              setPackagePage(1);
-                            }}
-                            variant="bottom"
-                            isCompact
-                          />
-                        </div>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
               </div>
 
               {/* Divider between sections */}
@@ -2554,6 +2394,28 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               Review your image configuration and build settings before creating the image.
             </p>
             
+            {/* Cloud Environment Expiration Reminder */}
+            {(selectedCloudProvider === 'aws' || selectedCloudProvider === 'gcp' || selectedCloudProvider === 'azure') && (
+              <Alert
+                variant="warning"
+                title="Important: Cloud image expiration notice"
+                style={{ marginBottom: '2rem' }}
+              >
+                <p>
+                  You are seeing this notice because you selected <strong>
+                  {selectedCloudProvider === 'aws' ? 'Amazon Web Services' : 
+                   selectedCloudProvider === 'gcp' ? 'Google Cloud Platform' : 
+                   'Microsoft Azure'}
+                  </strong> as your target environment.
+                </p>
+                <p style={{ marginTop: '0.5rem', marginBottom: 0 }}>
+                  <strong>The image will expire in 2 weeks</strong> after it's built. You must copy it to your own 
+                  {selectedCloudProvider === 'aws' ? ' AWS' : 
+                   selectedCloudProvider === 'gcp' ? ' GCP' : 
+                   ' Azure'} account to ensure continued access.
+                </p>
+              </Alert>
+            )}
 
             
             <Stack hasGutter>
@@ -2593,6 +2455,15 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       <DescriptionListGroup>
                         <DescriptionListTerm>Architecture</DescriptionListTerm>
                         <DescriptionListDescription>{baseImageArchitecture}</DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>Target Environment</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          {selectedCloudProvider === 'aws' ? 'Amazon Web Services' :
+                           selectedCloudProvider === 'gcp' ? 'Google Cloud Platform' :
+                           selectedCloudProvider === 'azure' ? 'Microsoft Azure' :
+                           <span style={{ color: '#666', fontStyle: 'italic' }}>No cloud provider selected</span>}
+                        </DescriptionListDescription>
                       </DescriptionListGroup>
                       {selectedCloudProvider && (
                         <DescriptionListGroup>
@@ -2866,6 +2737,266 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             </Stack>
           </div>
         );
+      case 4:
+        return (
+          <div>
+            <Title headingLevel="h2" size="xl" style={{ marginBottom: '1rem' }}>
+              Packages and Repos Ideation
+            </Title>
+            <p style={{ fontSize: '16px', color: '#666', marginBottom: '2rem' }}>
+              Design exploration for a comprehensive repository and package management system.
+            </p>
+
+
+
+            {/* Approach 1: Repository-First */}
+            <Card style={{ marginBottom: '2rem' }}>
+              <CardBody>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  🎯 Approach 1: Repository-First Workflow
+                </Title>
+                <p style={{ marginBottom: '1.5rem', color: '#666' }}>
+                  Users start by selecting repositories, then browse packages within each repository.
+                </p>
+                
+                <div style={{ border: '2px dashed #0066cc', borderRadius: '8px', padding: '1.5rem', backgroundColor: '#f8f9fa' }}>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
+                      1. Repository Selection
+                    </Title>
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                      <div style={{ flex: 1, padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px', backgroundColor: 'white' }}>
+                        <strong>Red Hat Repository</strong>
+                        <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                          ✅ Always included • BaseOS, AppStream, etc.
+                        </div>
+                      </div>
+                      <div style={{ flex: 1, padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px', backgroundColor: 'white' }}>
+                        <strong>Third-Party Repositories</strong>
+                        <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                          + Add EPEL, CentOS Stream, Custom...
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
+                      2. Package Selection Within Repository
+                    </Title>
+                    <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px', backgroundColor: 'white' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                        <span><strong>Red Hat Repository</strong> • 2,847 packages</span>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <Button variant="link" size="sm">Select All</Button>
+                          <Button variant="link" size="sm">Select None</Button>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                        <TextInput placeholder="Search packages..." style={{ flex: 1 }} />
+                        <div style={{ width: '150px', padding: '0.5rem', border: '1px solid #d2d2d2', borderRadius: '4px', fontSize: '0.875rem', color: '#666' }}>
+                          Package type ▼
+                        </div>
+                      </div>
+                      <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                        📦 Individual packages: httpd, nginx, postgresql...<br/>
+                        📚 Package groups: Development Tools, Web Server...
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
+                      3. Smart Recommendations
+                    </Title>
+                    <div style={{ padding: '1rem', border: '1px solid #ffc107', borderRadius: '4px', backgroundColor: '#fff3cd' }}>
+                      <strong>💡 Suggested packages for "httpd"</strong>
+                      <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                        Users who selected httpd also commonly add: mod_ssl, httpd-tools, certbot
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#e8f5e8', borderRadius: '4px' }}>
+                  <strong>✅ Pros:</strong> Clear hierarchy, easy to understand repository structure, bulk operations
+                </div>
+                <div style={{ marginTop: '0.5rem', padding: '1rem', backgroundColor: '#ffe8e8', borderRadius: '4px' }}>
+                  <strong>❌ Cons:</strong> Requires knowing which repository contains desired packages, more steps
+                </div>
+              </CardBody>
+            </Card>
+
+            {/* Approach 2: Search-First */}
+            <Card style={{ marginBottom: '2rem' }}>
+              <CardBody>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  🔍 Approach 2: Search-First Workflow
+                </Title>
+                <p style={{ marginBottom: '1.5rem', color: '#666' }}>
+                  Users search for packages by name, system handles repository management automatically.
+                </p>
+                
+                <div style={{ border: '2px dashed #28a745', borderRadius: '8px', padding: '1.5rem', backgroundColor: '#f8f9fa' }}>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
+                      1. Universal Search
+                    </Title>
+                    <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px', backgroundColor: 'white' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                        <TextInput placeholder="Search for any package or repository..." style={{ flex: 1 }} />
+                        <div style={{ width: '120px', padding: '0.5rem', border: '1px solid #d2d2d2', borderRadius: '4px', fontSize: '0.875rem', color: '#666' }}>
+                          All types ▼
+                        </div>
+                        <Button variant="primary">Search</Button>
+                      </div>
+                      <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                        Search across all available repositories simultaneously
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
+                      2. Results with Repository Context
+                    </Title>
+                    <div style={{ border: '1px solid #d2d2d2', borderRadius: '4px', backgroundColor: 'white' }}>
+                      <div style={{ padding: '0.75rem', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <strong>httpd</strong> <span style={{ color: '#666' }}>• Web server</span>
+                          <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                            📍 Red Hat Repository (BaseOS)
+                          </div>
+                        </div>
+                        <Button variant="secondary" size="sm">+ Add</Button>
+                      </div>
+                      <div style={{ padding: '0.75rem', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <strong>nginx</strong> <span style={{ color: '#666' }}>• Web server</span>
+                          <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                            📍 EPEL Repository
+                          </div>
+                        </div>
+                        <Button variant="secondary" size="sm">+ Add</Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
+                      3. Auto-Repository Addition
+                    </Title>
+                    <div style={{ padding: '1rem', border: '1px solid #17a2b8', borderRadius: '4px', backgroundColor: '#d1ecf1' }}>
+                      <strong>🔄 Adding "nginx" from EPEL Repository</strong>
+                      <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                        EPEL repository will be automatically added to your image configuration.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#e8f5e8', borderRadius: '4px' }}>
+                  <strong>✅ Pros:</strong> Fast discovery, no need to know repository structure, automatic dependency management
+                </div>
+                <div style={{ marginTop: '0.5rem', padding: '1rem', backgroundColor: '#ffe8e8', borderRadius: '4px' }}>
+                  <strong>❌ Cons:</strong> Less control over repositories, potential for unexpected additions
+                </div>
+              </CardBody>
+            </Card>
+
+            {/* Approach 3: Hybrid Dashboard */}
+            <Card style={{ marginBottom: '2rem' }}>
+              <CardBody>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  ⚡ Approach 3: Hybrid Dashboard
+                </Title>
+                <p style={{ marginBottom: '1.5rem', color: '#666' }}>
+                  Combined approach with clear selection overview and multiple discovery methods.
+                </p>
+                
+                <div style={{ border: '2px dashed #6f42c1', borderRadius: '8px', padding: '1.5rem', backgroundColor: '#f8f9fa' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                    {/* Left Side: Search & Add */}
+                    <div>
+                      <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
+                        🔍 Discovery & Search
+                      </Title>
+                      <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px', backgroundColor: 'white' }}>
+                        <div style={{ marginBottom: '1rem' }}>
+                          <TextInput placeholder="Search packages or repositories..." />
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                          <Button variant="tertiary" size="sm">Packages</Button>
+                          <Button variant="tertiary" size="sm">Package Groups</Button>
+                          <Button variant="tertiary" size="sm">Repositories</Button>
+                        </div>
+                        <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                          💡 Popular: Development Tools, Web Server, Database
+                        </div>
+                      </div>
+
+                      <div style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #ffc107', borderRadius: '4px', backgroundColor: '#fff3cd' }}>
+                        <strong>🎯 Recommendations</strong>
+                        <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                          Based on "Web Server" selection:<br/>
+                          • SSL certificates (certbot)<br/>
+                          • Performance monitoring (mod_status)<br/>
+                          • Security tools (mod_security)
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Side: Selection Summary */}
+                    <div>
+                      <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
+                        📋 Current Selection
+                      </Title>
+                      <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px', backgroundColor: 'white' }}>
+                        <div style={{ marginBottom: '1rem' }}>
+                          <strong>Repositories (2)</strong>
+                          <div style={{ marginTop: '0.5rem' }}>
+                            <Badge style={{ marginRight: '0.5rem' }}>Red Hat</Badge>
+                            <Badge style={{ marginRight: '0.5rem' }}>EPEL</Badge>
+                          </div>
+                        </div>
+                        <div style={{ marginBottom: '1rem' }}>
+                          <strong>Packages (5)</strong>
+                          <div style={{ marginTop: '0.5rem' }}>
+                            <Badge style={{ marginRight: '0.5rem' }}>httpd</Badge>
+                            <Badge style={{ marginRight: '0.5rem' }}>nginx</Badge>
+                            <Badge style={{ marginRight: '0.5rem' }}>+3 more</Badge>
+                          </div>
+                        </div>
+                        <div>
+                          <strong>Package Groups (1)</strong>
+                          <div style={{ marginTop: '0.5rem' }}>
+                            <Badge>Development Tools</Badge>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #28a745', borderRadius: '4px', backgroundColor: '#d4edda' }}>
+                        <strong>📊 Summary</strong>
+                        <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                          • 2 repositories enabled<br/>
+                          • 47 total packages (5 + 42 from groups)<br/>
+                          • ~127 MB additional size
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#e8f5e8', borderRadius: '4px' }}>
+                  <strong>✅ Pros:</strong> Best of both worlds, clear overview, flexible workflow, smart recommendations
+                </div>
+                <div style={{ marginTop: '0.5rem', padding: '1rem', backgroundColor: '#ffe8e8', borderRadius: '4px' }}>
+                  <strong>❌ Cons:</strong> More complex UI, potential information overload
+                </div>
+              </CardBody>
+            </Card>
+          </div>
+        );
       default:
         return null;
     }
@@ -2918,18 +3049,21 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               <Tab eventKey={1} title={<TabTitleText>Repositories and packages</TabTitleText>} />
               <Tab eventKey={2} title={<TabTitleText>Advanced settings</TabTitleText>} />
               <Tab eventKey={3} title={<TabTitleText>Review image</TabTitleText>} />
+              <Tab eventKey={4} title={<TabTitleText>Packages and repos ideation</TabTitleText>} />
             </Tabs>
           </div>
         </div>
 
         {/* Content Area */}
-        <div style={{ 
-          flex: 1,
-          minHeight: 0,
-          padding: '24px 24px 24px 32px',
-          overflowY: 'auto',
-          overflowX: 'hidden'
-        }}>
+        <div 
+          ref={contentAreaRef}
+          style={{ 
+            flex: 1,
+            minHeight: 0,
+            padding: '24px 24px 24px 32px',
+            overflowY: 'auto',
+            overflowX: 'hidden'
+          }}>
           {renderTabContent()}
         </div>
 
@@ -2950,7 +3084,13 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             {activeTabKey !== 3 && (
               <Button
                 variant="primary"
-                onClick={() => setActiveTabKey(3)}
+                onClick={() => {
+                  setActiveTabKey(3);
+                  // Scroll to top when navigating to Review tab to ensure users see the cloud expiration alert
+                  if (contentAreaRef.current) {
+                    contentAreaRef.current.scrollTop = 0;
+                  }
+                }}
                 isDisabled={false}
               >
                 Review image
