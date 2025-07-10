@@ -360,15 +360,10 @@ const Dashboard: React.FunctionComponent = () => {
                 content={
                   <div style={{ maxWidth: '300px' }}>
                     <p style={{ marginBottom: '0.5rem' }}>
-                      <strong>Why did this image expire?</strong>
-                    </p>
-                    <p style={{ marginBottom: '0.5rem' }}>
-                      Images built for cloud environments ({targetEnvironment}) expire after 2 weeks 
-                      because they're hosted temporarily in Red Hat's cloud account.
+                      Click to select this row and then use rebuild.
                     </p>
                     <p style={{ marginBottom: 0 }}>
-                      <strong>Solution:</strong> Use the toolbar above to rebuild this image, 
-                      then copy it to your own {targetEnvironment} account.
+                      <strong>Warning:</strong> Rebuild will pull latest changes (new package versions for example).
                     </p>
                   </div>
                 }
@@ -376,7 +371,7 @@ const Dashboard: React.FunctionComponent = () => {
               >
                 <span style={{ 
                   borderBottom: '1px dotted #151515', 
-                  cursor: 'help'
+                  cursor: 'pointer'
                 }}>
                   {capitalizeWords(status)}
                 </span>
