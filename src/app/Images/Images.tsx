@@ -637,6 +637,20 @@ const Images: React.FunctionComponent = () => {
               <p style={{ marginTop: '0.5rem', color: '#666' }}>
                 View and manage your system images
               </p>
+              <p style={{ marginTop: '0.25rem', fontSize: '0.875rem' }}>
+                <a 
+                  href="https://issues.redhat.com/browse/HMS-8807" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style={{ 
+                    color: '#0066cc', 
+                    textDecoration: 'none',
+                    borderBottom: '1px dotted #0066cc'
+                  }}
+                >
+                  🎫 HMS-8807 - Image Builder Table + Filtering
+                </a>
+              </p>
             </FlexItem>
             <FlexItem>
               <Flex spaceItems={{ default: 'spaceItemsSm' }}>
