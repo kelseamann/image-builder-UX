@@ -964,32 +964,10 @@ const Dashboard: React.FunctionComponent = () => {
             <FlexItem>
               <Flex spaceItems={{ default: 'spaceItemsSm' }}>
                 <FlexItem>
-                  <Button 
-                    variant="secondary" 
-                    onClick={() => {
-                      setSelectedImage(null); // Clear selected image for creation flow
-                      setIsBuildImageModalOpen(true);
-                    }}
-                    style={{
-                      backgroundColor: '#FF007F',
-                      borderColor: '#FF007F',
-                      color: 'white',
-                      fontWeight: 'bold',
-                      textShadow: '0 0 5px rgba(255, 0, 127, 0.5)',
-                      boxShadow: '0 0 10px rgba(255, 0, 127, 0.3)',
-                      transition: 'all 0.3s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#FF1493';
-                      e.currentTarget.style.borderColor = '#FF1493';
-                      e.currentTarget.style.boxShadow = '0 0 15px rgba(255, 0, 127, 0.5)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = '#FF007F';
-                      e.currentTarget.style.borderColor = '#FF007F';
-                      e.currentTarget.style.boxShadow = '0 0 10px rgba(255, 0, 127, 0.3)';
-                    }}
-                  >
+                  <Button variant="secondary" onClick={() => {
+                    setSelectedImage(null); // Clear selected image for creation flow
+                    setIsBuildImageModalOpen(true);
+                  }}>
                     Build Image
                   </Button>
                 </FlexItem>
