@@ -2736,6 +2736,55 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               </CardBody>
             </Card>
 
+
+
+            {/* Implementation Considerations */}
+            <Card>
+              <CardBody>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  🔧 Implementation Considerations
+                </Title>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
+                  <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px' }}>
+                    <strong>🎨 UI Consistency</strong>
+                    <ul style={{ margin: '0.5rem 0 0 1.2rem', fontSize: '0.875rem' }}>
+                      <li>Same Select components</li>
+                      <li>Consistent Button styles</li>
+                      <li>PatternFly Table patterns</li>
+                      <li>Standard form layouts</li>
+                    </ul>
+                  </div>
+                  <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px' }}>
+                    <strong>⚡ Performance</strong>
+                    <ul style={{ margin: '0.5rem 0 0 1.2rem', fontSize: '0.875rem' }}>
+                      <li>Virtual scrolling for large lists</li>
+                      <li>Debounced search inputs</li>
+                      <li>Lazy loading of package data</li>
+                      <li>Efficient state management</li>
+                    </ul>
+                  </div>
+                  <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px' }}>
+                    <strong>🔄 State Management</strong>
+                    <ul style={{ margin: '0.5rem 0 0 1.2rem', fontSize: '0.875rem' }}>
+                      <li>Repository selection state</li>
+                      <li>Package selection tracking</li>
+                      <li>Search result caching</li>
+                      <li>Recommendation engine</li>
+                    </ul>
+                  </div>
+                  <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px' }}>
+                    <strong>📱 Accessibility</strong>
+                    <ul style={{ margin: '0.5rem 0 0 1.2rem', fontSize: '0.875rem' }}>
+                      <li>Keyboard navigation</li>
+                      <li>Screen reader support</li>
+                      <li>High contrast modes</li>
+                      <li>Focus management</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardBody>
+            </Card>
+
             {/* Approach 1: Repository-First */}
             <Card style={{ marginBottom: '2rem' }}>
               <CardBody>
@@ -2779,12 +2828,12 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                           <Button variant="link" size="sm">Select None</Button>
                         </div>
                       </div>
-                                              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                          <TextInput placeholder="Search packages..." style={{ flex: 1 }} />
-                          <div style={{ width: '150px', padding: '0.5rem', border: '1px solid #d2d2d2', borderRadius: '4px', fontSize: '0.875rem', color: '#666' }}>
-                            Package type ▼
-                          </div>
+                      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                        <TextInput placeholder="Search packages..." style={{ flex: 1 }} />
+                        <div style={{ width: '150px', padding: '0.5rem', border: '1px solid #d2d2d2', borderRadius: '4px', fontSize: '0.875rem', color: '#666' }}>
+                          Package type ▼
                         </div>
+                      </div>
                       <div style={{ fontSize: '0.875rem', color: '#666' }}>
                         📦 Individual packages: httpd, nginx, postgresql...<br/>
                         📚 Package groups: Development Tools, Web Server...
@@ -2832,9 +2881,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px', backgroundColor: 'white' }}>
                       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
                         <TextInput placeholder="Search for any package or repository..." style={{ flex: 1 }} />
-                                                 <div style={{ width: '120px', padding: '0.5rem', border: '1px solid #d2d2d2', borderRadius: '4px', fontSize: '0.875rem', color: '#666' }}>
-                           All types ▼
-                         </div>
+                        <div style={{ width: '120px', padding: '0.5rem', border: '1px solid #d2d2d2', borderRadius: '4px', fontSize: '0.875rem', color: '#666' }}>
+                          All types ▼
+                        </div>
                         <Button variant="primary">Search</Button>
                       </div>
                       <div style={{ fontSize: '0.875rem', color: '#666' }}>
@@ -2979,53 +3028,6 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 </div>
                 <div style={{ marginTop: '0.5rem', padding: '1rem', backgroundColor: '#ffe8e8', borderRadius: '4px' }}>
                   <strong>❌ Cons:</strong> More complex UI, potential information overload
-                </div>
-              </CardBody>
-            </Card>
-
-            {/* Implementation Considerations */}
-            <Card>
-              <CardBody>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                  🔧 Implementation Considerations
-                </Title>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
-                  <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px' }}>
-                    <strong>🎨 UI Consistency</strong>
-                    <ul style={{ margin: '0.5rem 0 0 1.2rem', fontSize: '0.875rem' }}>
-                      <li>Same Select components</li>
-                      <li>Consistent Button styles</li>
-                      <li>PatternFly Table patterns</li>
-                      <li>Standard form layouts</li>
-                    </ul>
-                  </div>
-                  <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px' }}>
-                    <strong>⚡ Performance</strong>
-                    <ul style={{ margin: '0.5rem 0 0 1.2rem', fontSize: '0.875rem' }}>
-                      <li>Virtual scrolling for large lists</li>
-                      <li>Debounced search inputs</li>
-                      <li>Lazy loading of package data</li>
-                      <li>Efficient state management</li>
-                    </ul>
-                  </div>
-                  <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px' }}>
-                    <strong>🔄 State Management</strong>
-                    <ul style={{ margin: '0.5rem 0 0 1.2rem', fontSize: '0.875rem' }}>
-                      <li>Repository selection state</li>
-                      <li>Package selection tracking</li>
-                      <li>Search result caching</li>
-                      <li>Recommendation engine</li>
-                    </ul>
-                  </div>
-                  <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px' }}>
-                    <strong>📱 Accessibility</strong>
-                    <ul style={{ margin: '0.5rem 0 0 1.2rem', fontSize: '0.875rem' }}>
-                      <li>Keyboard navigation</li>
-                      <li>Screen reader support</li>
-                      <li>High contrast modes</li>
-                      <li>Focus management</li>
-                    </ul>
-                  </div>
                 </div>
               </CardBody>
             </Card>
