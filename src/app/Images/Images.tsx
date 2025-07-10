@@ -611,7 +611,7 @@ const Images: React.FunctionComponent = () => {
           position: 'fixed',
           top: '80px',
           right: '20px',
-          zIndex: 99999,
+          zIndex: 999999,
           maxWidth: '400px',
           minWidth: '300px'
         }}>

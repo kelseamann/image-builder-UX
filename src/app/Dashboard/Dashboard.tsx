@@ -862,7 +862,7 @@ const Dashboard: React.FunctionComponent = () => {
           position: 'fixed',
           top: '20px',
           right: '20px',
-          zIndex: 10000,
+          zIndex: 999999,
           maxWidth: '400px',
           minWidth: '300px'
         }}>
