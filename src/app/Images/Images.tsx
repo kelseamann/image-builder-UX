@@ -35,7 +35,6 @@ interface ImageTableRow extends ImageInfo {
   lastUpdate: string;
   dateUpdated: Date;
   targetEnvironment: 'AWS' | 'GCP' | 'Azure' | 'Bare metal' | 'VMWare';
-  version: string;
   owner: string;
   isFavorited: boolean;
   uuid: string;
@@ -76,7 +75,6 @@ const Images: React.FunctionComponent = () => {
       lastUpdate: '2024-01-15 14:30:25',
       dateUpdated: new Date('2024-01-15'),
       targetEnvironment: 'AWS',
-      version: '2',
       owner: 'DevOps Team',
       isFavorited: true,
       uuid: '7fb34b5c-c0d4-40ab-b112-a8492d6ee61b',
@@ -93,7 +91,6 @@ const Images: React.FunctionComponent = () => {
       lastUpdate: '2024-01-14 09:15:40',
       dateUpdated: new Date('2024-01-14'),
       targetEnvironment: 'GCP',
-      version: '1',
       owner: 'Backend Team',
       isFavorited: false,
       uuid: 'a2c5f8e1-9b3d-4f7a-8e2c-1d5b7f9a3c6e',
@@ -110,7 +107,6 @@ const Images: React.FunctionComponent = () => {
       lastUpdate: '2024-01-15 16:45:12',
       dateUpdated: new Date('2024-01-15'),
       targetEnvironment: 'Azure',
-      version: '3',
       owner: 'Data Team',
       isFavorited: false,
       uuid: 'f3e7d2a9-5c8b-4a1f-9e6d-2b5a8c1f4e7a',
@@ -127,7 +123,6 @@ const Images: React.FunctionComponent = () => {
       lastUpdate: '2024-01-13 11:20:18',
       dateUpdated: new Date('2024-01-13'),
       targetEnvironment: 'Bare metal',
-      version: '1',
       owner: 'Security Team',
       isFavorited: true,
       uuid: 'b8d4c2f6-7a9e-4b3c-8f1d-5e2a9c6b8d4f',
@@ -144,7 +139,6 @@ const Images: React.FunctionComponent = () => {
       lastUpdate: '2023-10-12 08:45:30',
       dateUpdated: new Date('2023-10-12'),
       targetEnvironment: 'GCP',
-      version: '2',
       owner: 'SRE Team',
       isFavorited: false,
       uuid: 'e9a3b7f2-4d6c-4e8a-9b2f-7c4e1a6b9d3e',
@@ -161,7 +155,6 @@ const Images: React.FunctionComponent = () => {
       lastUpdate: '2024-01-15 13:22:44',
       dateUpdated: new Date('2024-01-15'),
       targetEnvironment: 'AWS',
-      version: '1',
       owner: 'Platform Team',
       isFavorited: false,
       uuid: 'c5f8a1d3-6b2e-4c9f-8a5d-3f7b2e9c5a8d',
@@ -321,10 +314,7 @@ const Images: React.FunctionComponent = () => {
             aValue = a.targetEnvironment;
             bValue = b.targetEnvironment;
             break;
-          case 'version':
-            aValue = a.version;
-            bValue = b.version;
-            break;
+
           case 'status':
             aValue = a.status;
             bValue = b.status;
@@ -915,18 +905,7 @@ const Images: React.FunctionComponent = () => {
                         <>Target Environment{getSortIcon('targetEnvironment')}</>
                       )}
                     </th>
-                    <th 
-                      style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600, cursor: 'pointer' }}
-                      onClick={() => handleSort('version')}
-                    >
-                      {sortField === 'version' ? (
-                        <Tooltip content={getSortTooltipText('version', sortDirection)}>
-                          <span>Version{getSortIcon('version')}</span>
-                        </Tooltip>
-                      ) : (
-                        <>Version{getSortIcon('version')}</>
-                      )}
-                    </th>
+
                     <th 
                       style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600, cursor: 'pointer' }}
                       onClick={() => handleSort('status')}
@@ -1008,16 +987,7 @@ const Images: React.FunctionComponent = () => {
                       </td>
                       <td style={{ padding: '1rem 1.5rem' }}>{image.currentRelease}</td>
                       <td style={{ padding: '1rem 1.5rem' }}>{image.targetEnvironment}</td>
-                      <td style={{ padding: '1rem 1.5rem' }}>
-                        <code style={{ 
-                          backgroundColor: '#f5f5f5', 
-                          padding: '0.25rem 0.5rem', 
-                          borderRadius: '3px',
-                          fontSize: '0.9em'
-                        }}>
-                          {image.version}
-                        </code>
-                      </td>
+
                       <td style={{ padding: '1rem 1.5rem' }}>{getStatusBadge(image.status, image.targetEnvironment)}</td>
                       <td style={{ padding: '1rem 1.5rem' }}>{image.owner}</td>
                       <td style={{ padding: '1rem 1.5rem' }} onClick={(e) => e.stopPropagation()}>
@@ -1093,7 +1063,7 @@ const Images: React.FunctionComponent = () => {
                     </tr>
                     {expandedRows.has(image.id) && (
                       <tr style={{ backgroundColor: '#f8f9fa' }}>
-                        <td colSpan={11} style={{ padding: '1.5rem', borderBottom: index < paginatedImages.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
+                        <td colSpan={10} style={{ padding: '1.5rem', borderBottom: index < paginatedImages.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
                           <div>
                             <h4 style={{ marginBottom: '1rem', fontSize: '1rem', fontWeight: 600 }}>Build information</h4>
                             <div style={{ display: 'grid', gap: '0.5rem' }}>
