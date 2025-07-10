@@ -224,7 +224,7 @@ const Images: React.FunctionComponent = () => {
                 position="top"
               >
                 <span style={{ 
-                  borderBottom: '1px dotted #f0ab00', 
+                  borderBottom: '1px dotted #151515', 
                   cursor: 'help'
                 }}>
                   {capitalizeWords(status)}
