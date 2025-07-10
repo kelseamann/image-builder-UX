@@ -2359,6 +2359,32 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               Review your image configuration and build settings before creating the image.
             </p>
             
+            {/* Cloud Environment Expiration Reminder */}
+            {(selectedCloudProvider === 'aws' || selectedCloudProvider === 'gcp' || selectedCloudProvider === 'azure') && (
+              <Alert
+                variant="warning"
+                title="Important: Cloud image expiration notice"
+                style={{ marginBottom: '2rem' }}
+              >
+                <p>
+                  You have selected <strong>
+                  {selectedCloudProvider === 'aws' ? 'Amazon Web Services' : 
+                   selectedCloudProvider === 'gcp' ? 'Google Cloud Platform' : 
+                   'Microsoft Azure'}
+                  </strong> as your target cloud environment.
+                </p>
+                <p style={{ marginTop: '0.5rem' }}>
+                  <strong>⚠️ The image will expire in 2 weeks</strong> after it's built. To ensure continued access, 
+                  you must copy the image to your own cloud provider account before it expires.
+                </p>
+                <p style={{ marginTop: '0.5rem', marginBottom: 0 }}>
+                  After the build completes, follow the deployment instructions to copy the image to your 
+                  {selectedCloudProvider === 'aws' ? ' AWS' : 
+                   selectedCloudProvider === 'gcp' ? ' GCP' : 
+                   ' Azure'} account.
+                </p>
+              </Alert>
+            )}
 
             
             <Stack hasGutter>
@@ -2398,6 +2424,15 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       <DescriptionListGroup>
                         <DescriptionListTerm>Architecture</DescriptionListTerm>
                         <DescriptionListDescription>{baseImageArchitecture}</DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>Target Environment</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          {selectedCloudProvider === 'aws' ? 'Amazon Web Services' :
+                           selectedCloudProvider === 'gcp' ? 'Google Cloud Platform' :
+                           selectedCloudProvider === 'azure' ? 'Microsoft Azure' :
+                           <span style={{ color: '#666', fontStyle: 'italic' }}>No cloud provider selected</span>}
+                        </DescriptionListDescription>
                       </DescriptionListGroup>
                       {selectedCloudProvider && (
                         <DescriptionListGroup>
