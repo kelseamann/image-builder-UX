@@ -63,7 +63,8 @@ import {
   EditIcon,
   PlusIcon,
   TimesCircleIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  MinusCircleIcon
 } from '@patternfly/react-icons';
 
 interface UserRow {
@@ -193,6 +194,23 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
   // Organization ID state
   const [organizationId, setOrganizationId] = React.useState<string>('11009103');
+
+  // Systemd services state
+  const [systemdDisabledServices, setSystemdDisabledServices] = React.useState<string>('');
+  const [systemdMaskedServices, setSystemdMaskedServices] = React.useState<string>('');
+  const [systemdEnabledServices, setSystemdEnabledServices] = React.useState<string>('');
+
+  // Firewall state
+  const [firewallPorts, setFirewallPorts] = React.useState<string[]>(['']);
+  const [firewallDisabledServices, setFirewallDisabledServices] = React.useState<string[]>(['']);
+  const [firewallEnabledServices, setFirewallEnabledServices] = React.useState<string[]>(['']);
+
+  // Kernel append state
+  const [kernelAppend, setKernelAppend] = React.useState<string>('');
+
+  // Specialty keyboards state
+  const [specialtyKeyboard, setSpecialtyKeyboard] = React.useState<string>('');
+  const [isSpecialtyKeyboardOpen, setIsSpecialtyKeyboardOpen] = React.useState<boolean>(false);
 
 
   
@@ -704,6 +722,42 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
   const getFilteredRepositories = () => {
     return availableRepositories;
+  };
+
+  // Firewall helper functions
+  const addFirewallRow = () => {
+    setFirewallPorts([...firewallPorts, '']);
+    setFirewallDisabledServices([...firewallDisabledServices, '']);
+    setFirewallEnabledServices([...firewallEnabledServices, '']);
+  };
+
+  const removeFirewallRow = (index: number) => {
+    if (firewallPorts.length > 1) {
+      const newPorts = firewallPorts.filter((_, i) => i !== index);
+      const newDisabledServices = firewallDisabledServices.filter((_, i) => i !== index);
+      const newEnabledServices = firewallEnabledServices.filter((_, i) => i !== index);
+      setFirewallPorts(newPorts);
+      setFirewallDisabledServices(newDisabledServices);
+      setFirewallEnabledServices(newEnabledServices);
+    }
+  };
+
+  const updateFirewallPort = (index: number, value: string) => {
+    const newPorts = [...firewallPorts];
+    newPorts[index] = value;
+    setFirewallPorts(newPorts);
+  };
+
+  const updateFirewallDisabledService = (index: number, value: string) => {
+    const newServices = [...firewallDisabledServices];
+    newServices[index] = value;
+    setFirewallDisabledServices(newServices);
+  };
+
+  const updateFirewallEnabledService = (index: number, value: string) => {
+    const newServices = [...firewallEnabledServices];
+    newServices[index] = value;
+    setFirewallEnabledServices(newServices);
   };
 
   const handleTabClick = (event: React.MouseEvent | React.KeyboardEvent, tabIndex: string | number) => {
@@ -2131,6 +2185,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       ))}
                     </SelectList>
                   </Select>
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                    Comma-separated list of NTP servers
+                  </div>
                 </FormGroup>
 
                 <FormGroup
@@ -2247,7 +2304,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 <FormGroup
                   label="Suggested keyboards"
                   fieldId="suggested-keyboards"
-                  style={{ marginBottom: '0rem' }}
+                  style={{ marginBottom: '1rem' }}
                 >
                   <Select
                     id="suggested-keyboards-select"
@@ -2274,6 +2331,41 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       <SelectOption value="German QWERTZ">German QWERTZ</SelectOption>
                       <SelectOption value="French AZERTY">French AZERTY</SelectOption>
                       <SelectOption value="UK QWERTY">UK QWERTY</SelectOption>
+                    </SelectList>
+                  </Select>
+                </FormGroup>
+
+                <FormGroup
+                  label="Specialty keyboards"
+                  fieldId="specialty-keyboards"
+                  style={{ marginBottom: '0rem' }}
+                >
+                  <Select
+                    id="specialty-keyboards-select"
+                    isOpen={isSpecialtyKeyboardOpen}
+                    selected={specialtyKeyboard}
+                    onSelect={(_, selection) => {
+                      setSpecialtyKeyboard(String(selection));
+                      setIsSpecialtyKeyboardOpen(false);
+                    }}
+                    onOpenChange={(isOpen) => setIsSpecialtyKeyboardOpen(isOpen)}
+                    toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                      <MenuToggle 
+                        ref={toggleRef} 
+                        onClick={() => setIsSpecialtyKeyboardOpen(!isSpecialtyKeyboardOpen)}
+                        isExpanded={isSpecialtyKeyboardOpen}
+                        style={{ width: '300px' }}
+                      >
+                        {specialtyKeyboard || 'Select specialty keyboard'}
+                      </MenuToggle>
+                    )}
+                  >
+                    <SelectList>
+                      <SelectOption value="Dvorak">Dvorak</SelectOption>
+                      <SelectOption value="Colemak">Colemak</SelectOption>
+                      <SelectOption value="Workman">Workman</SelectOption>
+                      <SelectOption value="Neo">Neo</SelectOption>
+                      <SelectOption value="Bépo">Bépo</SelectOption>
                     </SelectList>
                   </Select>
                 </FormGroup>
@@ -2350,6 +2442,193 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     </SelectList>
                   </Select>
                 </FormGroup>
+
+                <FormGroup
+                  label="Append"
+                  fieldId="kernel-append"
+                  style={{ marginBottom: '0rem' }}
+                >
+                  <TextInput
+                    id="kernel-append"
+                    value={kernelAppend}
+                    onChange={(_event, value) => setKernelAppend(value)}
+                    placeholder="Enter kernel append options"
+                    style={{ width: '400px' }}
+                  />
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    color: '#666'
+                  }}>
+                    <MinusIcon style={{ fontSize: '0.875rem' }} />
+                    <span>Additional kernel boot parameters to append</span>
+                  </div>
+                </FormGroup>
+              </div>
+
+              {/* Divider */}
+              <div style={{ 
+                height: '1px', 
+                backgroundColor: '#d2d2d2', 
+                margin: '1rem 0' 
+              }} />
+
+              {/* Systemd Services Section */}
+              <div style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  Systemd services
+                </Title>
+                
+                <FormGroup
+                  label="Disabled services"
+                  fieldId="systemd-disabled-services"
+                  style={{ marginBottom: '1rem' }}
+                >
+                  <TextInput
+                    id="systemd-disabled-services"
+                    value={systemdDisabledServices}
+                    onChange={(_event, value) => setSystemdDisabledServices(value)}
+                    placeholder="Enter services to disable"
+                    style={{ width: '40%' }}
+                  />
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                    Comma-separated list of services to disable
+                  </div>
+                </FormGroup>
+
+                <FormGroup
+                  label="Masked services"
+                  fieldId="systemd-masked-services"
+                  style={{ marginBottom: '1rem' }}
+                >
+                  <TextInput
+                    id="systemd-masked-services"
+                    value={systemdMaskedServices}
+                    onChange={(_event, value) => setSystemdMaskedServices(value)}
+                    placeholder="Enter services to mask"
+                    style={{ width: '40%' }}
+                  />
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                    Comma-separated list of services to disable
+                  </div>
+                </FormGroup>
+
+                <FormGroup
+                  label="Enabled services"
+                  fieldId="systemd-enabled-services"
+                  style={{ marginBottom: '0rem' }}
+                >
+                  <TextInput
+                    id="systemd-enabled-services"
+                    value={systemdEnabledServices}
+                    onChange={(_event, value) => setSystemdEnabledServices(value)}
+                    placeholder="Enter services to enable"
+                    style={{ width: '40%' }}
+                  />
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                    Comma-separated list of services to disable
+                  </div>
+                </FormGroup>
+              </div>
+
+              {/* Divider */}
+              <div style={{ 
+                height: '1px', 
+                backgroundColor: '#d2d2d2', 
+                margin: '1rem 0' 
+              }} />
+
+              {/* Firewall Section */}
+              <div style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  Firewall
+                </Title>
+                
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                  <FormGroup
+                    label="Enabled ports"
+                    fieldId="firewall-enabled-ports"
+                    style={{ flex: 1 }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {firewallPorts.map((port, index) => (
+                        <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <TextInput
+                            id={`firewall-enabled-ports-${index}`}
+                            value={port}
+                            onChange={(_event, value) => updateFirewallPort(index, value)}
+                            placeholder="Enter port (e.g., 8080, 443)"
+                            style={{ flex: 1 }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </FormGroup>
+
+                  <FormGroup
+                    label="Disabled services"
+                    fieldId="firewall-disabled-services"
+                    style={{ flex: 1 }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {firewallDisabledServices.map((service, index) => (
+                        <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <TextInput
+                            id={`firewall-disabled-services-${index}`}
+                            value={service}
+                            onChange={(_event, value) => updateFirewallDisabledService(index, value)}
+                            placeholder="Enter service name"
+                            style={{ flex: 1 }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </FormGroup>
+
+                  <FormGroup
+                    label="Enabled services"
+                    fieldId="firewall-enabled-services"
+                    style={{ flex: 1 }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {firewallEnabledServices.map((service, index) => (
+                        <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <TextInput
+                            id={`firewall-enabled-services-${index}`}
+                            value={service}
+                            onChange={(_event, value) => updateFirewallEnabledService(index, value)}
+                            placeholder="Enter service name"
+                            style={{ flex: 1 }}
+                          />
+                          <MinusCircleIcon
+                            style={{ 
+                              fontSize: '1.25rem', 
+                              color: '#151515',
+                              cursor: firewallEnabledServices.length > 1 ? 'pointer' : 'not-allowed',
+                              opacity: firewallEnabledServices.length > 1 ? 1 : 0.3
+                            }}
+                            onClick={() => {
+                              if (firewallEnabledServices.length > 1) {
+                                removeFirewallRow(index);
+                              }
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </FormGroup>
+                </div>
+
+                <Button
+                  variant="secondary"
+                  onClick={addFirewallRow}
+                  style={{ marginBottom: '0rem' }}
+                >
+                  Add more
+                </Button>
               </div>
 
               {/* Divider */}
