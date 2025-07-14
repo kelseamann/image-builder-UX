@@ -745,20 +745,29 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     });
   };
 
-  const handleRowPackageSearch = (rowId: string, searchTerm: string) => {
-    // Update the search term for this row
+  const handleRowPackageSearchInput = (rowId: string, searchTerm: string) => {
+    // Update the search term for this row (without performing search)
     updateRepositoryRow(rowId, { packageSearchTerm: searchTerm });
-    
+  };
+
+  const performRowPackageSearch = (rowId: string) => {
     // Perform search if repository is selected and term is not empty
     const row = repositoryRows.find(r => r.id === rowId);
-    if (row && row.repository && searchTerm.trim()) {
+    if (row && row.repository && row.packageSearchTerm.trim()) {
       const filtered = allSearchResults.filter(pkg => 
-        pkg.name.toLowerCase().includes(searchTerm.toLowerCase())
+        pkg.name.toLowerCase().includes(row.packageSearchTerm.toLowerCase())
       );
       updateRepositoryRow(rowId, { searchResults: filtered });
     } else {
       updateRepositoryRow(rowId, { searchResults: [] });
     }
+  };
+
+  const handleRowPackageSearchClear = (rowId: string) => {
+    updateRepositoryRow(rowId, { 
+      packageSearchTerm: '',
+      searchResults: []
+    });
   };
 
   const handlePackageSelection = (rowId: string, pkg: any) => {
@@ -2254,8 +2263,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                                       <SearchInput
                                         placeholder={row.repository ? "Search for packages..." : "Select repository first"}
                                         value={row.packageSearchTerm}
-                                        onChange={(_event, value) => handleRowPackageSearch(row.id, value)}
-                                        onClear={() => handleRowPackageSearch(row.id, '')}
+                                        onChange={(_event, value) => handleRowPackageSearchInput(row.id, value)}
+                                        onSearch={() => performRowPackageSearch(row.id)}
+                                        onClear={() => handleRowPackageSearchClear(row.id)}
+                                        onKeyDown={(event) => {
+                                          if (event.key === 'Enter') {
+                                            performRowPackageSearch(row.id);
+                                          }
+                                        }}
                                         isDisabled={!row.repository}
                                         style={{ flex: 1 }}
                                       />
