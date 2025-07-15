@@ -52,7 +52,8 @@ import {
   StackItem,
   Badge,
   Tooltip,
-  Divider
+  Divider,
+  Spinner
 } from '@patternfly/react-core';
 import { 
   InfoCircleIcon, 
@@ -250,12 +251,15 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   interface RepositoryRow {
     id: string;
     repository: string;
+    repositorySearchTerm: string;
     packageSearchTerm: string;
     selectedPackage: any | null;
     isLocked: boolean;
     isRepositoryDropdownOpen: boolean;
     searchResults: any[];
     isOpenSCAPRequired: boolean;
+    isLoading: boolean;
+    isRepositorySearching: boolean;
   }
 
   const [repositoryRows, setRepositoryRows] = React.useState<RepositoryRow[]>([
@@ -263,32 +267,41 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     {
       id: 'openscap-1',
       repository: 'Red Hat',
+      repositorySearchTerm: 'Red Hat',
       packageSearchTerm: 'aide',
       selectedPackage: { id: 'aide', name: 'aide', version: '0.16', repository: 'BaseOS' },
       isLocked: true,
       isRepositoryDropdownOpen: false,
       searchResults: [],
-      isOpenSCAPRequired: true
+      isOpenSCAPRequired: true,
+      isLoading: false,
+      isRepositorySearching: false
     },
     {
       id: 'openscap-2', 
       repository: 'Red Hat',
+      repositorySearchTerm: 'Red Hat',
       packageSearchTerm: 'sudo',
       selectedPackage: { id: 'sudo', name: 'sudo', version: '1.9.5p2', repository: 'BaseOS' },
       isLocked: true,
       isRepositoryDropdownOpen: false,
       searchResults: [],
-      isOpenSCAPRequired: true
+      isOpenSCAPRequired: true,
+      isLoading: false,
+      isRepositorySearching: false
     },
     {
       id: 'row-1',
-      repository: 'Red Hat',
+      repository: '',
+      repositorySearchTerm: 'Custom Repository',
       packageSearchTerm: '',
       selectedPackage: null,
       isLocked: false,
       isRepositoryDropdownOpen: false,
       searchResults: [],
-      isOpenSCAPRequired: false
+      isOpenSCAPRequired: false,
+      isLoading: false,
+      isRepositorySearching: true
     }
   ]);
   
@@ -296,6 +309,29 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const [isSearchPackageTypeOpen, setIsSearchPackageTypeOpen] = React.useState<boolean>(false);
   const [searchResultsPage, setSearchResultsPage] = React.useState<number>(1);
   const [searchResultsPerPage, setSearchResultsPerPage] = React.useState<number>(10);
+
+  // Function to calculate dropdown position to avoid modal overflow
+  const getDropdownPosition = (inputElement: HTMLElement | null) => {
+    if (!inputElement) return { top: '100%', bottom: 'auto', marginTop: '4px', marginBottom: '0' };
+    
+    const inputRect = inputElement.getBoundingClientRect();
+    const modalElement = contentAreaRef.current;
+    const modalRect = modalElement?.getBoundingClientRect();
+    
+    if (!modalRect) return { top: '100%', bottom: 'auto', marginTop: '4px', marginBottom: '0' };
+    
+    const spaceBelow = modalRect.bottom - inputRect.bottom;
+    const spaceAbove = inputRect.top - modalRect.top;
+    const dropdownHeight = 200; // maxHeight of dropdown
+    
+    if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+      // Position above input
+      return { top: 'auto', bottom: '100%', marginTop: '0', marginBottom: '4px' };
+    } else {
+      // Position below input (default)
+      return { top: '100%', bottom: 'auto', marginTop: '4px', marginBottom: '0' };
+    }
+  };
 
 
   
@@ -438,7 +474,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   ];
 
   // Repository options
-  const availableRepositories = [
+  const [availableRepositories, setAvailableRepositories] = React.useState<string[]>([
     'Red Hat',
     'EPEL',
     'CentOS Stream',
@@ -446,7 +482,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     'RPM Fusion',
     'Custom Repository 1',
     'Custom Repository 2'
-  ];
+  ]);
 
   // Search package types
   const searchPackageTypes = [
@@ -734,14 +770,25 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     const newRow: RepositoryRow = {
       id: `row-${Date.now()}`,
       repository: 'Red Hat',
+      repositorySearchTerm: 'Red Hat',
       packageSearchTerm: '',
       selectedPackage: null,
       isLocked: false,
       isRepositoryDropdownOpen: false,
       searchResults: [],
-      isOpenSCAPRequired: false
+      isOpenSCAPRequired: false,
+      isLoading: false,
+      isRepositorySearching: false
     };
     setRepositoryRows([...repositoryRows, newRow]);
+  };
+
+  const handleRepositorySearchClear = (rowId: string) => {
+    updateRepositoryRow(rowId, {
+      repositorySearchTerm: '',
+      repository: '',
+      isRepositorySearching: false
+    });
   };
 
   const updateRepositoryRow = (rowId: string, updates: Partial<RepositoryRow>) => {
@@ -755,12 +802,29 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const handleRepositorySelect = (rowId: string, repository: string) => {
     updateRepositoryRow(rowId, { 
       repository, 
+      repositorySearchTerm: repository,
       isRepositoryDropdownOpen: false,
       packageSearchTerm: '', // Reset search when repository changes
       searchResults: [],
       selectedPackage: null,
-      isLocked: false
+      isLocked: false,
+      isRepositorySearching: false
     });
+  };
+
+  const handleRepositorySearchInput = (rowId: string, searchTerm: string) => {
+    updateRepositoryRow(rowId, { 
+      repositorySearchTerm: searchTerm,
+      isRepositorySearching: true
+    });
+  };
+
+  const handleRepositorySearchSelect = (rowId: string, repository: string) => {
+    // If it's a new repository not in the list, add it
+    if (!availableRepositories.includes(repository) && repository.trim()) {
+      setAvailableRepositories(prev => [...prev, repository.trim()]);
+    }
+    handleRepositorySelect(rowId, repository);
   };
 
   const handleRowPackageSearchInput = (rowId: string, searchTerm: string) => {
@@ -772,19 +836,26 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     // Perform search if repository is selected and term is not empty
     const row = repositoryRows.find(r => r.id === rowId);
     if (row && row.repository && row.packageSearchTerm.trim()) {
-      const filtered = allSearchResults.filter(pkg => 
-        pkg.name.toLowerCase().includes(row.packageSearchTerm.toLowerCase())
-      );
-      updateRepositoryRow(rowId, { searchResults: filtered });
+      // Set loading state
+      updateRepositoryRow(rowId, { isLoading: true, searchResults: [] });
+      
+      // Simulate async search with timeout (replace with real API call)
+      setTimeout(() => {
+        const filtered = allSearchResults.filter(pkg => 
+          pkg.name.toLowerCase().includes(row.packageSearchTerm.toLowerCase())
+        );
+        updateRepositoryRow(rowId, { searchResults: filtered, isLoading: false });
+      }, 800);
     } else {
-      updateRepositoryRow(rowId, { searchResults: [] });
+      updateRepositoryRow(rowId, { searchResults: [], isLoading: false });
     }
   };
 
   const handleRowPackageSearchClear = (rowId: string) => {
     updateRepositoryRow(rowId, { 
       packageSearchTerm: '',
-      searchResults: []
+      searchResults: [],
+      isLoading: false
     });
   };
 
@@ -840,8 +911,13 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     }
   };
 
-  const getFilteredRepositories = () => {
-    return availableRepositories;
+  const getFilteredRepositories = (searchTerm: string = '') => {
+    if (!searchTerm.trim()) {
+      return availableRepositories;
+    }
+    return availableRepositories.filter(repo => 
+      repo.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   };
 
   // Firewall helper functions
@@ -1926,223 +2002,309 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               </FormGroup>
 
               {/* Repository Rows - Grouped Layout */}
-                <Card style={{ overflow: 'visible' }}>
-                  <CardBody style={{ padding: '1.5rem', overflow: 'visible' }}>
-                    <Stack hasGutter>
-                      {repositoryRows.map((row, index) => (
-                        <StackItem key={row.id}>
-                          <Grid hasGutter>
-                            <GridItem span={3}>
-                              <FormGroup
-                                label={index === 0 ? "Package Type" : ""}
-                                fieldId={`package-type-${row.id}`}
+              <Stack hasGutter>
+                {repositoryRows.map((row, index) => (
+                  <StackItem key={row.id}>
+                    <Grid hasGutter>
+                      <GridItem span={3}>
+                        <FormGroup
+                          label={index === 0 ? "Package Type" : ""}
+                          fieldId={`package-type-${row.id}`}
+                        >
+                          <Select
+                            id={`package-type-select-${row.id}`}
+                            isOpen={isSearchPackageTypeOpen}
+                            selected={searchPackageType === 'individual' ? 'Individual packages' : 'Package groups'}
+                            onSelect={onSearchPackageTypeSelect}
+                            onOpenChange={(isOpen) => setIsSearchPackageTypeOpen(isOpen)}
+                            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                              <MenuToggle 
+                                ref={toggleRef} 
+                                onClick={() => setIsSearchPackageTypeOpen(!isSearchPackageTypeOpen)}
+                                isExpanded={isSearchPackageTypeOpen}
+                                style={{ width: '100%' }}
+                                isDisabled={row.isOpenSCAPRequired}
                               >
-                                <Select
-                                  id={`package-type-select-${row.id}`}
-                                  isOpen={isSearchPackageTypeOpen}
-                                  selected={searchPackageType === 'individual' ? 'Individual packages' : 'Package groups'}
-                                  onSelect={onSearchPackageTypeSelect}
-                                  onOpenChange={(isOpen) => setIsSearchPackageTypeOpen(isOpen)}
-                                  toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                                    <MenuToggle 
-                                      ref={toggleRef} 
-                                      onClick={() => setIsSearchPackageTypeOpen(!isSearchPackageTypeOpen)}
-                                      isExpanded={isSearchPackageTypeOpen}
-                                      style={{ width: '100%' }}
-                                      isDisabled={row.isOpenSCAPRequired}
-                                    >
-                                      {searchPackageType === 'individual' ? 'Individual packages' : 'Package groups'}
-                                    </MenuToggle>
-                                  )}
-                                >
-                                  <SelectList>
-                                    <SelectOption value="individual">Individual packages</SelectOption>
-                                    <SelectOption value="groups">Package groups</SelectOption>
-                                  </SelectList>
-                                </Select>
-                              </FormGroup>
-                            </GridItem>
-                            
-                            <GridItem span={3}>
-                              <FormGroup
-                                label={index === 0 ? "Repository" : ""}
-                                fieldId={`repository-${row.id}`}
-                              >
-                                <Select
-                                  id={`repository-select-${row.id}`}
-                                  isOpen={row.isRepositoryDropdownOpen}
-                                  selected={row.repository}
-                                  onSelect={(_, selection) => {
-                                    handleRepositorySelect(row.id, String(selection));
+                                {searchPackageType === 'individual' ? 'Individual packages' : 'Package groups'}
+                              </MenuToggle>
+                            )}
+                          >
+                            <SelectList>
+                              <SelectOption value="individual">Individual packages</SelectOption>
+                              <SelectOption value="groups">Package groups</SelectOption>
+                            </SelectList>
+                          </Select>
+                        </FormGroup>
+                      </GridItem>
+                      
+                      <GridItem span={3}>
+                        <FormGroup
+                          label={index === 0 ? "Repository" : ""}
+                          fieldId={`repository-${row.id}`}
+                          style={{ position: 'relative' }}
+                        >
+                          {row.isOpenSCAPRequired ? (
+                            <TextInput
+                              value={row.repositorySearchTerm}
+                              readOnly
+                              style={{ width: '100%' }}
+                            />
+                          ) : (
+                            <SearchInput
+                              ref={(el) => { (window as any)[`repositoryInput-${row.id}`] = el; }}
+                              placeholder="Search or add repository..."
+                              value={row.repositorySearchTerm}
+                              onChange={(_event, value) => handleRepositorySearchInput(row.id, value)}
+                              onSearch={() => handleRepositorySearchSelect(row.id, row.repositorySearchTerm)}
+                              onClear={() => handleRepositorySearchClear(row.id)}
+                              onKeyDown={(event) => {
+                                if (event.key === 'Enter' && row.repositorySearchTerm.trim()) {
+                                  handleRepositorySearchSelect(row.id, row.repositorySearchTerm);
+                                }
+                              }}
+                              onFocus={() => updateRepositoryRow(row.id, { isRepositorySearching: true })}
+                              onBlur={() => {
+                                // Small delay to allow dropdown clicks to register
+                                setTimeout(() => updateRepositoryRow(row.id, { isRepositorySearching: false }), 200);
+                              }}
+                              style={{ width: '100%' }}
+                            />
+                          )}
+                          
+                          {/* Repository dropdown for search results */}
+                          {!row.isOpenSCAPRequired && row.isRepositorySearching && (
+                            (row.repositorySearchTerm && getFilteredRepositories(row.repositorySearchTerm).length > 0) ||
+                            (!row.repositorySearchTerm && availableRepositories.length > 0)
+                          ) && (
+                            <div style={{ 
+                              position: 'absolute',
+                              top: '100%',
+                              left: 0,
+                              right: 0,
+                              backgroundColor: 'white',
+                              border: '1px solid #d2d2d2',
+                              borderRadius: '4px',
+                              boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                              zIndex: 9999,
+                              maxHeight: '200px',
+                              overflowY: 'auto',
+                              marginTop: '4px'
+                            }}>
+                              {(row.repositorySearchTerm ? getFilteredRepositories(row.repositorySearchTerm) : availableRepositories).map((repo) => (
+                                <div
+                                  key={repo}
+                                  style={{ 
+                                    padding: '12px 16px',
+                                    borderBottom: '1px solid #f0f0f0',
+                                    cursor: 'pointer',
+                                    fontSize: '0.875rem',
+                                    transition: 'background-color 0.15s ease'
                                   }}
-                                  onOpenChange={(isOpen) => updateRepositoryRow(row.id, { isRepositoryDropdownOpen: isOpen })}
-                                  toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                                    <MenuToggle 
-                                      ref={toggleRef} 
-                                      onClick={() => updateRepositoryRow(row.id, { isRepositoryDropdownOpen: !row.isRepositoryDropdownOpen })}
-                                      isExpanded={row.isRepositoryDropdownOpen}
-                                      style={{ width: '100%' }}
-                                      isDisabled={row.isOpenSCAPRequired}
-                                    >
-                                      {row.repository || 'Select repository'}
-                                    </MenuToggle>
-                                  )}
+                                  onClick={() => handleRepositorySearchSelect(row.id, repo)}
+                                  onMouseEnter={(e) => {
+                                    (e.target as HTMLElement).style.backgroundColor = '#f5f5f5';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    (e.target as HTMLElement).style.backgroundColor = 'white';
+                                  }}
                                 >
-                                  <SelectList>
-                                    {getFilteredRepositories().map((repo) => (
-                                      <SelectOption key={repo} value={repo}>
-                                        {repo}
-                                      </SelectOption>
-                                    ))}
-                                  </SelectList>
-                                </Select>
-                              </FormGroup>
-                            </GridItem>
-                            
-                            <GridItem span={6} style={{ overflow: 'visible' }}>
-                              <FormGroup
-                                label={index === 0 ? "Package" : ""}
-                                fieldId={`package-${row.id}`}
-                                style={{ position: 'relative', overflow: 'visible' }}
-                              >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  {row.isLocked && row.selectedPackage ? (
-                                    <>
-                                      <TextInput
-                                        value={`${row.selectedPackage.name} v${row.selectedPackage.version}`}
-                                        readOnly
-                                        style={{ flex: 1 }}
-                                      />
-                                      {row.isOpenSCAPRequired ? (
-                                        <Tooltip content="Added by OpenSCAP">
-                                          <Button
-                                            variant="plain"
-                                            style={{ padding: '8px', minWidth: 'auto', cursor: 'default' }}
-                                            aria-label="Package added by OpenSCAP"
-                                            isDisabled
-                                          >
-                                            <svg
-                                              style={{ fontSize: '0.875rem', color: '#666' }}
-                                              fill="currentColor"
-                                              height="1em"
-                                              width="1em"
-                                              viewBox="0 0 512 512"
-                                            >
-                                              <path d="M336 208v-95a80 80 0 0 0-160 0v95" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="32"/>
-                                              <rect x="96" y="208" width="320" height="272" rx="48" ry="48" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="32"/>
-                                            </svg>
-                                          </Button>
-                                        </Tooltip>
-                                      ) : (
-                                        <Button
-                                          variant="plain"
-                                          onClick={() => removeRepositoryRow(row.id)}
-                                          style={{ padding: '8px', minWidth: 'auto' }}
-                                          aria-label="Remove row"
-                                        >
-                                          <MinusIcon style={{ fontSize: '0.875rem' }} />
-                                        </Button>
-                                      )}
-                                    </>
-                                  ) : (
-                                    <>
-                                      <SearchInput
-                                        placeholder={row.repository ? "Search for packages..." : "Select repository first"}
-                                        value={row.packageSearchTerm}
-                                        onChange={(_event, value) => handleRowPackageSearchInput(row.id, value)}
-                                        onSearch={() => performRowPackageSearch(row.id)}
-                                        onClear={() => handleRowPackageSearchClear(row.id)}
-                                        onKeyDown={(event) => {
-                                          if (event.key === 'Enter') {
-                                            performRowPackageSearch(row.id);
-                                          }
-                                        }}
-                                        isDisabled={!row.repository}
-                                        style={{ flex: 1 }}
-                                      />
-                                      {!row.isOpenSCAPRequired && (
-                                        <Button
-                                          variant="plain"
-                                          onClick={() => removeRepositoryRow(row.id)}
-                                          style={{ padding: '8px', minWidth: 'auto' }}
-                                          aria-label="Remove row"
-                                        >
-                                          <MinusIcon style={{ fontSize: '0.875rem' }} />
-                                        </Button>
-                                      )}
-                                    </>
-                                  )}
+                                  {repo}
                                 </div>
-                                {row.isOpenSCAPRequired && row.isLocked && (
-                                  <div style={{ 
-                                    fontSize: '0.75rem', 
-                                    color: '#666', 
-                                    marginTop: '4px',
-                                    fontStyle: 'italic'
-                                  }}>
-                                    Added by OpenSCAP
-                                  </div>
+                              ))}
+                              {!row.isOpenSCAPRequired && row.isRepositorySearching && row.repositorySearchTerm && 
+                               !getFilteredRepositories(row.repositorySearchTerm).some(repo => 
+                                 repo.toLowerCase() === row.repositorySearchTerm.toLowerCase()
+                               ) && (
+                                <div
+                                  style={{ 
+                                    padding: '12px 16px',
+                                    borderBottom: '1px solid #f0f0f0',
+                                    cursor: 'pointer',
+                                    fontSize: '0.875rem',
+                                    transition: 'background-color 0.15s ease',
+                                    fontStyle: 'italic',
+                                    color: '#0066cc'
+                                  }}
+                                  onClick={() => handleRepositorySearchSelect(row.id, row.repositorySearchTerm)}
+                                  onMouseEnter={(e) => {
+                                    (e.target as HTMLElement).style.backgroundColor = '#f5f5f5';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    (e.target as HTMLElement).style.backgroundColor = 'white';
+                                  }}
+                                >
+                                  Add new repository: "{row.repositorySearchTerm}"
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </FormGroup>
+                      </GridItem>
+                      
+                      <GridItem span={6} style={{ overflow: 'visible' }}>
+                        <FormGroup
+                          label={index === 0 ? "Package" : ""}
+                          fieldId={`package-${row.id}`}
+                          style={{ position: 'relative', overflow: 'visible' }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {row.isLocked && row.selectedPackage ? (
+                              <>
+                                <TextInput
+                                  value={`${row.selectedPackage.name} v${row.selectedPackage.version}`}
+                                  readOnly
+                                  style={{ flex: 1 }}
+                                />
+                                {!row.isOpenSCAPRequired && (
+                                  <MinusCircleIcon
+                                    style={{ 
+                                      fontSize: '1.25rem', 
+                                      color: '#151515',
+                                      cursor: 'pointer'
+                                    }}
+                                    onClick={() => removeRepositoryRow(row.id)}
+                                  />
                                 )}
-                                
-                                {/* Search Results Dropdown for this row */}
-                                {!row.isLocked && row.searchResults.length > 0 && (
-                                  <div style={{ 
-                                    position: 'absolute',
-                                    top: '100%',
-                                    left: 0,
-                                    right: 0,
-                                    backgroundColor: 'white',
-                                    border: '1px solid #d2d2d2',
-                                    borderRadius: '4px',
-                                    boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-                                    zIndex: 9999,
-                                    maxHeight: '200px',
-                                    overflowY: 'auto',
-                                    marginTop: '4px'
-                                  }}>
-                                    {row.searchResults.slice(0, 5).map((pkg) => (
-                                      <div
-                                        key={pkg.id}
-                                        style={{ 
-                                          padding: '12px 16px',
-                                          borderBottom: '1px solid #f0f0f0',
-                                          cursor: 'pointer',
-                                          fontSize: '0.875rem',
-                                          transition: 'background-color 0.15s ease'
-                                        }}
-                                        onClick={() => handlePackageSelection(row.id, pkg)}
-                                        onMouseEnter={(e) => {
-                                          (e.target as HTMLElement).style.backgroundColor = '#f5f5f5';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                          (e.target as HTMLElement).style.backgroundColor = 'white';
-                                        }}
-                                      >
-                                        <div style={{ fontWeight: 500, marginBottom: '2px' }}>
-                                          {pkg.name}
-                                        </div>
-                                        <div style={{ color: '#666', fontSize: '0.75rem' }}>
-                                          v{pkg.version} • {pkg.repository}
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
+                              </>
+                            ) : (
+                              <>
+                                <SearchInput
+                                  placeholder={row.repository ? "Search for packages..." : "Select repository first"}
+                                  value={row.packageSearchTerm}
+                                  onChange={(_event, value) => handleRowPackageSearchInput(row.id, value)}
+                                  onSearch={() => performRowPackageSearch(row.id)}
+                                  onClear={() => handleRowPackageSearchClear(row.id)}
+                                  onKeyDown={(event) => {
+                                    if (event.key === 'Enter') {
+                                      performRowPackageSearch(row.id);
+                                    }
+                                  }}
+                                  isDisabled={!row.repository}
+                                  style={{ flex: 1 }}
+                                />
+                                {!row.isOpenSCAPRequired && (
+                                  <MinusCircleIcon
+                                    style={{ 
+                                      fontSize: '1.25rem', 
+                                      color: '#151515',
+                                      cursor: 'pointer'
+                                    }}
+                                    onClick={() => removeRepositoryRow(row.id)}
+                                  />
                                 )}
-                              </FormGroup>
-                            </GridItem>
-                          </Grid>
-                        </StackItem>
-                      ))}
-                    </Stack>
-                  </CardBody>
-                </Card>
+                              </>
+                            )}
+                          </div>
+                          {row.isOpenSCAPRequired && row.isLocked && (
+                            <div style={{ 
+                              fontSize: '0.75rem', 
+                              color: '#666', 
+                              marginTop: '4px',
+                              fontStyle: 'italic'
+                            }}>
+                              Added by OpenSCAP
+                            </div>
+                          )}
+                          
+                          {/* Search Results Dropdown for this row */}
+                          {!row.isLocked && (row.isLoading || row.searchResults.length > 0 || (row.packageSearchTerm.trim() && !row.isLoading)) && (
+                            <div style={{ 
+                              position: 'absolute',
+                              top: '100%',
+                              left: 0,
+                              right: 0,
+                              backgroundColor: 'white',
+                              border: '1px solid #d2d2d2',
+                              borderRadius: '4px',
+                              boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                              zIndex: 9999,
+                              maxHeight: '200px',
+                              overflowY: 'auto',
+                              marginTop: '4px'
+                            }}>
+                              {row.isLoading ? (
+                                <div style={{ 
+                                  padding: '16px',
+                                  textAlign: 'center',
+                                  color: '#666'
+                                }}>
+                                  <Spinner size="md" style={{ marginBottom: '8px' }} />
+                                  <div style={{ fontSize: '0.875rem', marginBottom: '4px' }}>
+                                    Searching packages...
+                                  </div>
+                                  <div style={{ fontSize: '0.75rem', color: '#888' }}>
+                                    <ArrowRightIcon style={{ marginRight: '4px', fontSize: '0.75rem' }} />
+                                    Click the arrow or press Enter to search
+                                  </div>
+                                  <div style={{ fontSize: '0.75rem', color: '#888', marginTop: '4px' }}>
+                                    Tip: Type the full package name for better results
+                                  </div>
+                                </div>
+                              ) : row.searchResults.length > 0 ? (
+                                row.searchResults.slice(0, 5).map((pkg) => (
+                                  <div
+                                    key={pkg.id}
+                                    style={{ 
+                                      padding: '12px 16px',
+                                      borderBottom: '1px solid #f0f0f0',
+                                      cursor: 'pointer',
+                                      fontSize: '0.875rem',
+                                      transition: 'background-color 0.15s ease'
+                                    }}
+                                    onClick={() => handlePackageSelection(row.id, pkg)}
+                                    onMouseEnter={(e) => {
+                                      (e.target as HTMLElement).style.backgroundColor = '#f5f5f5';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      (e.target as HTMLElement).style.backgroundColor = 'white';
+                                    }}
+                                  >
+                                    <div style={{ fontWeight: 500, marginBottom: '2px' }}>
+                                      {pkg.name}
+                                    </div>
+                                    <div style={{ color: '#666', fontSize: '0.75rem' }}>
+                                      v{pkg.version} • {pkg.repository}
+                                    </div>
+                                  </div>
+                                ))
+                              ) : row.packageSearchTerm.trim() ? (
+                                <div style={{ 
+                                  padding: '16px',
+                                  textAlign: 'center',
+                                  color: '#666'
+                                }}>
+                                  <div style={{ fontSize: '0.875rem', marginBottom: '8px' }}>
+                                    <ArrowRightIcon style={{ marginRight: '4px', fontSize: '0.75rem' }} />
+                                    Click the arrow or press Enter to search for "{row.packageSearchTerm}"
+                                  </div>
+                                  <div style={{ fontSize: '0.75rem', color: '#888' }}>
+                                    Tip: Type the full package name for better results
+                                  </div>
+                                </div>
+                              ) : (
+                                <div style={{ 
+                                  padding: '16px',
+                                  textAlign: 'center',
+                                  color: '#666',
+                                  fontSize: '0.875rem'
+                                }}>
+                                  No packages found. Try typing the full package name.
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </FormGroup>
+                      </GridItem>
+                    </Grid>
+                  </StackItem>
+                ))}
+              </Stack>
 
               {/* Add Repository Button */}
               <div style={{ marginTop: '1rem' }}>
                 <Button
                   variant="secondary"
                   onClick={addRepositoryRow}
-                  icon={<PlusIcon />}
                 >
                   Add Repository
                 </Button>
