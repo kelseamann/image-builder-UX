@@ -767,6 +767,18 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
   // Repository row management functions
   const addRepositoryRow = () => {
+    // Lock all existing non-OpenSCAP rows when adding a new one
+    const lockedRows = repositoryRows.map(row => {
+      if (!row.isOpenSCAPRequired && row.repository) {
+        return {
+          ...row,
+          isLocked: true,
+          isRepositorySearching: false
+        };
+      }
+      return row;
+    });
+
     const newRow: RepositoryRow = {
       id: `row-${Date.now()}`,
       repository: 'Red Hat',
@@ -780,7 +792,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       isLoading: false,
       isRepositorySearching: false
     };
-    setRepositoryRows([...repositoryRows, newRow]);
+    setRepositoryRows([...lockedRows, newRow]);
   };
 
   const handleRepositorySearchClear = (rowId: string) => {
@@ -813,10 +825,19 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   };
 
   const handleRepositorySearchInput = (rowId: string, searchTerm: string) => {
-    updateRepositoryRow(rowId, { 
-      repositorySearchTerm: searchTerm,
-      isRepositorySearching: true
-    });
+    if (searchTerm.trim() === '') {
+      // Empty search term should have same effect as clear
+      updateRepositoryRow(rowId, {
+        repositorySearchTerm: '',
+        repository: '',
+        isRepositorySearching: false
+      });
+    } else {
+      updateRepositoryRow(rowId, { 
+        repositorySearchTerm: searchTerm,
+        isRepositorySearching: true
+      });
+    }
   };
 
   const handleRepositorySearchSelect = (rowId: string, repository: string) => {
@@ -2023,7 +2044,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                                 onClick={() => setIsSearchPackageTypeOpen(!isSearchPackageTypeOpen)}
                                 isExpanded={isSearchPackageTypeOpen}
                                 style={{ width: '100%' }}
-                                isDisabled={row.isOpenSCAPRequired}
+                                isDisabled={row.isOpenSCAPRequired || row.isLocked}
                               >
                                 {searchPackageType === 'individual' ? 'Individual packages' : 'Package groups'}
                               </MenuToggle>
@@ -2043,7 +2064,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                           fieldId={`repository-${row.id}`}
                           style={{ position: 'relative' }}
                         >
-                          {row.isOpenSCAPRequired ? (
+                          {row.isOpenSCAPRequired || row.isLocked ? (
                             <TextInput
                               value={row.repositorySearchTerm}
                               readOnly
@@ -2179,7 +2200,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                                       performRowPackageSearch(row.id);
                                     }
                                   }}
-                                  isDisabled={!row.repository}
+                                  isDisabled={!row.repository || row.isLocked}
                                   style={{ flex: 1 }}
                                 />
                                 {!row.isOpenSCAPRequired && (
@@ -2203,6 +2224,16 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                               fontStyle: 'italic'
                             }}>
                               Added by OpenSCAP
+                            </div>
+                          )}
+                          {!row.isOpenSCAPRequired && row.isLocked && (
+                            <div style={{ 
+                              fontSize: '0.75rem', 
+                              color: '#666', 
+                              marginTop: '4px',
+                              fontStyle: 'italic'
+                            }}>
+                              Repository selected
                             </div>
                           )}
                           
