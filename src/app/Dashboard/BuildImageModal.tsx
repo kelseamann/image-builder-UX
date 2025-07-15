@@ -63,7 +63,8 @@ import {
   EditIcon,
   PlusIcon,
   TimesCircleIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  MinusCircleIcon
 } from '@patternfly/react-icons';
 
 interface UserRow {
@@ -194,6 +195,23 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   // Organization ID state
   const [organizationId, setOrganizationId] = React.useState<string>('11009103');
 
+  // Systemd services state
+  const [systemdDisabledServices, setSystemdDisabledServices] = React.useState<string>('');
+  const [systemdMaskedServices, setSystemdMaskedServices] = React.useState<string>('');
+  const [systemdEnabledServices, setSystemdEnabledServices] = React.useState<string>('');
+
+  // Firewall state
+  const [firewallPorts, setFirewallPorts] = React.useState<string[]>(['']);
+  const [firewallDisabledServices, setFirewallDisabledServices] = React.useState<string[]>(['']);
+  const [firewallEnabledServices, setFirewallEnabledServices] = React.useState<string[]>(['']);
+
+  // Kernel append state
+  const [kernelAppend, setKernelAppend] = React.useState<string>('');
+
+  // Specialty keyboards state
+  const [specialtyKeyboard, setSpecialtyKeyboard] = React.useState<string>('');
+  const [isSpecialtyKeyboardOpen, setIsSpecialtyKeyboardOpen] = React.useState<boolean>(false);
+
 
   
   // Track what the user has modified to detect migration-only changes
@@ -218,21 +236,64 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
 
 
-  // Selected packages state
-  const [selectedPackages, setSelectedPackages] = React.useState<string[]>([]);
+  // Selected packages state - include OpenSCAP packages initially
+  const [selectedPackages, setSelectedPackages] = React.useState<any[]>([
+    { id: 'aide', name: 'aide', version: '0.16', repository: 'BaseOS' },
+    { id: 'sudo', name: 'sudo', version: '1.9.5p2', repository: 'BaseOS' }
+  ]);
   const [packageSearchTerm, setPackageSearchTerm] = React.useState<string>('');
   const [packagePage, setPackagePage] = React.useState<number>(1);
   const [packagePerPage, setPackagePerPage] = React.useState<number>(10);
   const [isPackageAccordionExpanded, setIsPackageAccordionExpanded] = React.useState<boolean>(false);
 
-  // Search packages state
+  // Repository rows state - each row represents a repository-package selection
+  interface RepositoryRow {
+    id: string;
+    repository: string;
+    packageSearchTerm: string;
+    selectedPackage: any | null;
+    isLocked: boolean;
+    isRepositoryDropdownOpen: boolean;
+    searchResults: any[];
+    isOpenSCAPRequired: boolean;
+  }
+
+  const [repositoryRows, setRepositoryRows] = React.useState<RepositoryRow[]>([
+    // Mock OpenSCAP required packages
+    {
+      id: 'openscap-1',
+      repository: 'Red Hat',
+      packageSearchTerm: 'aide',
+      selectedPackage: { id: 'aide', name: 'aide', version: '0.16', repository: 'BaseOS' },
+      isLocked: true,
+      isRepositoryDropdownOpen: false,
+      searchResults: [],
+      isOpenSCAPRequired: true
+    },
+    {
+      id: 'openscap-2', 
+      repository: 'Red Hat',
+      packageSearchTerm: 'sudo',
+      selectedPackage: { id: 'sudo', name: 'sudo', version: '1.9.5p2', repository: 'BaseOS' },
+      isLocked: true,
+      isRepositoryDropdownOpen: false,
+      searchResults: [],
+      isOpenSCAPRequired: true
+    },
+    {
+      id: 'row-1',
+      repository: 'Red Hat',
+      packageSearchTerm: '',
+      selectedPackage: null,
+      isLocked: false,
+      isRepositoryDropdownOpen: false,
+      searchResults: [],
+      isOpenSCAPRequired: false
+    }
+  ]);
+  
   const [searchPackageType, setSearchPackageType] = React.useState<string>('individual');
   const [isSearchPackageTypeOpen, setIsSearchPackageTypeOpen] = React.useState<boolean>(false);
-  const [selectedRepository, setSelectedRepository] = React.useState<string>('Red Hat');
-  const [isRepositoryDropdownOpen, setIsRepositoryDropdownOpen] = React.useState<boolean>(false);
-  const [advancedSearchTerm, setAdvancedSearchTerm] = React.useState<string>('');
-  const [searchResults, setSearchResults] = React.useState<any[]>([]);
-  const [selectedSearchResults, setSelectedSearchResults] = React.useState<string[]>([]);
   const [searchResultsPage, setSearchResultsPage] = React.useState<number>(1);
   const [searchResultsPerPage, setSearchResultsPerPage] = React.useState<number>(10);
 
@@ -395,14 +456,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
   // Sample search results data
   const allSearchResults = [
-    { id: 'search-zsh', name: 'zsh', applicationStream: 'RHEL 9', retirementDate: '2032-05-31', packageRepository: 'BaseOS' },
-    { id: 'search-bash', name: 'bash', applicationStream: 'RHEL 9', retirementDate: '2032-05-31', packageRepository: 'BaseOS' },
-    { id: 'search-fish', name: 'fish', applicationStream: '3.4', retirementDate: '2030-08-15', packageRepository: 'AppStream' },
-    { id: 'search-tmux', name: 'tmux', applicationStream: 'RHEL 9', retirementDate: '2032-05-31', packageRepository: 'BaseOS' },
-    { id: 'search-screen', name: 'screen', applicationStream: 'RHEL 9', retirementDate: '2032-05-31', packageRepository: 'BaseOS' },
-    { id: 'search-htop', name: 'htop', applicationStream: '3.2', retirementDate: '2030-12-01', packageRepository: 'EPEL' },
-    { id: 'search-ncdu', name: 'ncdu', applicationStream: '1.16', retirementDate: '2031-06-30', packageRepository: 'EPEL' },
-    { id: 'search-tree', name: 'tree', applicationStream: 'RHEL 9', retirementDate: '2032-05-31', packageRepository: 'BaseOS' }
+    { id: 'search-zsh', name: 'zsh', version: '5.8', applicationStream: 'RHEL 9', retirementDate: '2032-05-31', repository: 'BaseOS' },
+    { id: 'search-bash', name: 'bash', version: '5.1.8', applicationStream: 'RHEL 9', retirementDate: '2032-05-31', repository: 'BaseOS' },
+    { id: 'search-fish', name: 'fish', version: '3.4', applicationStream: '3.4', retirementDate: '2030-08-15', repository: 'AppStream' },
+    { id: 'search-tmux', name: 'tmux', version: '3.2a', applicationStream: 'RHEL 9', retirementDate: '2032-05-31', repository: 'BaseOS' },
+    { id: 'search-screen', name: 'screen', version: '4.8.0', applicationStream: 'RHEL 9', retirementDate: '2032-05-31', repository: 'BaseOS' },
+    { id: 'search-htop', name: 'htop', version: '3.2.1', applicationStream: '3.2', retirementDate: '2030-12-01', repository: 'EPEL' },
+    { id: 'search-ncdu', name: 'ncdu', version: '1.16', applicationStream: '1.16', retirementDate: '2031-06-30', repository: 'EPEL' },
+    { id: 'search-tree', name: 'tree', version: '1.8.0', applicationStream: 'RHEL 9', retirementDate: '2032-05-31', repository: 'BaseOS' }
   ];
 
   const handleConfirm = async () => {
@@ -605,12 +666,22 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     }
   };
 
-  // Package management functions
-  const handlePackageSelection = (packageId: string, isSelected: boolean) => {
+  // Package management functions (for the old accordion-style package browser)
+  const handleOldPackageSelection = (packageId: string, isSelected: boolean) => {
     if (isSelected) {
-      setSelectedPackages([...selectedPackages, packageId]);
+      // Find the package object from packageData
+      const packageObj = packageData.find(pkg => pkg.id === packageId);
+      if (packageObj) {
+        setSelectedPackages(prev => {
+          const existingIds = prev.map(p => p.id || p);
+          if (!existingIds.includes(packageId)) {
+            return [...prev, packageObj];
+          }
+          return prev;
+        });
+      }
     } else {
-      setSelectedPackages(selectedPackages.filter(id => id !== packageId));
+      setSelectedPackages(selectedPackages.filter(pkg => (pkg.id || pkg) !== packageId));
     }
     // Track package modifications
     setModifiedFields(prev => new Set(prev.add('packages')));
@@ -619,13 +690,15 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const handleSelectAllPackages = (isSelected: boolean) => {
     if (isSelected) {
       const filteredPackages = getFilteredPackages();
-      const allPackageIds = filteredPackages.map(pkg => pkg.id);
-      const uniquePackages = Array.from(new Set([...selectedPackages, ...allPackageIds]));
-      setSelectedPackages(uniquePackages);
+      setSelectedPackages(prev => {
+        const existingIds = prev.map(p => p.id || p);
+        const newPackages = filteredPackages.filter(pkg => !existingIds.includes(pkg.id));
+        return [...prev, ...newPackages];
+      });
     } else {
       const filteredPackages = getFilteredPackages();
       const filteredPackageIds = filteredPackages.map(pkg => pkg.id);
-      setSelectedPackages(selectedPackages.filter(id => !filteredPackageIds.includes(id)));
+      setSelectedPackages(selectedPackages.filter(pkg => !filteredPackageIds.includes(pkg.id || pkg)));
     }
   };
 
@@ -656,54 +729,155 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     }
   };
 
-  const handleRepositorySelect = (repository: string) => {
-    setSelectedRepository(repository);
-    setIsRepositoryDropdownOpen(false);
+  // Repository row management functions
+  const addRepositoryRow = () => {
+    const newRow: RepositoryRow = {
+      id: `row-${Date.now()}`,
+      repository: 'Red Hat',
+      packageSearchTerm: '',
+      selectedPackage: null,
+      isLocked: false,
+      isRepositoryDropdownOpen: false,
+      searchResults: [],
+      isOpenSCAPRequired: false
+    };
+    setRepositoryRows([...repositoryRows, newRow]);
   };
 
-  const handleSearchPackages = () => {
-    // Simulate search - filter results based on search term
-    const filtered = allSearchResults.filter(pkg => 
-      pkg.name.toLowerCase().includes(advancedSearchTerm.toLowerCase())
+  const updateRepositoryRow = (rowId: string, updates: Partial<RepositoryRow>) => {
+    setRepositoryRows(prev => 
+      prev.map(row => 
+        row.id === rowId ? { ...row, ...updates } : row
+      )
     );
-    setSearchResults(filtered);
-    setSearchResultsPage(1);
   };
 
-  const handleSearchResultSelection = (packageId: string, isSelected: boolean) => {
-    if (isSelected) {
-      setSelectedSearchResults([...selectedSearchResults, packageId]);
+  const handleRepositorySelect = (rowId: string, repository: string) => {
+    updateRepositoryRow(rowId, { 
+      repository, 
+      isRepositoryDropdownOpen: false,
+      packageSearchTerm: '', // Reset search when repository changes
+      searchResults: [],
+      selectedPackage: null,
+      isLocked: false
+    });
+  };
+
+  const handleRowPackageSearchInput = (rowId: string, searchTerm: string) => {
+    // Update the search term for this row (without performing search)
+    updateRepositoryRow(rowId, { packageSearchTerm: searchTerm });
+  };
+
+  const performRowPackageSearch = (rowId: string) => {
+    // Perform search if repository is selected and term is not empty
+    const row = repositoryRows.find(r => r.id === rowId);
+    if (row && row.repository && row.packageSearchTerm.trim()) {
+      const filtered = allSearchResults.filter(pkg => 
+        pkg.name.toLowerCase().includes(row.packageSearchTerm.toLowerCase())
+      );
+      updateRepositoryRow(rowId, { searchResults: filtered });
     } else {
-      setSelectedSearchResults(selectedSearchResults.filter(id => id !== packageId));
+      updateRepositoryRow(rowId, { searchResults: [] });
     }
   };
 
-  const handleSelectAllSearchResults = (isSelected: boolean) => {
-    if (isSelected) {
-      const filteredResults = getFilteredSearchResults();
-      const allResultIds = filteredResults.map(pkg => pkg.id);
-      const uniqueResults = Array.from(new Set([...selectedSearchResults, ...allResultIds]));
-      setSelectedSearchResults(uniqueResults);
-    } else {
-      const filteredResults = getFilteredSearchResults();
-      const filteredResultIds = filteredResults.map(pkg => pkg.id);
-      setSelectedSearchResults(selectedSearchResults.filter(id => !filteredResultIds.includes(id)));
+  const handleRowPackageSearchClear = (rowId: string) => {
+    updateRepositoryRow(rowId, { 
+      packageSearchTerm: '',
+      searchResults: []
+    });
+  };
+
+  const handlePackageSelection = (rowId: string, pkg: any) => {
+    // Lock this row with the selected package
+    updateRepositoryRow(rowId, {
+      selectedPackage: pkg,
+      isLocked: true,
+      searchResults: [],
+      packageSearchTerm: pkg.name
+    });
+    
+    // Add to overall selected packages
+    setSelectedPackages(prev => {
+      const existingIds = prev.map(p => p.id || p);
+      if (!existingIds.includes(pkg.id)) {
+        return [...prev, pkg];
+      }
+      return prev;
+    });
+  };
+
+  const unlockRepositoryRow = (rowId: string) => {
+    const row = repositoryRows.find(r => r.id === rowId);
+    if (row && row.selectedPackage && !row.isOpenSCAPRequired) {
+      // Remove from selected packages
+      setSelectedPackages(prev => 
+        prev.filter(pkg => (pkg.id || pkg) !== (row.selectedPackage.id || row.selectedPackage))
+      );
+      
+      // Unlock the row
+      updateRepositoryRow(rowId, {
+        selectedPackage: null,
+        isLocked: false,
+        packageSearchTerm: '',
+        searchResults: []
+      });
     }
   };
 
-  const getFilteredSearchResults = () => {
-    return searchResults;
-  };
-
-  const getPaginatedSearchResults = () => {
-    const filteredResults = getFilteredSearchResults();
-    const startIndex = (searchResultsPage - 1) * searchResultsPerPage;
-    const endIndex = startIndex + searchResultsPerPage;
-    return filteredResults.slice(startIndex, endIndex);
+  const removeRepositoryRow = (rowId: string) => {
+    const row = repositoryRows.find(r => r.id === rowId);
+    if (row && !row.isOpenSCAPRequired) {
+      // Remove from selected packages if there was one
+      if (row.selectedPackage) {
+        setSelectedPackages(prev => 
+          prev.filter(pkg => (pkg.id || pkg) !== (row.selectedPackage.id || row.selectedPackage))
+        );
+      }
+      
+      // Remove the row entirely
+      setRepositoryRows(prev => prev.filter(r => r.id !== rowId));
+    }
   };
 
   const getFilteredRepositories = () => {
     return availableRepositories;
+  };
+
+  // Firewall helper functions
+  const addFirewallRow = () => {
+    setFirewallPorts([...firewallPorts, '']);
+    setFirewallDisabledServices([...firewallDisabledServices, '']);
+    setFirewallEnabledServices([...firewallEnabledServices, '']);
+  };
+
+  const removeFirewallRow = (index: number) => {
+    if (firewallPorts.length > 1) {
+      const newPorts = firewallPorts.filter((_, i) => i !== index);
+      const newDisabledServices = firewallDisabledServices.filter((_, i) => i !== index);
+      const newEnabledServices = firewallEnabledServices.filter((_, i) => i !== index);
+      setFirewallPorts(newPorts);
+      setFirewallDisabledServices(newDisabledServices);
+      setFirewallEnabledServices(newEnabledServices);
+    }
+  };
+
+  const updateFirewallPort = (index: number, value: string) => {
+    const newPorts = [...firewallPorts];
+    newPorts[index] = value;
+    setFirewallPorts(newPorts);
+  };
+
+  const updateFirewallDisabledService = (index: number, value: string) => {
+    const newServices = [...firewallDisabledServices];
+    newServices[index] = value;
+    setFirewallDisabledServices(newServices);
+  };
+
+  const updateFirewallEnabledService = (index: number, value: string) => {
+    const newServices = [...firewallEnabledServices];
+    newServices[index] = value;
+    setFirewallEnabledServices(newServices);
   };
 
   const handleTabClick = (event: React.MouseEvent | React.KeyboardEvent, tabIndex: string | number) => {
@@ -734,11 +908,11 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     switch (registrationMethod) {
       case 'auto':
         return (
-          <div>
+          <div style={{ marginTop: '0rem', marginBottom: '0rem' }}>
             <FormGroup
               label="Activation key"
               fieldId="activation-key"
-              style={{ marginBottom: '1rem' }}
+              style={{ marginBottom: '0rem' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Select
@@ -771,12 +945,41 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   aria-label="Activation key details"
                   position={PopoverPosition.right}
                   bodyContent={
-                    <div>
-                      <div style={{ marginBottom: '0.5rem' }}><strong>Key:</strong> {selectedActivationKey}</div>
-                      <div style={{ marginBottom: '0.5rem' }}><strong>Environment:</strong> Production</div>
-                      <div style={{ marginBottom: '0.5rem' }}><strong>Usage:</strong> 45/100 systems</div>
-                      <div style={{ marginBottom: '0.5rem' }}><strong>Auto-attach:</strong> Enabled</div>
-                      <div><strong>Content view:</strong> RHEL-8-CV</div>
+                    <div style={{ minWidth: '300px' }}>
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Key</div>
+                        <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                          {selectedActivationKey}
+                        </div>
+                      </div>
+                      
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Environment</div>
+                        <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                          Production
+                        </div>
+                      </div>
+                      
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Usage</div>
+                        <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                          45/100 systems
+                        </div>
+                      </div>
+                      
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Auto-attach</div>
+                        <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                          Enabled
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Content view</div>
+                        <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                          RHEL-8-CV
+                        </div>
+                      </div>
                     </div>
                   }
                 >
@@ -792,303 +995,6 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 </a>
               </div>
             </FormGroup>
-
-            {/* Divider */}
-            <div style={{ 
-              height: '1px', 
-              backgroundColor: '#d2d2d2', 
-              margin: '2rem 0' 
-            }} />
-
-            {/* Timezone Section */}
-            <div style={{ marginBottom: '2rem' }}>
-              <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                Timezone
-              </Title>
-              
-              <FormGroup
-                label="Timezone"
-                fieldId="timezone"
-                style={{ marginBottom: '1rem' }}
-              >
-                <Select
-                  id="timezone-select"
-                  isOpen={isTimezoneOpen}
-                  selected={timezone}
-                  onSelect={(_, selection) => {
-                    setTimezone(String(selection));
-                    setIsTimezoneOpen(false);
-                  }}
-                  onOpenChange={(isOpen) => setIsTimezoneOpen(isOpen)}
-                  toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                    <MenuToggle 
-                      ref={toggleRef} 
-                      onClick={() => setIsTimezoneOpen(!isTimezoneOpen)}
-                      isExpanded={isTimezoneOpen}
-                      style={{ width: '300px' }}
-                    >
-                      {timezone || 'Select timezone'}
-                    </MenuToggle>
-                  )}
-                >
-                  <SelectList>
-                    {timezoneOptions.map((tz) => (
-                      <SelectOption key={tz} value={tz}>
-                        {tz}
-                      </SelectOption>
-                    ))}
-                  </SelectList>
-                </Select>
-              </FormGroup>
-
-              <FormGroup
-                label="NTP servers"
-                fieldId="ntp-servers"
-                style={{ marginBottom: '1rem' }}
-              >
-                <TextInput
-                  id="ntp-servers"
-                  value={ntpServers}
-                  onChange={(_event, value) => setNtpServers(value)}
-                  placeholder="pool.ntp.org"
-                />
-                <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
-                  Comma-separated list of NTP servers
-                </div>
-              </FormGroup>
-            </div>
-
-            {/* Divider */}
-            <div style={{ 
-              height: '1px', 
-              backgroundColor: '#d2d2d2', 
-              margin: '2rem 0' 
-            }} />
-
-            {/* Locale Section */}
-            <div style={{ marginBottom: '2rem' }}>
-              <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                Locale
-              </Title>
-              
-              <FormGroup
-                label="Suggest keyboards from these languages"
-                fieldId="languages"
-                style={{ marginBottom: '1rem' }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {languages.map((language) => (
-                    <div key={language.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <div style={{ width: '400px' }}>
-                        <Select
-                          id={`language-select-${language.id}`}
-                          isOpen={language.isOpen}
-                          selected={language.value}
-                          onSelect={(_, selection) => {
-                            updateLanguage(language.id, String(selection));
-                            toggleLanguageDropdown(language.id);
-                          }}
-                          onOpenChange={() => toggleLanguageDropdown(language.id)}
-                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                            <MenuToggle 
-                              ref={toggleRef} 
-                              onClick={() => toggleLanguageDropdown(language.id)}
-                              isExpanded={language.isOpen}
-                              style={{ width: '100%' }}
-                            >
-                              {language.value || 'Select language'}
-                            </MenuToggle>
-                          )}
-                        >
-                          <SelectList>
-                            <div style={{ padding: '0.5rem', borderBottom: '1px solid #D2D2D2' }}>
-                              <SearchInput
-                                placeholder="Search languages..."
-                                value={language.filterValue}
-                                onChange={(_, value) => updateLanguageFilter(language.id, value)}
-                                onClear={() => updateLanguageFilter(language.id, '')}
-                              />
-                            </div>
-                            {getFilteredLanguageOptions(language.filterValue).map((lang) => (
-                              <SelectOption key={lang} value={lang}>
-                                {lang}
-                              </SelectOption>
-                            ))}
-                          </SelectList>
-                        </Select>
-                      </div>
-                      {language.id !== 0 && (
-                        <Button
-                          variant="plain"
-                          aria-label="Remove language"
-                          onClick={() => removeLanguage(language.id)}
-                          style={{ minWidth: 'auto', padding: '0.5rem', color: '#6A6E73' }}
-                        >
-                          <MinusIcon />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <div style={{ marginTop: '0.75rem' }}>
-                  <div style={{ color: '#6A6E73', marginBottom: '0.75rem', fontSize: '0.875rem' }}>
-                    Search by country, language or UTF code
-                  </div>
-                  <Button
-                    variant="link"
-                    onClick={addLanguage}
-                    style={{ 
-                      padding: '0.5rem 1rem', 
-                      border: '1px solid #C7C7C7', 
-                      borderRadius: '24px', 
-                      color: '#0066CC', 
-                      backgroundColor: 'transparent',
-                      textDecoration: 'none'
-                    }}
-                  >
-                    Add more
-                  </Button>
-                </div>
-              </FormGroup>
-
-              <FormGroup
-                label="Suggested keyboards"
-                fieldId="suggested-keyboards"
-                style={{ marginBottom: '1rem' }}
-              >
-                <Select
-                  id="suggested-keyboards-select"
-                  isOpen={isSuggestedKeyboardOpen}
-                  selected={suggestedKeyboard}
-                  onSelect={(_, selection) => {
-                    setSuggestedKeyboard(String(selection));
-                    setIsSuggestedKeyboardOpen(false);
-                  }}
-                  onOpenChange={(isOpen) => setIsSuggestedKeyboardOpen(isOpen)}
-                  toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                    <MenuToggle 
-                      ref={toggleRef} 
-                      onClick={() => setIsSuggestedKeyboardOpen(!isSuggestedKeyboardOpen)}
-                      isExpanded={isSuggestedKeyboardOpen}
-                      style={{ width: '300px' }}
-                    >
-                      {suggestedKeyboard || 'Select keyboard'}
-                    </MenuToggle>
-                  )}
-                >
-                  <SelectList>
-                    <SelectOption value="US QWERTY">US QWERTY</SelectOption>
-                    <SelectOption value="German QWERTZ">German QWERTZ</SelectOption>
-                    <SelectOption value="French AZERTY">French AZERTY</SelectOption>
-                    <SelectOption value="UK QWERTY">UK QWERTY</SelectOption>
-                  </SelectList>
-                </Select>
-              </FormGroup>
-            </div>
-
-            {/* Divider */}
-            <div style={{ 
-              height: '1px', 
-              backgroundColor: '#d2d2d2', 
-              margin: '2rem 0' 
-            }} />
-
-            {/* Hostname Section */}
-            <div style={{ marginBottom: '2rem' }}>
-              <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                Hostname
-              </Title>
-              
-              <FormGroup
-                label="Hostname"
-                fieldId="hostname"
-                style={{ marginBottom: '1rem' }}
-              >
-                <TextInput
-                  id="hostname"
-                  value={hostname}
-                  onChange={(_event, value) => setHostname(value)}
-                  placeholder="Enter hostname"
-                />
-              </FormGroup>
-            </div>
-
-            {/* Divider */}
-            <div style={{ 
-              height: '1px', 
-              backgroundColor: '#d2d2d2', 
-              margin: '2rem 0' 
-            }} />
-
-            {/* Kernel Section */}
-            <div style={{ marginBottom: '2rem' }}>
-              <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                Kernel
-              </Title>
-              
-              <FormGroup
-                label="Kernel package"
-                fieldId="kernel-package"
-                style={{ marginBottom: '1rem' }}
-              >
-                <Select
-                  id="kernel-package-select"
-                  isOpen={isKernelPackageOpen}
-                  selected={kernelPackage}
-                  onSelect={(_, selection) => {
-                    setKernelPackage(String(selection));
-                    setIsKernelPackageOpen(false);
-                  }}
-                  onOpenChange={(isOpen) => setIsKernelPackageOpen(isOpen)}
-                  toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                    <MenuToggle 
-                      ref={toggleRef} 
-                      onClick={() => setIsKernelPackageOpen(!isKernelPackageOpen)}
-                      isExpanded={isKernelPackageOpen}
-                      style={{ width: '300px' }}
-                    >
-                      {kernelPackage}
-                    </MenuToggle>
-                  )}
-                >
-                  <SelectList>
-                    <SelectOption value="kernel">kernel</SelectOption>
-                    <SelectOption value="kernel-debug">kernel-debug</SelectOption>
-                  </SelectList>
-                </Select>
-              </FormGroup>
-
-
-            </div>
-
-            {/* Divider */}
-            <div style={{ 
-              height: '1px', 
-              backgroundColor: '#d2d2d2', 
-              margin: '2rem 0' 
-            }} />
-
-            {/* Users Section */}
-            <div style={{ marginBottom: '2rem' }}>
-              <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                Users
-              </Title>
-              <p style={{ 
-                fontSize: '14px', 
-                lineHeight: '1.5',
-                marginBottom: '1rem',
-                color: '#666'
-              }}>
-                Create user accounts for systems that will use this image.
-              </p>
-
-              {/* User management table would go here - simplified for now */}
-              <div style={{ border: '1px solid #d2d2d2', borderRadius: '4px', padding: '1rem' }}>
-                <p style={{ fontSize: '14px', color: '#666' }}>
-                  User management interface - add users, set passwords, configure SSH keys, assign groups
-                </p>
-              </div>
-            </div>
           </div>
         );
       case 'later':
@@ -1097,7 +1003,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             variant="info"
             isInline
             title="Register with Red Hat Insights within 30 days"
-            style={{ marginTop: '2rem' }}
+            style={{ marginTop: '1rem' }}
           >
             <p style={{ marginBottom: '0.5rem' }}>
               If you don't register your systems within 30 days, you will not be able to use Red Hat Insights capabilities.
@@ -1116,7 +1022,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             variant="warning"
             isInline
             title="Work in Progress"
-            style={{ marginTop: '2rem' }}
+            style={{ marginTop: '1rem' }}
           >
             Satellite registration is currently being developed and will be available in a future release.
           </Alert>
@@ -1988,291 +1894,258 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             </p>
             
             <Form>
-              {/* Use Extended Support Section */}
-              <div style={{ marginBottom: '2rem' }}>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                  Use Extended Support
-                </Title>
-                
-                <FormGroup
-                  label="Extended support subscription"
-                  fieldId="extended-support"
-                  style={{ marginBottom: '1rem' }}
-                >
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <Radio
-                      isChecked={extendedSupport === 'none'}
-                      name="extended-support"
-                      onChange={() => setExtendedSupport('none')}
-                      label="None"
-                      id="extended-support-none"
-                    />
-                    <Radio
-                      isChecked={extendedSupport === 'eus'}
-                      name="extended-support"
-                      onChange={() => setExtendedSupport('eus')}
-                      label="Extended update support (EUS)"
-                      id="extended-support-eus"
-                    />
-                    <Radio
-                      isChecked={extendedSupport === 'eeus'}
-                      name="extended-support"
-                      onChange={() => setExtendedSupport('eeus')}
-                      label="Enhanced extended update support (EEUS)"
-                      id="extended-support-eeus"
-                    />
-                  </div>
-                </FormGroup>
-              </div>
-
-              {/* Divider between sections */}
-              <div style={{ 
-                height: '1px', 
-                backgroundColor: '#d2d2d2', 
-                margin: '2rem 0' 
-              }} />
-
-              {/* Search Packages Section */}
-              <div style={{ marginBottom: '2rem' }}>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                  Search packages
-                </Title>
-
-                {/* Search Form */}
-                <div style={{ marginBottom: '1rem' }}>
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
-                    {/* Types Dropdown */}
-                    <div style={{ flex: '0 0 200px' }}>
-                      <FormGroup
-                        label="Types"
-                        fieldId="search-package-types"
-                        isRequired
-                        style={{ marginBottom: '1rem' }}
-                      >
-                        <Select
-                          id="search-package-types-select"
-                          isOpen={isSearchPackageTypeOpen}
-                          selected={searchPackageType === 'individual' ? 'Individual packages' : 'Package groups'}
-                          onSelect={onSearchPackageTypeSelect}
-                          onOpenChange={(isOpen) => setIsSearchPackageTypeOpen(isOpen)}
-                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                            <MenuToggle 
-                              ref={toggleRef} 
-                              onClick={() => setIsSearchPackageTypeOpen(!isSearchPackageTypeOpen)}
-                              isExpanded={isSearchPackageTypeOpen}
-                              style={{ width: '100%' }}
-                            >
-                              {searchPackageType === 'individual' ? 'Individual packages' : 'Package groups'}
-                            </MenuToggle>
-                          )}
-                        >
-                          <SelectList>
-                            <SelectOption value="individual">Individual packages</SelectOption>
-                            <SelectOption value="groups">Package groups</SelectOption>
-                          </SelectList>
-                        </Select>
-                      </FormGroup>
-                    </div>
-
-                    {/* Repository Dropdown */}
-                    <div style={{ flex: '0 0 200px' }}>
-                      <FormGroup
-                        label="Repository"
-                        fieldId="search-repository"
-                        isRequired
-                        style={{ marginBottom: '1rem' }}
-                      >
-                        <Select
-                          id="search-repository-select"
-                          isOpen={isRepositoryDropdownOpen}
-                          selected={selectedRepository}
-                          onSelect={(_, selection) => {
-                            setSelectedRepository(String(selection));
-                            setIsRepositoryDropdownOpen(false);
-                          }}
-                          onOpenChange={(isOpen) => setIsRepositoryDropdownOpen(isOpen)}
-                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                            <MenuToggle 
-                              ref={toggleRef} 
-                              onClick={() => setIsRepositoryDropdownOpen(!isRepositoryDropdownOpen)}
-                              isExpanded={isRepositoryDropdownOpen}
-                              style={{ width: '100%' }}
-                            >
-                              {selectedRepository || 'Select repository'}
-                            </MenuToggle>
-                          )}
-                        >
-                          <SelectList>
-                            {getFilteredRepositories().map((repo) => (
-                              <SelectOption key={repo} value={repo}>
-                                {repo}
-                              </SelectOption>
-                            ))}
-                          </SelectList>
-                        </Select>
-                      </FormGroup>
-                    </div>
-
-                    {/* Search Input */}
-                    <div style={{ flex: 1 }}>
-                      <FormGroup
-                        label="Search terms"
-                        fieldId="search-terms"
-                        style={{ marginBottom: '1rem' }}
-                      >
-                        <SearchInput
-                          placeholder="Search for packages..."
-                          value={advancedSearchTerm}
-                          onChange={(_event, value) => setAdvancedSearchTerm(value)}
-                          onClear={() => setAdvancedSearchTerm('')}
-                          style={{ width: '100%' }}
-                        />
-                      </FormGroup>
-                    </div>
-
-                    {/* Search Button */}
-                    <div style={{ flex: '0 0 auto' }}>
-                      <Button
-                        variant="primary"
-                        onClick={handleSearchPackages}
-                        isDisabled={!selectedRepository || !advancedSearchTerm.trim()}
-                        style={{ marginBottom: '1rem' }}
-                      >
-                        Search
-                      </Button>
-                    </div>
-                  </div>
+              {/* Extended Support Subscription */}
+              <FormGroup
+                label="Extended support subscription"
+                fieldId="extended-support"
+                style={{ marginBottom: '2rem' }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <Radio
+                    isChecked={extendedSupport === 'none'}
+                    name="extended-support"
+                    onChange={() => setExtendedSupport('none')}
+                    label="None"
+                    id="extended-support-none"
+                  />
+                  <Radio
+                    isChecked={extendedSupport === 'eus'}
+                    name="extended-support"
+                    onChange={() => setExtendedSupport('eus')}
+                    label="Extended update support (EUS)"
+                    id="extended-support-eus"
+                  />
+                  <Radio
+                    isChecked={extendedSupport === 'eeus'}
+                    name="extended-support"
+                    onChange={() => setExtendedSupport('eeus')}
+                    label="Enhanced extended update support (EEUS)"
+                    id="extended-support-eeus"
+                  />
                 </div>
+              </FormGroup>
 
-                {/* Search Results */}
-                {searchResults.length > 0 && (
-                  <div style={{ marginTop: '1rem' }}>
-                    <h5 style={{ 
-                      fontSize: '0.875rem', 
-                      fontWeight: 600, 
-                      marginBottom: '1rem',
-                      color: '#151515'
-                    }}>
-                      Search Results ({getFilteredSearchResults().length} packages found)
-                    </h5>
+              {/* Repository Rows - Grouped Layout */}
+                <Card style={{ overflow: 'visible' }}>
+                  <CardBody style={{ padding: '1.5rem', overflow: 'visible' }}>
+                    <Stack hasGutter>
+                      {repositoryRows.map((row, index) => (
+                        <StackItem key={row.id}>
+                          <Grid hasGutter>
+                            <GridItem span={3}>
+                              <FormGroup
+                                label={index === 0 ? "Package Type" : ""}
+                                fieldId={`package-type-${row.id}`}
+                              >
+                                <Select
+                                  id={`package-type-select-${row.id}`}
+                                  isOpen={isSearchPackageTypeOpen}
+                                  selected={searchPackageType === 'individual' ? 'Individual packages' : 'Package groups'}
+                                  onSelect={onSearchPackageTypeSelect}
+                                  onOpenChange={(isOpen) => setIsSearchPackageTypeOpen(isOpen)}
+                                  toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                                    <MenuToggle 
+                                      ref={toggleRef} 
+                                      onClick={() => setIsSearchPackageTypeOpen(!isSearchPackageTypeOpen)}
+                                      isExpanded={isSearchPackageTypeOpen}
+                                      style={{ width: '100%' }}
+                                      isDisabled={row.isOpenSCAPRequired}
+                                    >
+                                      {searchPackageType === 'individual' ? 'Individual packages' : 'Package groups'}
+                                    </MenuToggle>
+                                  )}
+                                >
+                                  <SelectList>
+                                    <SelectOption value="individual">Individual packages</SelectOption>
+                                    <SelectOption value="groups">Package groups</SelectOption>
+                                  </SelectList>
+                                </Select>
+                              </FormGroup>
+                            </GridItem>
+                            
+                            <GridItem span={3}>
+                              <FormGroup
+                                label={index === 0 ? "Repository" : ""}
+                                fieldId={`repository-${row.id}`}
+                              >
+                                <Select
+                                  id={`repository-select-${row.id}`}
+                                  isOpen={row.isRepositoryDropdownOpen}
+                                  selected={row.repository}
+                                  onSelect={(_, selection) => {
+                                    handleRepositorySelect(row.id, String(selection));
+                                  }}
+                                  onOpenChange={(isOpen) => updateRepositoryRow(row.id, { isRepositoryDropdownOpen: isOpen })}
+                                  toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                                    <MenuToggle 
+                                      ref={toggleRef} 
+                                      onClick={() => updateRepositoryRow(row.id, { isRepositoryDropdownOpen: !row.isRepositoryDropdownOpen })}
+                                      isExpanded={row.isRepositoryDropdownOpen}
+                                      style={{ width: '100%' }}
+                                      isDisabled={row.isOpenSCAPRequired}
+                                    >
+                                      {row.repository || 'Select repository'}
+                                    </MenuToggle>
+                                  )}
+                                >
+                                  <SelectList>
+                                    {getFilteredRepositories().map((repo) => (
+                                      <SelectOption key={repo} value={repo}>
+                                        {repo}
+                                      </SelectOption>
+                                    ))}
+                                  </SelectList>
+                                </Select>
+                              </FormGroup>
+                            </GridItem>
+                            
+                            <GridItem span={6} style={{ overflow: 'visible' }}>
+                              <FormGroup
+                                label={index === 0 ? "Package" : ""}
+                                fieldId={`package-${row.id}`}
+                                style={{ position: 'relative', overflow: 'visible' }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  {row.isLocked && row.selectedPackage ? (
+                                    <>
+                                      <TextInput
+                                        value={`${row.selectedPackage.name} v${row.selectedPackage.version}`}
+                                        readOnly
+                                        style={{ flex: 1 }}
+                                      />
+                                      {row.isOpenSCAPRequired ? (
+                                        <Tooltip content="Added by OpenSCAP">
+                                          <Button
+                                            variant="plain"
+                                            style={{ padding: '8px', minWidth: 'auto', cursor: 'default' }}
+                                            aria-label="Package added by OpenSCAP"
+                                            isDisabled
+                                          >
+                                            <svg
+                                              style={{ fontSize: '0.875rem', color: '#666' }}
+                                              fill="currentColor"
+                                              height="1em"
+                                              width="1em"
+                                              viewBox="0 0 512 512"
+                                            >
+                                              <path d="M336 208v-95a80 80 0 0 0-160 0v95" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="32"/>
+                                              <rect x="96" y="208" width="320" height="272" rx="48" ry="48" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="32"/>
+                                            </svg>
+                                          </Button>
+                                        </Tooltip>
+                                      ) : (
+                                        <Button
+                                          variant="plain"
+                                          onClick={() => removeRepositoryRow(row.id)}
+                                          style={{ padding: '8px', minWidth: 'auto' }}
+                                          aria-label="Remove row"
+                                        >
+                                          <MinusIcon style={{ fontSize: '0.875rem' }} />
+                                        </Button>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <SearchInput
+                                        placeholder={row.repository ? "Search for packages..." : "Select repository first"}
+                                        value={row.packageSearchTerm}
+                                        onChange={(_event, value) => handleRowPackageSearchInput(row.id, value)}
+                                        onSearch={() => performRowPackageSearch(row.id)}
+                                        onClear={() => handleRowPackageSearchClear(row.id)}
+                                        onKeyDown={(event) => {
+                                          if (event.key === 'Enter') {
+                                            performRowPackageSearch(row.id);
+                                          }
+                                        }}
+                                        isDisabled={!row.repository}
+                                        style={{ flex: 1 }}
+                                      />
+                                      {!row.isOpenSCAPRequired && (
+                                        <Button
+                                          variant="plain"
+                                          onClick={() => removeRepositoryRow(row.id)}
+                                          style={{ padding: '8px', minWidth: 'auto' }}
+                                          aria-label="Remove row"
+                                        >
+                                          <MinusIcon style={{ fontSize: '0.875rem' }} />
+                                        </Button>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
+                                {row.isOpenSCAPRequired && row.isLocked && (
+                                  <div style={{ 
+                                    fontSize: '0.75rem', 
+                                    color: '#666', 
+                                    marginTop: '4px',
+                                    fontStyle: 'italic'
+                                  }}>
+                                    Added by OpenSCAP
+                                  </div>
+                                )}
+                                
+                                {/* Search Results Dropdown for this row */}
+                                {!row.isLocked && row.searchResults.length > 0 && (
+                                  <div style={{ 
+                                    position: 'absolute',
+                                    top: '100%',
+                                    left: 0,
+                                    right: 0,
+                                    backgroundColor: 'white',
+                                    border: '1px solid #d2d2d2',
+                                    borderRadius: '4px',
+                                    boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                                    zIndex: 9999,
+                                    maxHeight: '200px',
+                                    overflowY: 'auto',
+                                    marginTop: '4px'
+                                  }}>
+                                    {row.searchResults.slice(0, 5).map((pkg) => (
+                                      <div
+                                        key={pkg.id}
+                                        style={{ 
+                                          padding: '12px 16px',
+                                          borderBottom: '1px solid #f0f0f0',
+                                          cursor: 'pointer',
+                                          fontSize: '0.875rem',
+                                          transition: 'background-color 0.15s ease'
+                                        }}
+                                        onClick={() => handlePackageSelection(row.id, pkg)}
+                                        onMouseEnter={(e) => {
+                                          (e.target as HTMLElement).style.backgroundColor = '#f5f5f5';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                          (e.target as HTMLElement).style.backgroundColor = 'white';
+                                        }}
+                                      >
+                                        <div style={{ fontWeight: 500, marginBottom: '2px' }}>
+                                          {pkg.name}
+                                        </div>
+                                        <div style={{ color: '#666', fontSize: '0.75rem' }}>
+                                          v{pkg.version} • {pkg.repository}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </FormGroup>
+                            </GridItem>
+                          </Grid>
+                        </StackItem>
+                      ))}
+                    </Stack>
+                  </CardBody>
+                </Card>
 
-                    {/* Compact Table */}
-                    <div style={{ 
-                      border: '1px solid #d2d2d2',
-                      borderRadius: '4px',
-                      overflow: 'hidden',
-                      marginBottom: '1rem'
-                    }}>
-                      <table style={{ 
-                        width: '100%', 
-                        borderCollapse: 'collapse',
-                        fontSize: '0.875rem'
-                      }}>
-                        <thead style={{ backgroundColor: '#f5f5f5' }}>
-                          <tr>
-                            <th style={{ 
-                              padding: '8px 12px',
-                              textAlign: 'left',
-                              borderBottom: '1px solid #d2d2d2',
-                              fontWeight: 600,
-                              width: '40px'
-                            }}>
-                              <Checkbox
-                                id="select-all-search-results"
-                                isChecked={
-                                  getFilteredSearchResults().length > 0 &&
-                                  getFilteredSearchResults().every(pkg => selectedSearchResults.includes(pkg.id))
-                                }
-                                onChange={(_event, checked) => handleSelectAllSearchResults(checked)}
-                              />
-                            </th>
-                            <th style={{ 
-                              padding: '8px 12px',
-                              textAlign: 'left',
-                              borderBottom: '1px solid #d2d2d2',
-                              fontWeight: 600
-                            }}>
-                              Name
-                            </th>
-                            <th style={{ 
-                              padding: '8px 12px',
-                              textAlign: 'left',
-                              borderBottom: '1px solid #d2d2d2',
-                              fontWeight: 600
-                            }}>
-                              Version
-                            </th>
-                            <th style={{ 
-                              padding: '8px 12px',
-                              textAlign: 'left',
-                              borderBottom: '1px solid #d2d2d2',
-                              fontWeight: 600
-                            }}>
-                              Repository
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {getPaginatedSearchResults().map((pkg, index) => (
-                            <tr key={pkg.id} style={{ 
-                              borderBottom: index < getPaginatedSearchResults().length - 1 ? '1px solid #f0f0f0' : 'none'
-                            }}>
-                              <td style={{ padding: '8px 12px' }}>
-                                <Checkbox
-                                  id={`search-result-${pkg.id}`}
-                                  isChecked={selectedSearchResults.includes(pkg.id)}
-                                  onChange={(_event, checked) => handleSearchResultSelection(pkg.id, checked)}
-                                />
-                              </td>
-                              <td style={{ 
-                                padding: '8px 12px',
-                                fontWeight: 500
-                              }}>
-                                {pkg.name}
-                              </td>
-                              <td style={{ padding: '8px 12px' }}>
-                                {pkg.version}
-                              </td>
-                              <td style={{ padding: '8px 12px' }}>
-                                {pkg.repository}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* Pagination for Search Results */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Button
-                        variant="primary"
-                        onClick={() => {
-                          // Add selected search results to the main packages list
-                          setSelectedPackages(prev => [...prev, ...selectedSearchResults]);
-                          setSelectedSearchResults([]);
-                          setSearchResults([]);
-                          setAdvancedSearchTerm('');
-                        }}
-                        isDisabled={selectedSearchResults.length === 0}
-                      >
-                        Add Selected ({selectedSearchResults.length})
-                      </Button>
-                      
-                      <Pagination
-                        itemCount={getFilteredSearchResults().length}
-                        perPage={searchResultsPerPage}
-                        page={searchResultsPage}
-                        onSetPage={(_event, pageNumber) => setSearchResultsPage(pageNumber)}
-                        onPerPageSelect={(_event, perPage) => {
-                          setSearchResultsPerPage(perPage);
-                          setSearchResultsPage(1);
-                        }}
-                        variant="bottom"
-                        isCompact
-                      />
-                    </div>
-                  </div>
-                )}
+              {/* Add Repository Button */}
+              <div style={{ marginTop: '1rem' }}>
+                <Button
+                  variant="secondary"
+                  onClick={addRepositoryRow}
+                  icon={<PlusIcon />}
+                >
+                  Add Repository
+                </Button>
               </div>
             </Form>
           </div>
@@ -2288,7 +2161,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             </p>
             <Form>
               {/* Register Section */}
-              <div style={{ marginBottom: '2rem' }}>
+              <div style={{ marginBottom: '0rem' }}>
                 <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                   Register
                 </Title>
@@ -2311,6 +2184,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     hoverTip="Copy Organization ID" 
                     clickTip="Organization ID copied!"
                     variant="inline"
+                    style={{ width: '25%' }}
                   >
                     {organizationId}
                   </ClipboardCopy>
@@ -2322,7 +2196,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 <FormGroup
                   label="Registration method"
                   fieldId="registration-method"
-                  style={{ marginBottom: '1rem' }}
+                  style={{ marginBottom: '0rem' }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <Radio
@@ -2351,6 +2225,527 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               </div>
 
               {renderChangeableContent()}
+
+              {/* Divider */}
+              <div style={{ 
+                height: '1px', 
+                backgroundColor: '#d2d2d2', 
+                margin: '0rem, 0, 2rem, 0' 
+              }} />
+
+              {/* Timezone Section */}
+              <div style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  Timezone
+                </Title>
+                
+                <FormGroup
+                  label="Timezone"
+                  fieldId="timezone"
+                  style={{ marginBottom: '1rem' }}
+                >
+                  <Select
+                    id="timezone-select"
+                    isOpen={isTimezoneOpen}
+                    selected={timezone}
+                    onSelect={(_, selection) => {
+                      setTimezone(String(selection));
+                      setIsTimezoneOpen(false);
+                    }}
+                    onOpenChange={(isOpen) => setIsTimezoneOpen(isOpen)}
+                    toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                      <MenuToggle 
+                        ref={toggleRef} 
+                        onClick={() => setIsTimezoneOpen(!isTimezoneOpen)}
+                        isExpanded={isTimezoneOpen}
+                        style={{ width: '300px' }}
+                      >
+                        {timezone || 'Select timezone'}
+                      </MenuToggle>
+                    )}
+                  >
+                    <SelectList>
+                      {timezoneOptions.map((tz) => (
+                        <SelectOption key={tz} value={tz}>
+                          {tz}
+                        </SelectOption>
+                      ))}
+                    </SelectList>
+                  </Select>
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                    Comma-separated list of NTP servers
+                  </div>
+                </FormGroup>
+
+                <FormGroup
+                  label="NTP servers"
+                  fieldId="ntp-servers"
+                  style={{ marginBottom: '0rem' }}
+                >
+                  <TextInput
+                    id="ntp-servers"
+                    value={ntpServers}
+                    style={{ width: '200px' }}
+                    onChange={(_event, value) => setNtpServers(value)}
+                    placeholder="pool.ntp.org"
+                  />
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                    Comma-separated list of NTP servers
+                  </div>
+                </FormGroup>
+              </div>
+
+              {/* Divider */}
+              <div style={{ 
+                height: '1px', 
+                backgroundColor: '#d2d2d2', 
+                margin: '0rem 0 1.5rem 0' 
+              }} />
+
+              {/* Locale Section */}
+              <div style={{ marginBottom: '0rem' }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  Locale
+                </Title>
+                
+                <FormGroup
+                  label="Suggest keyboards from these languages"
+                  fieldId="languages"
+                  style={{ marginBottom: '2rem', marginTop:'2rem' }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {languages.map((language) => (
+                      <div key={language.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={{ width: '400px' }}>
+                          <Select
+                            id={`language-select-${language.id}`}
+                            isOpen={language.isOpen}
+                            selected={language.value}
+                            onSelect={(_, selection) => {
+                              updateLanguage(language.id, String(selection));
+                              toggleLanguageDropdown(language.id);
+                            }}
+                            onOpenChange={() => toggleLanguageDropdown(language.id)}
+                            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                              <MenuToggle 
+                                ref={toggleRef} 
+                                onClick={() => toggleLanguageDropdown(language.id)}
+                                isExpanded={language.isOpen}
+                                style={{ width: '100%' }}
+                              >
+                                {language.value || 'Select language'}
+                              </MenuToggle>
+                            )}
+                          >
+                            <SelectList>
+                              <div style={{ padding: '0.5rem', borderBottom: '1px solid #D2D2D2' }}>
+                                <SearchInput
+                                  placeholder="Search languages..."
+                                  value={language.filterValue}
+                                  onChange={(_, value) => updateLanguageFilter(language.id, value)}
+                                  onClear={() => updateLanguageFilter(language.id, '')}
+                                />
+                              </div>
+                              {getFilteredLanguageOptions(language.filterValue).map((lang) => (
+                                <SelectOption key={lang} value={lang}>
+                                  {lang}
+                                </SelectOption>
+                              ))}
+                            </SelectList>
+                          </Select>
+                        </div>
+                        {language.id !== 0 && (
+                          <Button
+                            variant="plain"
+                            aria-label="Remove language"
+                            onClick={() => removeLanguage(language.id)}
+                            style={{ minWidth: 'auto', padding: '0.5rem', color: '#6A6E73' }}
+                          >
+                            <MinusIcon />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: '0.75rem' }}>
+                    <div style={{ color: '#6A6E73', marginBottom: '0.75rem', fontSize: '0.875rem' }}>
+                      Search by country, language or UTF code
+                    </div>
+                    <Button
+                      variant="link"
+                      onClick={addLanguage}
+                      style={{ 
+                        padding: '0.5rem 1rem', 
+                        border: '1px solid #C7C7C7', 
+                        borderRadius: '24px', 
+                        color: '#0066CC', 
+                        backgroundColor: 'transparent',
+                        textDecoration: 'none'
+                      }}
+                    >
+                      Add more
+                    </Button>
+                  </div>
+                </FormGroup>
+
+                <FormGroup
+                  label="Suggested keyboards"
+                  fieldId="suggested-keyboards"
+                  style={{ marginBottom: '1rem' }}
+                >
+                  <Select
+                    id="suggested-keyboards-select"
+                    isOpen={isSuggestedKeyboardOpen}
+                    selected={suggestedKeyboard}
+                    onSelect={(_, selection) => {
+                      setSuggestedKeyboard(String(selection));
+                      setIsSuggestedKeyboardOpen(false);
+                    }}
+                    onOpenChange={(isOpen) => setIsSuggestedKeyboardOpen(isOpen)}
+                    toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                      <MenuToggle 
+                        ref={toggleRef} 
+                        onClick={() => setIsSuggestedKeyboardOpen(!isSuggestedKeyboardOpen)}
+                        isExpanded={isSuggestedKeyboardOpen}
+                        style={{ width: '300px' }}
+                      >
+                        {suggestedKeyboard || 'Select keyboard'}
+                      </MenuToggle>
+                    )}
+                  >
+                    <SelectList>
+                      <SelectOption value="US QWERTY">US QWERTY</SelectOption>
+                      <SelectOption value="German QWERTZ">German QWERTZ</SelectOption>
+                      <SelectOption value="French AZERTY">French AZERTY</SelectOption>
+                      <SelectOption value="UK QWERTY">UK QWERTY</SelectOption>
+                    </SelectList>
+                  </Select>
+                </FormGroup>
+
+                <FormGroup
+                  label="Specialty keyboards"
+                  fieldId="specialty-keyboards"
+                  style={{ marginBottom: '0rem' }}
+                >
+                  <Select
+                    id="specialty-keyboards-select"
+                    isOpen={isSpecialtyKeyboardOpen}
+                    selected={specialtyKeyboard}
+                    onSelect={(_, selection) => {
+                      setSpecialtyKeyboard(String(selection));
+                      setIsSpecialtyKeyboardOpen(false);
+                    }}
+                    onOpenChange={(isOpen) => setIsSpecialtyKeyboardOpen(isOpen)}
+                    toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                      <MenuToggle 
+                        ref={toggleRef} 
+                        onClick={() => setIsSpecialtyKeyboardOpen(!isSpecialtyKeyboardOpen)}
+                        isExpanded={isSpecialtyKeyboardOpen}
+                        style={{ width: '300px' }}
+                      >
+                        {specialtyKeyboard || 'Select specialty keyboard'}
+                      </MenuToggle>
+                    )}
+                  >
+                    <SelectList>
+                      <SelectOption value="Dvorak">Dvorak</SelectOption>
+                      <SelectOption value="Colemak">Colemak</SelectOption>
+                      <SelectOption value="Workman">Workman</SelectOption>
+                      <SelectOption value="Neo">Neo</SelectOption>
+                      <SelectOption value="Bépo">Bépo</SelectOption>
+                    </SelectList>
+                  </Select>
+                </FormGroup>
+              </div>
+
+              {/* Divider */}
+              <div style={{ 
+                height: '1px', 
+                backgroundColor: '#d2d2d2', 
+                margin: '1rem 0' 
+              }} />
+
+              {/* Hostname Section */}
+              <div style={{ marginBottom: '1rem' }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  Hostname
+                </Title>
+                
+                <FormGroup
+                  label="Hostname"
+                  fieldId="hostname"
+                  style={{ marginBottom: '0rem', width: '25%' }}
+                >
+                  <TextInput
+                    id="hostname"
+                    value={hostname}
+                    onChange={(_event, value) => setHostname(value)}
+                    placeholder="Enter hostname"
+                  />
+                </FormGroup>
+              </div>
+
+              {/* Divider */}
+              <div style={{ 
+                height: '1px', 
+                backgroundColor: '#d2d2d2', 
+                margin: '1rem 0' 
+              }} />
+
+              {/* Kernel Section */}
+              <div style={{ marginBottom: '0rem' }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  Kernel
+                </Title>
+                
+                <FormGroup
+                  label="Kernel package"
+                  fieldId="kernel-package"
+                  style={{ marginBottom: '1rem' }}
+                >
+                  <Select
+                    id="kernel-package-select"
+                    isOpen={isKernelPackageOpen}
+                    selected={kernelPackage}
+                    onSelect={(_, selection) => {
+                      setKernelPackage(String(selection));
+                      setIsKernelPackageOpen(false);
+                    }}
+                    onOpenChange={(isOpen) => setIsKernelPackageOpen(isOpen)}
+                    toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                      <MenuToggle 
+                        ref={toggleRef} 
+                        onClick={() => setIsKernelPackageOpen(!isKernelPackageOpen)}
+                        isExpanded={isKernelPackageOpen}
+                        style={{ width: '300px' }}
+                      >
+                        {kernelPackage}
+                      </MenuToggle>
+                    )}
+                  >
+                    <SelectList>
+                      <SelectOption value="kernel">kernel</SelectOption>
+                      <SelectOption value="kernel-debug">kernel-debug</SelectOption>
+                    </SelectList>
+                  </Select>
+                </FormGroup>
+
+                <FormGroup
+                  label="Append"
+                  fieldId="kernel-append"
+                  style={{ marginBottom: '0rem' }}
+                >
+                  <TextInput
+                    id="kernel-append"
+                    value={kernelAppend}
+                    onChange={(_event, value) => setKernelAppend(value)}
+                    placeholder="Enter kernel append options"
+                    style={{ width: '400px' }}
+                  />
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    color: '#666'
+                  }}>
+                    <MinusIcon style={{ fontSize: '0.875rem' }} />
+                    <span>Additional kernel boot parameters to append</span>
+                  </div>
+                </FormGroup>
+              </div>
+
+              {/* Divider */}
+              <div style={{ 
+                height: '1px', 
+                backgroundColor: '#d2d2d2', 
+                margin: '1rem 0' 
+              }} />
+
+              {/* Systemd Services Section */}
+              <div style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  Systemd services
+                </Title>
+                
+                <FormGroup
+                  label="Disabled services"
+                  fieldId="systemd-disabled-services"
+                  style={{ marginBottom: '1rem' }}
+                >
+                  <TextInput
+                    id="systemd-disabled-services"
+                    value={systemdDisabledServices}
+                    onChange={(_event, value) => setSystemdDisabledServices(value)}
+                    placeholder="Enter services to disable"
+                    style={{ width: '40%' }}
+                  />
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                    Comma-separated list of services to disable
+                  </div>
+                </FormGroup>
+
+                <FormGroup
+                  label="Masked services"
+                  fieldId="systemd-masked-services"
+                  style={{ marginBottom: '1rem' }}
+                >
+                  <TextInput
+                    id="systemd-masked-services"
+                    value={systemdMaskedServices}
+                    onChange={(_event, value) => setSystemdMaskedServices(value)}
+                    placeholder="Enter services to mask"
+                    style={{ width: '40%' }}
+                  />
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                    Comma-separated list of services to disable
+                  </div>
+                </FormGroup>
+
+                <FormGroup
+                  label="Enabled services"
+                  fieldId="systemd-enabled-services"
+                  style={{ marginBottom: '0rem' }}
+                >
+                  <TextInput
+                    id="systemd-enabled-services"
+                    value={systemdEnabledServices}
+                    onChange={(_event, value) => setSystemdEnabledServices(value)}
+                    placeholder="Enter services to enable"
+                    style={{ width: '40%' }}
+                  />
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                    Comma-separated list of services to disable
+                  </div>
+                </FormGroup>
+              </div>
+
+              {/* Divider */}
+              <div style={{ 
+                height: '1px', 
+                backgroundColor: '#d2d2d2', 
+                margin: '1rem 0' 
+              }} />
+
+              {/* Firewall Section */}
+              <div style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  Firewall
+                </Title>
+                
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                  <FormGroup
+                    label="Enabled ports"
+                    fieldId="firewall-enabled-ports"
+                    style={{ flex: 1 }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {firewallPorts.map((port, index) => (
+                        <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <TextInput
+                            id={`firewall-enabled-ports-${index}`}
+                            value={port}
+                            onChange={(_event, value) => updateFirewallPort(index, value)}
+                            placeholder="Enter port (e.g., 8080, 443)"
+                            style={{ flex: 1 }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </FormGroup>
+
+                  <FormGroup
+                    label="Disabled services"
+                    fieldId="firewall-disabled-services"
+                    style={{ flex: 1 }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {firewallDisabledServices.map((service, index) => (
+                        <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <TextInput
+                            id={`firewall-disabled-services-${index}`}
+                            value={service}
+                            onChange={(_event, value) => updateFirewallDisabledService(index, value)}
+                            placeholder="Enter service name"
+                            style={{ flex: 1 }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </FormGroup>
+
+                  <FormGroup
+                    label="Enabled services"
+                    fieldId="firewall-enabled-services"
+                    style={{ flex: 1 }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {firewallEnabledServices.map((service, index) => (
+                        <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <TextInput
+                            id={`firewall-enabled-services-${index}`}
+                            value={service}
+                            onChange={(_event, value) => updateFirewallEnabledService(index, value)}
+                            placeholder="Enter service name"
+                            style={{ flex: 1 }}
+                          />
+                          <MinusCircleIcon
+                            style={{ 
+                              fontSize: '1.25rem', 
+                              color: '#151515',
+                              cursor: firewallEnabledServices.length > 1 ? 'pointer' : 'not-allowed',
+                              opacity: firewallEnabledServices.length > 1 ? 1 : 0.3
+                            }}
+                            onClick={() => {
+                              if (firewallEnabledServices.length > 1) {
+                                removeFirewallRow(index);
+                              }
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </FormGroup>
+                </div>
+
+                <Button
+                  variant="secondary"
+                  onClick={addFirewallRow}
+                  style={{ marginBottom: '0rem' }}
+                >
+                  Add more
+                </Button>
+              </div>
+
+              {/* Divider */}
+              <div style={{ 
+                height: '1px', 
+                backgroundColor: '#d2d2d2', 
+                margin: '1rem 0' 
+              }} />
+
+              {/* Users Section */}
+              <div style={{ marginBottom: '1rem' }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  Users
+                </Title>
+                <p style={{ 
+                  fontSize: '14px', 
+                  lineHeight: '1.5',
+                  marginBottom: '1rem',
+                  color: '#666'
+                }}>
+                  Create user accounts for systems that will use this image.
+                </p>
+
+                {/* User management table would go here - simplified for now */}
+                <div style={{ border: '1px solid #d2d2d2', borderRadius: '4px', padding: '1rem' }}>
+                  <p style={{ fontSize: '14px', color: '#666' }}>
+                    User management interface - add users, set passwords, configure SSH keys, assign groups
+                  </p>
+                </div>
+              </div>
             </Form>
           </div>
         );
@@ -2674,7 +3069,25 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                         </p>
                         <LabelGroup>
                           {selectedPackages.slice(0, 10).map((pkg) => (
-                            <Label key={pkg}>{pkg}</Label>
+                            <Label key={pkg.id || pkg}>
+                              {pkg.name || pkg}
+                              <Button
+                                variant="plain"
+                                onClick={() => {
+                                  setSelectedPackages(prev => 
+                                    prev.filter(p => (p.id || p) !== (pkg.id || pkg))
+                                  );
+                                }}
+                                style={{ 
+                                  marginLeft: '4px', 
+                                  padding: '0 4px',
+                                  minWidth: 'auto',
+                                  height: 'auto'
+                                }}
+                              >
+                                <TimesIcon style={{ fontSize: '0.75rem' }} />
+                              </Button>
+                            </Label>
                           ))}
                           {selectedPackages.length > 10 && (
                             <Label>+{selectedPackages.length - 10} more</Label>
@@ -2706,266 +3119,6 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
 
             </Stack>
-          </div>
-        );
-      case 4:
-        return (
-          <div>
-            <Title headingLevel="h2" size="xl" style={{ marginBottom: '1rem' }}>
-              Packages and Repos Ideation
-            </Title>
-            <p style={{ fontSize: '16px', color: '#666', marginBottom: '2rem' }}>
-              Design exploration for a comprehensive repository and package management system.
-            </p>
-
-
-
-            {/* Approach 1: Repository-First */}
-            <Card style={{ marginBottom: '2rem' }}>
-              <CardBody>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                  🎯 Approach 1: Repository-First Workflow
-                </Title>
-                <p style={{ marginBottom: '1.5rem', color: '#666' }}>
-                  Users start by selecting repositories, then browse packages within each repository.
-                </p>
-                
-                <div style={{ border: '2px dashed #0066cc', borderRadius: '8px', padding: '1.5rem', backgroundColor: '#f8f9fa' }}>
-                  <div style={{ marginBottom: '1.5rem' }}>
-                    <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
-                      1. Repository Selection
-                    </Title>
-                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                      <div style={{ flex: 1, padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px', backgroundColor: 'white' }}>
-                        <strong>Red Hat Repository</strong>
-                        <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
-                          ✅ Always included • BaseOS, AppStream, etc.
-                        </div>
-                      </div>
-                      <div style={{ flex: 1, padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px', backgroundColor: 'white' }}>
-                        <strong>Third-Party Repositories</strong>
-                        <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
-                          + Add EPEL, CentOS Stream, Custom...
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ marginBottom: '1.5rem' }}>
-                    <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
-                      2. Package Selection Within Repository
-                    </Title>
-                    <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px', backgroundColor: 'white' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <span><strong>Red Hat Repository</strong> • 2,847 packages</span>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <Button variant="link" size="sm">Select All</Button>
-                          <Button variant="link" size="sm">Select None</Button>
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                        <TextInput placeholder="Search packages..." style={{ flex: 1 }} />
-                        <div style={{ width: '150px', padding: '0.5rem', border: '1px solid #d2d2d2', borderRadius: '4px', fontSize: '0.875rem', color: '#666' }}>
-                          Package type ▼
-                        </div>
-                      </div>
-                      <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                        📦 Individual packages: httpd, nginx, postgresql...<br/>
-                        📚 Package groups: Development Tools, Web Server...
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
-                      3. Smart Recommendations
-                    </Title>
-                    <div style={{ padding: '1rem', border: '1px solid #ffc107', borderRadius: '4px', backgroundColor: '#fff3cd' }}>
-                      <strong>💡 Suggested packages for "httpd"</strong>
-                      <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
-                        Users who selected httpd also commonly add: mod_ssl, httpd-tools, certbot
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#e8f5e8', borderRadius: '4px' }}>
-                  <strong>✅ Pros:</strong> Clear hierarchy, easy to understand repository structure, bulk operations
-                </div>
-                <div style={{ marginTop: '0.5rem', padding: '1rem', backgroundColor: '#ffe8e8', borderRadius: '4px' }}>
-                  <strong>❌ Cons:</strong> Requires knowing which repository contains desired packages, more steps
-                </div>
-              </CardBody>
-            </Card>
-
-            {/* Approach 2: Search-First */}
-            <Card style={{ marginBottom: '2rem' }}>
-              <CardBody>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                  🔍 Approach 2: Search-First Workflow
-                </Title>
-                <p style={{ marginBottom: '1.5rem', color: '#666' }}>
-                  Users search for packages by name, system handles repository management automatically.
-                </p>
-                
-                <div style={{ border: '2px dashed #28a745', borderRadius: '8px', padding: '1.5rem', backgroundColor: '#f8f9fa' }}>
-                  <div style={{ marginBottom: '1.5rem' }}>
-                    <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
-                      1. Universal Search
-                    </Title>
-                    <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px', backgroundColor: 'white' }}>
-                      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                        <TextInput placeholder="Search for any package or repository..." style={{ flex: 1 }} />
-                        <div style={{ width: '120px', padding: '0.5rem', border: '1px solid #d2d2d2', borderRadius: '4px', fontSize: '0.875rem', color: '#666' }}>
-                          All types ▼
-                        </div>
-                        <Button variant="primary">Search</Button>
-                      </div>
-                      <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                        Search across all available repositories simultaneously
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ marginBottom: '1.5rem' }}>
-                    <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
-                      2. Results with Repository Context
-                    </Title>
-                    <div style={{ border: '1px solid #d2d2d2', borderRadius: '4px', backgroundColor: 'white' }}>
-                      <div style={{ padding: '0.75rem', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                          <strong>httpd</strong> <span style={{ color: '#666' }}>• Web server</span>
-                          <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                            📍 Red Hat Repository (BaseOS)
-                          </div>
-                        </div>
-                        <Button variant="secondary" size="sm">+ Add</Button>
-                      </div>
-                      <div style={{ padding: '0.75rem', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                          <strong>nginx</strong> <span style={{ color: '#666' }}>• Web server</span>
-                          <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                            📍 EPEL Repository
-                          </div>
-                        </div>
-                        <Button variant="secondary" size="sm">+ Add</Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
-                      3. Auto-Repository Addition
-                    </Title>
-                    <div style={{ padding: '1rem', border: '1px solid #17a2b8', borderRadius: '4px', backgroundColor: '#d1ecf1' }}>
-                      <strong>🔄 Adding "nginx" from EPEL Repository</strong>
-                      <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
-                        EPEL repository will be automatically added to your image configuration.
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#e8f5e8', borderRadius: '4px' }}>
-                  <strong>✅ Pros:</strong> Fast discovery, no need to know repository structure, automatic dependency management
-                </div>
-                <div style={{ marginTop: '0.5rem', padding: '1rem', backgroundColor: '#ffe8e8', borderRadius: '4px' }}>
-                  <strong>❌ Cons:</strong> Less control over repositories, potential for unexpected additions
-                </div>
-              </CardBody>
-            </Card>
-
-            {/* Approach 3: Hybrid Dashboard */}
-            <Card style={{ marginBottom: '2rem' }}>
-              <CardBody>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                  ⚡ Approach 3: Hybrid Dashboard
-                </Title>
-                <p style={{ marginBottom: '1.5rem', color: '#666' }}>
-                  Combined approach with clear selection overview and multiple discovery methods.
-                </p>
-                
-                <div style={{ border: '2px dashed #6f42c1', borderRadius: '8px', padding: '1.5rem', backgroundColor: '#f8f9fa' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                    {/* Left Side: Search & Add */}
-                    <div>
-                      <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
-                        🔍 Discovery & Search
-                      </Title>
-                      <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px', backgroundColor: 'white' }}>
-                        <div style={{ marginBottom: '1rem' }}>
-                          <TextInput placeholder="Search packages or repositories..." />
-                        </div>
-                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                          <Button variant="tertiary" size="sm">Packages</Button>
-                          <Button variant="tertiary" size="sm">Package Groups</Button>
-                          <Button variant="tertiary" size="sm">Repositories</Button>
-                        </div>
-                        <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                          💡 Popular: Development Tools, Web Server, Database
-                        </div>
-                      </div>
-
-                      <div style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #ffc107', borderRadius: '4px', backgroundColor: '#fff3cd' }}>
-                        <strong>🎯 Recommendations</strong>
-                        <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
-                          Based on "Web Server" selection:<br/>
-                          • SSL certificates (certbot)<br/>
-                          • Performance monitoring (mod_status)<br/>
-                          • Security tools (mod_security)
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right Side: Selection Summary */}
-                    <div>
-                      <Title headingLevel="h4" size="md" style={{ marginBottom: '1rem' }}>
-                        📋 Current Selection
-                      </Title>
-                      <div style={{ padding: '1rem', border: '1px solid #d2d2d2', borderRadius: '4px', backgroundColor: 'white' }}>
-                        <div style={{ marginBottom: '1rem' }}>
-                          <strong>Repositories (2)</strong>
-                          <div style={{ marginTop: '0.5rem' }}>
-                            <Badge style={{ marginRight: '0.5rem' }}>Red Hat</Badge>
-                            <Badge style={{ marginRight: '0.5rem' }}>EPEL</Badge>
-                          </div>
-                        </div>
-                        <div style={{ marginBottom: '1rem' }}>
-                          <strong>Packages (5)</strong>
-                          <div style={{ marginTop: '0.5rem' }}>
-                            <Badge style={{ marginRight: '0.5rem' }}>httpd</Badge>
-                            <Badge style={{ marginRight: '0.5rem' }}>nginx</Badge>
-                            <Badge style={{ marginRight: '0.5rem' }}>+3 more</Badge>
-                          </div>
-                        </div>
-                        <div>
-                          <strong>Package Groups (1)</strong>
-                          <div style={{ marginTop: '0.5rem' }}>
-                            <Badge>Development Tools</Badge>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #28a745', borderRadius: '4px', backgroundColor: '#d4edda' }}>
-                        <strong>📊 Summary</strong>
-                        <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
-                          • 2 repositories enabled<br/>
-                          • 47 total packages (5 + 42 from groups)<br/>
-                          • ~127 MB additional size
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#e8f5e8', borderRadius: '4px' }}>
-                  <strong>✅ Pros:</strong> Best of both worlds, clear overview, flexible workflow, smart recommendations
-                </div>
-                <div style={{ marginTop: '0.5rem', padding: '1rem', backgroundColor: '#ffe8e8', borderRadius: '4px' }}>
-                  <strong>❌ Cons:</strong> More complex UI, potential information overload
-                </div>
-              </CardBody>
-            </Card>
           </div>
         );
       default:
@@ -3020,7 +3173,6 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               <Tab eventKey={1} title={<TabTitleText>Repositories and packages</TabTitleText>} />
               <Tab eventKey={2} title={<TabTitleText>Advanced settings</TabTitleText>} />
               <Tab eventKey={3} title={<TabTitleText>Review image</TabTitleText>} />
-              <Tab eventKey={4} title={<TabTitleText>Packages and repos ideation</TabTitleText>} />
             </Tabs>
           </div>
         </div>
