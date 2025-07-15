@@ -212,6 +212,41 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const [specialtyKeyboard, setSpecialtyKeyboard] = React.useState<string>('');
   const [isSpecialtyKeyboardOpen, setIsSpecialtyKeyboardOpen] = React.useState<boolean>(false);
 
+  // User management helper functions
+  const addUser = () => {
+    const newUser: UserRow = {
+      id: Date.now().toString(),
+      isAdministrator: false,
+      username: '',
+      password: '',
+      sshKey: '',
+      groups: [],
+      isEditing: false
+    };
+    setUsers(prev => [...prev, newUser]);
+  };
+
+  const removeUser = (userId: string) => {
+    setUsers(prev => prev.filter(user => user.id !== userId));
+  };
+
+  const updateUser = (userId: string, field: keyof UserRow, value: any) => {
+    setUsers(prev => prev.map(user => 
+      user.id === userId ? { ...user, [field]: value } : user
+    ));
+  };
+
+  const addGroupToUser = (userId: string, group: string) => {
+    if (!group.trim()) return;
+    updateUser(userId, 'groups', [...(users.find(u => u.id === userId)?.groups || []), group.trim()]);
+  };
+
+  const removeGroupFromUser = (userId: string, groupToRemove: string) => {
+    const user = users.find(u => u.id === userId);
+    if (user) {
+      updateUser(userId, 'groups', user.groups.filter(g => g !== groupToRemove));
+    }
+  };
 
   
   // Track what the user has modified to detect migration-only changes
@@ -904,133 +939,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const isFirstTab = activeTabKey === 0;
   const isLastTab = activeTabKey === 3;
 
-  const renderChangeableContent = () => {
-    switch (registrationMethod) {
-      case 'auto':
-        return (
-          <div style={{ marginTop: '0rem', marginBottom: '0rem' }}>
-            <FormGroup
-              label="Activation key"
-              fieldId="activation-key"
-              style={{ marginBottom: '0rem' }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Select
-                  id="activation-key-select"
-                  isOpen={isActivationKeyOpen}
-                  selected={selectedActivationKey}
-                  onSelect={onActivationKeySelect}
-                  onOpenChange={(isOpen) => setIsActivationKeyOpen(isOpen)}
-                  toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                    <MenuToggle 
-                      ref={toggleRef} 
-                      onClick={() => setIsActivationKeyOpen(!isActivationKeyOpen)}
-                      isExpanded={isActivationKeyOpen}
-                      style={{ width: '300px' }}
-                    >
-                      {selectedActivationKey}
-                    </MenuToggle>
-                  )}
-                >
-                  <SelectList>
-                    {activationKeys.map((key) => (
-                      <SelectOption key={key} value={key}>
-                        {key}
-                      </SelectOption>
-                    ))}
-                  </SelectList>
-                </Select>
-                
-                <Popover
-                  aria-label="Activation key details"
-                  position={PopoverPosition.right}
-                  bodyContent={
-                    <div style={{ minWidth: '300px' }}>
-                      <div style={{ marginBottom: '1rem' }}>
-                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Key</div>
-                        <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                          {selectedActivationKey}
-                        </div>
-                      </div>
-                      
-                      <div style={{ marginBottom: '1rem' }}>
-                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Environment</div>
-                        <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                          Production
-                        </div>
-                      </div>
-                      
-                      <div style={{ marginBottom: '1rem' }}>
-                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Usage</div>
-                        <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                          45/100 systems
-                        </div>
-                      </div>
-                      
-                      <div style={{ marginBottom: '1rem' }}>
-                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Auto-attach</div>
-                        <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                          Enabled
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Content view</div>
-                        <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                          RHEL-8-CV
-                        </div>
-                      </div>
-                    </div>
-                  }
-                >
-                  <Button variant="secondary" icon={<InfoCircleIcon />}>
-                    View details
-                  </Button>
-                </Popover>
-              </div>
-              <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
-                <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
-                  <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
-                  Manage Activation keys
-                </a>
-              </div>
-            </FormGroup>
-          </div>
-        );
-      case 'later':
-        return (
-          <Alert
-            variant="info"
-            isInline
-            title="Register with Red Hat Insights within 30 days"
-            style={{ marginTop: '1rem' }}
-          >
-            <p style={{ marginBottom: '0.5rem' }}>
-              If you don't register your systems within 30 days, you will not be able to use Red Hat Insights capabilities.
-            </p>
-            <p>
-              <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
-                <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
-                Learn more about registration
-              </a>
-            </p>
-          </Alert>
-        );
-      case 'satellite':
-        return (
-          <Alert
-            variant="warning"
-            isInline
-            title="Work in Progress"
-            style={{ marginTop: '1rem' }}
-          >
-            Satellite registration is currently being developed and will be available in a future release.
-          </Alert>
-        );
-      default:
-        return null;
-    }
-  };
+
 
   const renderTabContent = () => {
     switch (activeTabKey) {
@@ -1067,7 +976,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 </FormGroup>
 
                 <FormGroup
-                  label="Details"
+                  label="Description"
                   fieldId="image-details"
                   style={{ marginTop: '12px', marginBottom: '1rem' }}
                 >
@@ -1084,14 +993,16 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               <div style={{ 
                 height: '1px', 
                 backgroundColor: '#d2d2d2', 
-                margin: '0px 0 0px 0' 
+                margin: '0 0 1rem 0' 
               }} />
 
               {/* Image Output Section */}
               <div style={{ marginBottom: '2rem' }}>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                  Image output
-                </Title>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                    Image output
+                  </Title>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                  This is filler text for now.                  </Content>
                 
                 <FormGroup
                   label="Release"
@@ -1608,7 +1519,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       </SplitItem>
                     </Split>
                     <div style={{ marginTop: '0.5rem', marginBottom: '1rem' ,fontSize: '0.875rem', color: '#666' }}>
-                      Use packages from this date to ensure reproducible builds
+                      Use packages from this date to ensure reproducible builds.
                     </div>
                   </FormGroup>
                 </div>
@@ -1622,17 +1533,23 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     margin: '0rem 0 2rem 0' 
                   }} />
                   
-                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-xs">
+              <div style={{ marginBottom: '1rem' }}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
                     Kickstart File
                   </Title>
-                  
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                  This is filler text for now.  
+                  </Content>
+                  </div>
+
                   <div style={{
                     '--pf-v5-c-file-upload__file-details-textarea--FontFamily': '"Red Hat Mono", "Monaco", "Menlo", "Ubuntu Mono", monospace'
                   } as React.CSSProperties}>
                     <FileUpload
                       id="kickstart-file"
                       type="text" 
-                      value={kickstartFile || 'Manually enter the kickstart CSV data here.'} style={{color: 'blue' }}
+                      value={kickstartFile || 'Manually enter the kickstart CSV data here.'} 
+                      style={{color: '#000000' }}
                       filename={kickstartFilename}
                       onTextChange={(event: React.ChangeEvent<HTMLTextAreaElement>, text: string) => {
                         setKickstartFile(text);
@@ -1661,17 +1578,15 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     margin: '0rem 0 2rem 0' 
                   }} />
                   
-                  <Title headingLevel="h3" size="lg" style={{ marginBottom: '0rem' }}>
+                  <div style={{ marginBottom: '2rem' }}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
                     Compliance
                   </Title>
-                  <p style={{ 
-                    fontSize: '14px', 
-                    lineHeight: '1.5',
-                    marginBottom: '1.5rem', marginTop: '1rem',
-                    color: '#666'
-                  }}>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
                     Below you can select which Insights compliance policy or OpenSCAP profile your image will be compliant to. Insights compliance allows the use of tailored policies, whereas OpenSCAP gives you the default versions. This will automatically help monitor the adherence of your registered RHEL systems to a selected policy or profile.
-                  </p>
+                    This is filler text for now.  
+                  </Content>
+                  </div>
 
                   {/* Custom Compliance Policy */}
                   <FormGroup
@@ -2156,28 +2071,24 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             <Title headingLevel="h2" size="xl" style={{ marginBottom: '0rem' }}>
               Advanced Settings
             </Title>
-            <p style={{ fontSize: '16px', color: '#666', marginBottom: '2rem' }}>
+            <p style={{ fontSize: '16px', color: '#666', marginBottom: '1rem' }}>
               Configure advanced system settings including registration, timezone, locale, and security options.
             </p>
             <Form>
+              
               {/* Register Section */}
-              <div style={{ marginBottom: '0rem' }}>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                  Register
-                </Title>
-                <p style={{ 
-                  fontSize: '14px', 
-                  lineHeight: '1.5',
-                  marginBottom: '1rem',
-                  color: '#666'
-                }}>
+              <div style={{ marginBottom: '2rem', marginTop : '1rem'}}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                    Register
+                  </Title>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
                   Configure registration settings for systems that will use this image.
-                </p>
+                  </Content>
                 
                 <FormGroup
                   label="Organization ID"
                   fieldId="organization-id"
-                  style={{ marginBottom: '1rem' }}
+                  style={{ marginBottom: '2rem' }}
                 >
                   <ClipboardCopy 
                     isReadOnly 
@@ -2196,7 +2107,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 <FormGroup
                   label="Registration method"
                   fieldId="registration-method"
-                  style={{ marginBottom: '0rem' }}
+                  style={{ marginTop: '1rem', marginBottom: '1rem' }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <Radio
@@ -2222,9 +2133,128 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     />
                   </div>
                 </FormGroup>
-              </div>
 
-              {renderChangeableContent()}
+                {registrationMethod === 'auto' && (
+                  <FormGroup
+                    label="Activation key"
+                    fieldId="activation-key"
+                    style={{ marginBottom: '0rem' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Select
+                        id="activation-key-select"
+                        isOpen={isActivationKeyOpen}
+                        selected={selectedActivationKey}
+                        onSelect={onActivationKeySelect}
+                        onOpenChange={(isOpen) => setIsActivationKeyOpen(isOpen)}
+                        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                          <MenuToggle 
+                            ref={toggleRef} 
+                            onClick={() => setIsActivationKeyOpen(!isActivationKeyOpen)}
+                            isExpanded={isActivationKeyOpen}
+                            style={{ width: '300px' }}
+                          >
+                            {selectedActivationKey}
+                          </MenuToggle>
+                        )}
+                      >
+                        <SelectList>
+                          {activationKeys.map((key) => (
+                            <SelectOption key={key} value={key}>
+                              {key}
+                            </SelectOption>
+                          ))}
+                        </SelectList>
+                      </Select>
+                      
+                      <Popover
+                        aria-label="Activation key details"
+                        position={PopoverPosition.right}
+                        bodyContent={
+                          <div style={{ minWidth: '300px' }}>
+                            <div style={{ marginBottom: '1rem' }}>
+                              <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Key</div>
+                              <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                {selectedActivationKey}
+                              </div>
+                            </div>
+                            
+                            <div style={{ marginBottom: '1rem' }}>
+                              <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Environment</div>
+                              <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                Production
+                              </div>
+                            </div>
+                            
+                            <div style={{ marginBottom: '1rem' }}>
+                              <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Usage</div>
+                              <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                45/100 systems
+                              </div>
+                            </div>
+                            
+                            <div style={{ marginBottom: '1rem' }}>
+                              <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Auto-attach</div>
+                              <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                Enabled
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Content view</div>
+                              <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                RHEL-8-CV
+                              </div>
+                            </div>
+                          </div>
+                        }
+                      >
+                        <Button variant="secondary" icon={<InfoCircleIcon />}>
+                          View details
+                        </Button>
+                      </Popover>
+                    </div>
+                    <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                      <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
+                        <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
+                        Manage Activation keys
+                      </a>
+                    </div>
+                  </FormGroup>
+                )}
+
+                {registrationMethod === 'later' && (
+                  <div style={{ marginTop: '1rem' }}>
+                    <Alert
+                      variant="info"
+                      isInline
+                      title="Register with Red Hat Insights within 30 days"
+                    >
+                      <p style={{ marginBottom: '0.5rem' }}>
+                        If you don't register your systems within 30 days, you will not be able to use Red Hat Insights capabilities.
+                      </p>
+                      <p>
+                        <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
+                          <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
+                          Learn more about registration
+                        </a>
+                      </p>
+                    </Alert>
+                  </div>
+                )}
+
+                {registrationMethod === 'satellite' && (
+                  <div style={{ marginTop: '1rem' }}>
+                    <Alert
+                      variant="warning"
+                      isInline
+                      title="Work in Progress"
+                    >
+                      Satellite registration is currently being developed and will be available in a future release.
+                    </Alert>
+                  </div>
+                                )}
+                </div>
 
               {/* Divider */}
               <div style={{ 
@@ -2234,10 +2264,13 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Timezone Section */}
-              <div style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                  Timezone
-                </Title>
+              <div style={{ marginBottom: '2rem', marginTop : '1rem'}}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                    Timezone
+                  </Title>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                    Create images that can be reproduced consistently with the same package versions and configurations.
+                  </Content>
                 
                 <FormGroup
                   label="Timezone"
@@ -2292,6 +2325,39 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
                     Comma-separated list of NTP servers
                   </div>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    color: '#666'
+                  }}>
+                    <MinusIcon style={{ fontSize: '0.875rem' }} />
+                    <span>Additional kernel boot parameters to append</span>
+                  </div>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    color: '#666'
+                  }}>
+                    <MinusIcon style={{ fontSize: '0.875rem' }} />
+                    <span>Additional kernel boot parameters to append</span>
+                  </div>
+                      <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    color: '#666'
+                  }}>
+                    <MinusIcon style={{ fontSize: '0.875rem' }} />
+                    <span>Additional kernel boot parameters to append</span>
+                  </div>
                 </FormGroup>
               </div>
 
@@ -2299,14 +2365,17 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               <div style={{ 
                 height: '1px', 
                 backgroundColor: '#d2d2d2', 
-                margin: '0rem 0 1.5rem 0' 
+                margin: '0rem 0 1rem 0' 
               }} />
 
               {/* Locale Section */}
-              <div style={{ marginBottom: '0rem' }}>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                  Locale
-                </Title>
+              <div style={{ marginBottom: '2rem', marginTop : '0rem'}}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                    Locale
+                  </Title>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                  This is filler text for now.                  
+                  </Content>
                 
                 <FormGroup
                   label="Suggest keyboards from these languages"
@@ -2466,10 +2535,13 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Hostname Section */}
-              <div style={{ marginBottom: '1rem' }}>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                  Hostname
-                </Title>
+              <div style={{ marginBottom: '2rem', marginTop : '0rem'}}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                    Hostname
+                  </Title>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                  This is filler text for now.                  
+                  </Content>
                 
                 <FormGroup
                   label="Hostname"
@@ -2482,6 +2554,39 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     onChange={(_event, value) => setHostname(value)}
                     placeholder="Enter hostname"
                   />
+                    <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    color: '#666'
+                  }}>
+                    <MinusIcon style={{ fontSize: '0.875rem' }} />
+                    <span>Additional kernel boot parameters to append</span>
+                  </div>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    color: '#666'
+                  }}>
+                    <MinusIcon style={{ fontSize: '0.875rem' }} />
+                    <span>Additional kernel boot parameters to append</span>
+                  </div>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    color: '#666'
+                  }}>
+                    <MinusIcon style={{ fontSize: '0.875rem' }} />
+                    <span>Additional kernel boot parameters to append</span>
+                  </div>
                 </FormGroup>
               </div>
 
@@ -2493,10 +2598,13 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Kernel Section */}
-              <div style={{ marginBottom: '0rem' }}>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                  Kernel
-                </Title>
+              <div style={{ marginBottom: '2rem', marginTop : '0rem'}}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                    Kernel
+                  </Title>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                  This is filler text for now.                  
+                  </Content>
                 
                 <FormGroup
                   label="Kernel package"
@@ -2535,13 +2643,32 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   fieldId="kernel-append"
                   style={{ marginBottom: '0rem' }}
                 >
-                  <TextInput
-                    id="kernel-append"
-                    value={kernelAppend}
-                    onChange={(_event, value) => setKernelAppend(value)}
-                    placeholder="Enter kernel append options"
-                    style={{ width: '400px' }}
-                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <TextInput
+                      id="kernel-append"
+                      value={kernelAppend}
+                      onChange={(_event, value) => setKernelAppend(value)}
+                      placeholder="Enter kernel append options"
+                      style={{ width: '100%' }}
+                    />
+                    <Button
+                      variant="secondary"
+                      style={{ marginLeft: '0.5rem' }}
+                    >
+                      Add more
+                    </Button>
+                  </div>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    color: '#666'
+                  }}>
+                    <MinusIcon style={{ fontSize: '0.875rem' }} />
+                    <span>Additional kernel boot parameters to append</span>
+                  </div>
                   <div style={{ 
                     display: 'flex', 
                     alignItems: 'center', 
@@ -2564,10 +2691,13 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Systemd Services Section */}
-              <div style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                  Systemd services
-                </Title>
+              <div style={{ marginBottom: '2rem', marginTop : '0rem'}}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                    Systemd services
+                  </Title>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                  This is filler text for now.                  
+                  </Content>
                 
                 <FormGroup
                   label="Disabled services"
@@ -2629,10 +2759,13 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Firewall Section */}
-              <div style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                  Firewall
-                </Title>
+              <div style={{ marginBottom: '2rem', marginTop : '0rem'}}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                    Firewall
+                  </Title>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                  This is filler text for now.                  
+                  </Content>
                 
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', marginBottom: '1rem' }}>
                   <FormGroup
@@ -2653,6 +2786,28 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                         </div>
                       ))}
                     </div>
+                    <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    color: '#666'
+                  }}>
+                    <MinusIcon style={{ fontSize: '0.875rem' }} />
+                    <span>Additional kernel boot parameters to append</span>
+                  </div>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    color: '#666'
+                  }}>
+                    <MinusIcon style={{ fontSize: '0.875rem' }} />
+                    <span>Additional kernel boot parameters to append</span>
+                  </div>
                   </FormGroup>
 
                   <FormGroup
@@ -2726,25 +2881,119 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Users Section */}
-              <div style={{ marginBottom: '1rem' }}>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                  Users
-                </Title>
-                <p style={{ 
-                  fontSize: '14px', 
-                  lineHeight: '1.5',
-                  marginBottom: '1rem',
-                  color: '#666'
-                }}>
-                  Create user accounts for systems that will use this image.
-                </p>
+              <div style={{ marginBottom: '2rem', marginTop : '0rem'}}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                    Users
+                  </Title>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                  Create user accounts for systems that will use this image.                  
+                  </Content>
 
-                {/* User management table would go here - simplified for now */}
-                <div style={{ border: '1px solid #d2d2d2', borderRadius: '4px', padding: '1rem' }}>
-                  <p style={{ fontSize: '14px', color: '#666' }}>
-                    User management interface - add users, set passwords, configure SSH keys, assign groups
-                  </p>
+                {/* User management table */}
+                <div style={{ border: '1px solid #d2d2d2', borderRadius: '4px', overflow: 'hidden' }}>
+                  {/* Table header */}
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: '100px 1fr 1fr 1fr 1fr 40px', 
+                    gap: '1rem',
+                    padding: '12px 16px',
+                    backgroundColor: '#f5f5f5',
+                    borderBottom: '1px solid #d2d2d2',
+                    fontWeight: 'bold',
+                    fontSize: '14px'
+                  }}>
+                    <div>Administrator</div>
+                    <div>Username</div>
+                    <div>Password</div>
+                    <div>SSH key</div>
+                    <div>Groups</div>
+                    <div></div>
+                  </div>
+                  
+                  {/* Table rows */}
+                  {users.map((user) => (
+                    <div key={user.id} style={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: '100px 1fr 1fr 1fr 1fr 40px', 
+                      gap: '1rem',
+                      padding: '12px 16px',
+                      borderBottom: users.indexOf(user) === users.length - 1 ? 'none' : '1px solid #d2d2d2',
+                      alignItems: 'center'
+                    }}>
+                      {/* Administrator checkbox */}
+                      <Checkbox
+                        id={`admin-${user.id}`}
+                        isChecked={user.isAdministrator}
+                        onChange={(event, checked) => updateUser(user.id, 'isAdministrator', checked)}
+                      />
+                      
+                      {/* Username */}
+                      <TextInput
+                        type="text"
+                        value={user.username}
+                        onChange={(event, value) => updateUser(user.id, 'username', value)}
+                        placeholder="Username"
+                        style={{ fontSize: '14px' }}
+                      />
+                      
+                      {/* Password */}
+                      <TextInput
+                        type="password"
+                        value={user.password}
+                        onChange={(event, value) => updateUser(user.id, 'password', value)}
+                        placeholder="Password"
+                        style={{ fontSize: '14px' }}
+                      />
+                      
+                      {/* SSH key */}
+                      <TextInput
+                        type="text"
+                        value={user.sshKey}
+                        onChange={(event, value) => updateUser(user.id, 'sshKey', value)}
+                        placeholder="SSH key"
+                        style={{ fontSize: '14px' }}
+                      />
+                      
+                      {/* Groups */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', alignItems: 'center' }}>
+                        {user.groups.map((group) => (
+                          <Label key={group} onClose={() => removeGroupFromUser(user.id, group)} closeBtnAriaLabel={`Remove ${group}`}>
+                            {group}
+                          </Label>
+                        ))}
+                        <Button
+                          variant="link"
+                          onClick={() => {
+                            const group = prompt('Enter group name:');
+                            if (group) addGroupToUser(user.id, group);
+                          }}
+                          style={{ padding: '2px 8px', fontSize: '12px' }}
+                        >
+                          Add group
+                        </Button>
+                      </div>
+                      
+                      {/* Remove button */}
+                      <Button
+                        variant="plain"
+                        onClick={() => removeUser(user.id)}
+                        isDisabled={users.length === 1}
+                        style={{ minWidth: 'auto', padding: '4px' }}
+                      >
+                        <MinusCircleIcon />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
+                
+                {/* Add user button */}
+                <Button
+                  variant="secondary"
+                  onClick={addUser}
+                  style={{ marginTop: '1rem' }}
+                >
+                  Add another user
+                </Button>
               </div>
             </Form>
           </div>
