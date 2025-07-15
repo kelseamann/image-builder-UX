@@ -63,7 +63,8 @@ import {
   EditIcon,
   PlusIcon,
   TimesCircleIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  MinusCircleIcon
 } from '@patternfly/react-icons';
 
 interface UserRow {
@@ -193,6 +194,23 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
   // Organization ID state
   const [organizationId, setOrganizationId] = React.useState<string>('11009103');
+
+  // Systemd services state
+  const [systemdDisabledServices, setSystemdDisabledServices] = React.useState<string>('');
+  const [systemdMaskedServices, setSystemdMaskedServices] = React.useState<string>('');
+  const [systemdEnabledServices, setSystemdEnabledServices] = React.useState<string>('');
+
+  // Firewall state
+  const [firewallPorts, setFirewallPorts] = React.useState<string[]>(['']);
+  const [firewallDisabledServices, setFirewallDisabledServices] = React.useState<string[]>(['']);
+  const [firewallEnabledServices, setFirewallEnabledServices] = React.useState<string[]>(['']);
+
+  // Kernel append state
+  const [kernelAppend, setKernelAppend] = React.useState<string>('');
+
+  // Specialty keyboards state
+  const [specialtyKeyboard, setSpecialtyKeyboard] = React.useState<string>('');
+  const [isSpecialtyKeyboardOpen, setIsSpecialtyKeyboardOpen] = React.useState<boolean>(false);
 
 
   
@@ -826,6 +844,42 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     return availableRepositories;
   };
 
+  // Firewall helper functions
+  const addFirewallRow = () => {
+    setFirewallPorts([...firewallPorts, '']);
+    setFirewallDisabledServices([...firewallDisabledServices, '']);
+    setFirewallEnabledServices([...firewallEnabledServices, '']);
+  };
+
+  const removeFirewallRow = (index: number) => {
+    if (firewallPorts.length > 1) {
+      const newPorts = firewallPorts.filter((_, i) => i !== index);
+      const newDisabledServices = firewallDisabledServices.filter((_, i) => i !== index);
+      const newEnabledServices = firewallEnabledServices.filter((_, i) => i !== index);
+      setFirewallPorts(newPorts);
+      setFirewallDisabledServices(newDisabledServices);
+      setFirewallEnabledServices(newEnabledServices);
+    }
+  };
+
+  const updateFirewallPort = (index: number, value: string) => {
+    const newPorts = [...firewallPorts];
+    newPorts[index] = value;
+    setFirewallPorts(newPorts);
+  };
+
+  const updateFirewallDisabledService = (index: number, value: string) => {
+    const newServices = [...firewallDisabledServices];
+    newServices[index] = value;
+    setFirewallDisabledServices(newServices);
+  };
+
+  const updateFirewallEnabledService = (index: number, value: string) => {
+    const newServices = [...firewallEnabledServices];
+    newServices[index] = value;
+    setFirewallEnabledServices(newServices);
+  };
+
   const handleTabClick = (event: React.MouseEvent | React.KeyboardEvent, tabIndex: string | number) => {
     setActiveTabKey(tabIndex);
     
@@ -854,11 +908,11 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     switch (registrationMethod) {
       case 'auto':
         return (
-          <div>
+          <div style={{ marginTop: '0rem', marginBottom: '0rem' }}>
             <FormGroup
               label="Activation key"
               fieldId="activation-key"
-              style={{ marginBottom: '1rem' }}
+              style={{ marginBottom: '0rem' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Select
@@ -891,12 +945,41 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   aria-label="Activation key details"
                   position={PopoverPosition.right}
                   bodyContent={
-                    <div>
-                      <div style={{ marginBottom: '0.5rem' }}><strong>Key:</strong> {selectedActivationKey}</div>
-                      <div style={{ marginBottom: '0.5rem' }}><strong>Environment:</strong> Production</div>
-                      <div style={{ marginBottom: '0.5rem' }}><strong>Usage:</strong> 45/100 systems</div>
-                      <div style={{ marginBottom: '0.5rem' }}><strong>Auto-attach:</strong> Enabled</div>
-                      <div><strong>Content view:</strong> RHEL-8-CV</div>
+                    <div style={{ minWidth: '300px' }}>
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Key</div>
+                        <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                          {selectedActivationKey}
+                        </div>
+                      </div>
+                      
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Environment</div>
+                        <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                          Production
+                        </div>
+                      </div>
+                      
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Usage</div>
+                        <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                          45/100 systems
+                        </div>
+                      </div>
+                      
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Auto-attach</div>
+                        <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                          Enabled
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Content view</div>
+                        <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                          RHEL-8-CV
+                        </div>
+                      </div>
                     </div>
                   }
                 >
@@ -912,303 +995,6 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 </a>
               </div>
             </FormGroup>
-
-            {/* Divider */}
-            <div style={{ 
-              height: '1px', 
-              backgroundColor: '#d2d2d2', 
-              margin: '2rem 0' 
-            }} />
-
-            {/* Timezone Section */}
-            <div style={{ marginBottom: '2rem' }}>
-              <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                Timezone
-              </Title>
-              
-              <FormGroup
-                label="Timezone"
-                fieldId="timezone"
-                style={{ marginBottom: '1rem' }}
-              >
-                <Select
-                  id="timezone-select"
-                  isOpen={isTimezoneOpen}
-                  selected={timezone}
-                  onSelect={(_, selection) => {
-                    setTimezone(String(selection));
-                    setIsTimezoneOpen(false);
-                  }}
-                  onOpenChange={(isOpen) => setIsTimezoneOpen(isOpen)}
-                  toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                    <MenuToggle 
-                      ref={toggleRef} 
-                      onClick={() => setIsTimezoneOpen(!isTimezoneOpen)}
-                      isExpanded={isTimezoneOpen}
-                      style={{ width: '300px' }}
-                    >
-                      {timezone || 'Select timezone'}
-                    </MenuToggle>
-                  )}
-                >
-                  <SelectList>
-                    {timezoneOptions.map((tz) => (
-                      <SelectOption key={tz} value={tz}>
-                        {tz}
-                      </SelectOption>
-                    ))}
-                  </SelectList>
-                </Select>
-              </FormGroup>
-
-              <FormGroup
-                label="NTP servers"
-                fieldId="ntp-servers"
-                style={{ marginBottom: '1rem' }}
-              >
-                <TextInput
-                  id="ntp-servers"
-                  value={ntpServers}
-                  onChange={(_event, value) => setNtpServers(value)}
-                  placeholder="pool.ntp.org"
-                />
-                <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
-                  Comma-separated list of NTP servers
-                </div>
-              </FormGroup>
-            </div>
-
-            {/* Divider */}
-            <div style={{ 
-              height: '1px', 
-              backgroundColor: '#d2d2d2', 
-              margin: '2rem 0' 
-            }} />
-
-            {/* Locale Section */}
-            <div style={{ marginBottom: '2rem' }}>
-              <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                Locale
-              </Title>
-              
-              <FormGroup
-                label="Suggest keyboards from these languages"
-                fieldId="languages"
-                style={{ marginBottom: '1rem' }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {languages.map((language) => (
-                    <div key={language.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <div style={{ width: '400px' }}>
-                        <Select
-                          id={`language-select-${language.id}`}
-                          isOpen={language.isOpen}
-                          selected={language.value}
-                          onSelect={(_, selection) => {
-                            updateLanguage(language.id, String(selection));
-                            toggleLanguageDropdown(language.id);
-                          }}
-                          onOpenChange={() => toggleLanguageDropdown(language.id)}
-                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                            <MenuToggle 
-                              ref={toggleRef} 
-                              onClick={() => toggleLanguageDropdown(language.id)}
-                              isExpanded={language.isOpen}
-                              style={{ width: '100%' }}
-                            >
-                              {language.value || 'Select language'}
-                            </MenuToggle>
-                          )}
-                        >
-                          <SelectList>
-                            <div style={{ padding: '0.5rem', borderBottom: '1px solid #D2D2D2' }}>
-                              <SearchInput
-                                placeholder="Search languages..."
-                                value={language.filterValue}
-                                onChange={(_, value) => updateLanguageFilter(language.id, value)}
-                                onClear={() => updateLanguageFilter(language.id, '')}
-                              />
-                            </div>
-                            {getFilteredLanguageOptions(language.filterValue).map((lang) => (
-                              <SelectOption key={lang} value={lang}>
-                                {lang}
-                              </SelectOption>
-                            ))}
-                          </SelectList>
-                        </Select>
-                      </div>
-                      {language.id !== 0 && (
-                        <Button
-                          variant="plain"
-                          aria-label="Remove language"
-                          onClick={() => removeLanguage(language.id)}
-                          style={{ minWidth: 'auto', padding: '0.5rem', color: '#6A6E73' }}
-                        >
-                          <MinusIcon />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <div style={{ marginTop: '0.75rem' }}>
-                  <div style={{ color: '#6A6E73', marginBottom: '0.75rem', fontSize: '0.875rem' }}>
-                    Search by country, language or UTF code
-                  </div>
-                  <Button
-                    variant="link"
-                    onClick={addLanguage}
-                    style={{ 
-                      padding: '0.5rem 1rem', 
-                      border: '1px solid #C7C7C7', 
-                      borderRadius: '24px', 
-                      color: '#0066CC', 
-                      backgroundColor: 'transparent',
-                      textDecoration: 'none'
-                    }}
-                  >
-                    Add more
-                  </Button>
-                </div>
-              </FormGroup>
-
-              <FormGroup
-                label="Suggested keyboards"
-                fieldId="suggested-keyboards"
-                style={{ marginBottom: '1rem' }}
-              >
-                <Select
-                  id="suggested-keyboards-select"
-                  isOpen={isSuggestedKeyboardOpen}
-                  selected={suggestedKeyboard}
-                  onSelect={(_, selection) => {
-                    setSuggestedKeyboard(String(selection));
-                    setIsSuggestedKeyboardOpen(false);
-                  }}
-                  onOpenChange={(isOpen) => setIsSuggestedKeyboardOpen(isOpen)}
-                  toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                    <MenuToggle 
-                      ref={toggleRef} 
-                      onClick={() => setIsSuggestedKeyboardOpen(!isSuggestedKeyboardOpen)}
-                      isExpanded={isSuggestedKeyboardOpen}
-                      style={{ width: '300px' }}
-                    >
-                      {suggestedKeyboard || 'Select keyboard'}
-                    </MenuToggle>
-                  )}
-                >
-                  <SelectList>
-                    <SelectOption value="US QWERTY">US QWERTY</SelectOption>
-                    <SelectOption value="German QWERTZ">German QWERTZ</SelectOption>
-                    <SelectOption value="French AZERTY">French AZERTY</SelectOption>
-                    <SelectOption value="UK QWERTY">UK QWERTY</SelectOption>
-                  </SelectList>
-                </Select>
-              </FormGroup>
-            </div>
-
-            {/* Divider */}
-            <div style={{ 
-              height: '1px', 
-              backgroundColor: '#d2d2d2', 
-              margin: '2rem 0' 
-            }} />
-
-            {/* Hostname Section */}
-            <div style={{ marginBottom: '2rem' }}>
-              <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                Hostname
-              </Title>
-              
-              <FormGroup
-                label="Hostname"
-                fieldId="hostname"
-                style={{ marginBottom: '1rem' }}
-              >
-                <TextInput
-                  id="hostname"
-                  value={hostname}
-                  onChange={(_event, value) => setHostname(value)}
-                  placeholder="Enter hostname"
-                />
-              </FormGroup>
-            </div>
-
-            {/* Divider */}
-            <div style={{ 
-              height: '1px', 
-              backgroundColor: '#d2d2d2', 
-              margin: '2rem 0' 
-            }} />
-
-            {/* Kernel Section */}
-            <div style={{ marginBottom: '2rem' }}>
-              <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                Kernel
-              </Title>
-              
-              <FormGroup
-                label="Kernel package"
-                fieldId="kernel-package"
-                style={{ marginBottom: '1rem' }}
-              >
-                <Select
-                  id="kernel-package-select"
-                  isOpen={isKernelPackageOpen}
-                  selected={kernelPackage}
-                  onSelect={(_, selection) => {
-                    setKernelPackage(String(selection));
-                    setIsKernelPackageOpen(false);
-                  }}
-                  onOpenChange={(isOpen) => setIsKernelPackageOpen(isOpen)}
-                  toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                    <MenuToggle 
-                      ref={toggleRef} 
-                      onClick={() => setIsKernelPackageOpen(!isKernelPackageOpen)}
-                      isExpanded={isKernelPackageOpen}
-                      style={{ width: '300px' }}
-                    >
-                      {kernelPackage}
-                    </MenuToggle>
-                  )}
-                >
-                  <SelectList>
-                    <SelectOption value="kernel">kernel</SelectOption>
-                    <SelectOption value="kernel-debug">kernel-debug</SelectOption>
-                  </SelectList>
-                </Select>
-              </FormGroup>
-
-
-            </div>
-
-            {/* Divider */}
-            <div style={{ 
-              height: '1px', 
-              backgroundColor: '#d2d2d2', 
-              margin: '2rem 0' 
-            }} />
-
-            {/* Users Section */}
-            <div style={{ marginBottom: '2rem' }}>
-              <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                Users
-              </Title>
-              <p style={{ 
-                fontSize: '14px', 
-                lineHeight: '1.5',
-                marginBottom: '1rem',
-                color: '#666'
-              }}>
-                Create user accounts for systems that will use this image.
-              </p>
-
-              {/* User management table would go here - simplified for now */}
-              <div style={{ border: '1px solid #d2d2d2', borderRadius: '4px', padding: '1rem' }}>
-                <p style={{ fontSize: '14px', color: '#666' }}>
-                  User management interface - add users, set passwords, configure SSH keys, assign groups
-                </p>
-              </div>
-            </div>
           </div>
         );
       case 'later':
@@ -1217,7 +1003,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             variant="info"
             isInline
             title="Register with Red Hat Insights within 30 days"
-            style={{ marginTop: '2rem' }}
+            style={{ marginTop: '1rem' }}
           >
             <p style={{ marginBottom: '0.5rem' }}>
               If you don't register your systems within 30 days, you will not be able to use Red Hat Insights capabilities.
@@ -1236,7 +1022,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             variant="warning"
             isInline
             title="Work in Progress"
-            style={{ marginTop: '2rem' }}
+            style={{ marginTop: '1rem' }}
           >
             Satellite registration is currently being developed and will be available in a future release.
           </Alert>
@@ -2375,7 +2161,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             </p>
             <Form>
               {/* Register Section */}
-              <div style={{ marginBottom: '2rem' }}>
+              <div style={{ marginBottom: '0rem' }}>
                 <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                   Register
                 </Title>
@@ -2398,6 +2184,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     hoverTip="Copy Organization ID" 
                     clickTip="Organization ID copied!"
                     variant="inline"
+                    style={{ width: '25%' }}
                   >
                     {organizationId}
                   </ClipboardCopy>
@@ -2409,7 +2196,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 <FormGroup
                   label="Registration method"
                   fieldId="registration-method"
-                  style={{ marginBottom: '1rem' }}
+                  style={{ marginBottom: '0rem' }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <Radio
@@ -2438,6 +2225,527 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               </div>
 
               {renderChangeableContent()}
+
+              {/* Divider */}
+              <div style={{ 
+                height: '1px', 
+                backgroundColor: '#d2d2d2', 
+                margin: '0rem, 0, 2rem, 0' 
+              }} />
+
+              {/* Timezone Section */}
+              <div style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  Timezone
+                </Title>
+                
+                <FormGroup
+                  label="Timezone"
+                  fieldId="timezone"
+                  style={{ marginBottom: '1rem' }}
+                >
+                  <Select
+                    id="timezone-select"
+                    isOpen={isTimezoneOpen}
+                    selected={timezone}
+                    onSelect={(_, selection) => {
+                      setTimezone(String(selection));
+                      setIsTimezoneOpen(false);
+                    }}
+                    onOpenChange={(isOpen) => setIsTimezoneOpen(isOpen)}
+                    toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                      <MenuToggle 
+                        ref={toggleRef} 
+                        onClick={() => setIsTimezoneOpen(!isTimezoneOpen)}
+                        isExpanded={isTimezoneOpen}
+                        style={{ width: '300px' }}
+                      >
+                        {timezone || 'Select timezone'}
+                      </MenuToggle>
+                    )}
+                  >
+                    <SelectList>
+                      {timezoneOptions.map((tz) => (
+                        <SelectOption key={tz} value={tz}>
+                          {tz}
+                        </SelectOption>
+                      ))}
+                    </SelectList>
+                  </Select>
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                    Comma-separated list of NTP servers
+                  </div>
+                </FormGroup>
+
+                <FormGroup
+                  label="NTP servers"
+                  fieldId="ntp-servers"
+                  style={{ marginBottom: '0rem' }}
+                >
+                  <TextInput
+                    id="ntp-servers"
+                    value={ntpServers}
+                    style={{ width: '200px' }}
+                    onChange={(_event, value) => setNtpServers(value)}
+                    placeholder="pool.ntp.org"
+                  />
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                    Comma-separated list of NTP servers
+                  </div>
+                </FormGroup>
+              </div>
+
+              {/* Divider */}
+              <div style={{ 
+                height: '1px', 
+                backgroundColor: '#d2d2d2', 
+                margin: '0rem 0 1.5rem 0' 
+              }} />
+
+              {/* Locale Section */}
+              <div style={{ marginBottom: '0rem' }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  Locale
+                </Title>
+                
+                <FormGroup
+                  label="Suggest keyboards from these languages"
+                  fieldId="languages"
+                  style={{ marginBottom: '2rem', marginTop:'2rem' }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {languages.map((language) => (
+                      <div key={language.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={{ width: '400px' }}>
+                          <Select
+                            id={`language-select-${language.id}`}
+                            isOpen={language.isOpen}
+                            selected={language.value}
+                            onSelect={(_, selection) => {
+                              updateLanguage(language.id, String(selection));
+                              toggleLanguageDropdown(language.id);
+                            }}
+                            onOpenChange={() => toggleLanguageDropdown(language.id)}
+                            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                              <MenuToggle 
+                                ref={toggleRef} 
+                                onClick={() => toggleLanguageDropdown(language.id)}
+                                isExpanded={language.isOpen}
+                                style={{ width: '100%' }}
+                              >
+                                {language.value || 'Select language'}
+                              </MenuToggle>
+                            )}
+                          >
+                            <SelectList>
+                              <div style={{ padding: '0.5rem', borderBottom: '1px solid #D2D2D2' }}>
+                                <SearchInput
+                                  placeholder="Search languages..."
+                                  value={language.filterValue}
+                                  onChange={(_, value) => updateLanguageFilter(language.id, value)}
+                                  onClear={() => updateLanguageFilter(language.id, '')}
+                                />
+                              </div>
+                              {getFilteredLanguageOptions(language.filterValue).map((lang) => (
+                                <SelectOption key={lang} value={lang}>
+                                  {lang}
+                                </SelectOption>
+                              ))}
+                            </SelectList>
+                          </Select>
+                        </div>
+                        {language.id !== 0 && (
+                          <Button
+                            variant="plain"
+                            aria-label="Remove language"
+                            onClick={() => removeLanguage(language.id)}
+                            style={{ minWidth: 'auto', padding: '0.5rem', color: '#6A6E73' }}
+                          >
+                            <MinusIcon />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: '0.75rem' }}>
+                    <div style={{ color: '#6A6E73', marginBottom: '0.75rem', fontSize: '0.875rem' }}>
+                      Search by country, language or UTF code
+                    </div>
+                    <Button
+                      variant="link"
+                      onClick={addLanguage}
+                      style={{ 
+                        padding: '0.5rem 1rem', 
+                        border: '1px solid #C7C7C7', 
+                        borderRadius: '24px', 
+                        color: '#0066CC', 
+                        backgroundColor: 'transparent',
+                        textDecoration: 'none'
+                      }}
+                    >
+                      Add more
+                    </Button>
+                  </div>
+                </FormGroup>
+
+                <FormGroup
+                  label="Suggested keyboards"
+                  fieldId="suggested-keyboards"
+                  style={{ marginBottom: '1rem' }}
+                >
+                  <Select
+                    id="suggested-keyboards-select"
+                    isOpen={isSuggestedKeyboardOpen}
+                    selected={suggestedKeyboard}
+                    onSelect={(_, selection) => {
+                      setSuggestedKeyboard(String(selection));
+                      setIsSuggestedKeyboardOpen(false);
+                    }}
+                    onOpenChange={(isOpen) => setIsSuggestedKeyboardOpen(isOpen)}
+                    toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                      <MenuToggle 
+                        ref={toggleRef} 
+                        onClick={() => setIsSuggestedKeyboardOpen(!isSuggestedKeyboardOpen)}
+                        isExpanded={isSuggestedKeyboardOpen}
+                        style={{ width: '300px' }}
+                      >
+                        {suggestedKeyboard || 'Select keyboard'}
+                      </MenuToggle>
+                    )}
+                  >
+                    <SelectList>
+                      <SelectOption value="US QWERTY">US QWERTY</SelectOption>
+                      <SelectOption value="German QWERTZ">German QWERTZ</SelectOption>
+                      <SelectOption value="French AZERTY">French AZERTY</SelectOption>
+                      <SelectOption value="UK QWERTY">UK QWERTY</SelectOption>
+                    </SelectList>
+                  </Select>
+                </FormGroup>
+
+                <FormGroup
+                  label="Specialty keyboards"
+                  fieldId="specialty-keyboards"
+                  style={{ marginBottom: '0rem' }}
+                >
+                  <Select
+                    id="specialty-keyboards-select"
+                    isOpen={isSpecialtyKeyboardOpen}
+                    selected={specialtyKeyboard}
+                    onSelect={(_, selection) => {
+                      setSpecialtyKeyboard(String(selection));
+                      setIsSpecialtyKeyboardOpen(false);
+                    }}
+                    onOpenChange={(isOpen) => setIsSpecialtyKeyboardOpen(isOpen)}
+                    toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                      <MenuToggle 
+                        ref={toggleRef} 
+                        onClick={() => setIsSpecialtyKeyboardOpen(!isSpecialtyKeyboardOpen)}
+                        isExpanded={isSpecialtyKeyboardOpen}
+                        style={{ width: '300px' }}
+                      >
+                        {specialtyKeyboard || 'Select specialty keyboard'}
+                      </MenuToggle>
+                    )}
+                  >
+                    <SelectList>
+                      <SelectOption value="Dvorak">Dvorak</SelectOption>
+                      <SelectOption value="Colemak">Colemak</SelectOption>
+                      <SelectOption value="Workman">Workman</SelectOption>
+                      <SelectOption value="Neo">Neo</SelectOption>
+                      <SelectOption value="Bépo">Bépo</SelectOption>
+                    </SelectList>
+                  </Select>
+                </FormGroup>
+              </div>
+
+              {/* Divider */}
+              <div style={{ 
+                height: '1px', 
+                backgroundColor: '#d2d2d2', 
+                margin: '1rem 0' 
+              }} />
+
+              {/* Hostname Section */}
+              <div style={{ marginBottom: '1rem' }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  Hostname
+                </Title>
+                
+                <FormGroup
+                  label="Hostname"
+                  fieldId="hostname"
+                  style={{ marginBottom: '0rem', width: '25%' }}
+                >
+                  <TextInput
+                    id="hostname"
+                    value={hostname}
+                    onChange={(_event, value) => setHostname(value)}
+                    placeholder="Enter hostname"
+                  />
+                </FormGroup>
+              </div>
+
+              {/* Divider */}
+              <div style={{ 
+                height: '1px', 
+                backgroundColor: '#d2d2d2', 
+                margin: '1rem 0' 
+              }} />
+
+              {/* Kernel Section */}
+              <div style={{ marginBottom: '0rem' }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  Kernel
+                </Title>
+                
+                <FormGroup
+                  label="Kernel package"
+                  fieldId="kernel-package"
+                  style={{ marginBottom: '1rem' }}
+                >
+                  <Select
+                    id="kernel-package-select"
+                    isOpen={isKernelPackageOpen}
+                    selected={kernelPackage}
+                    onSelect={(_, selection) => {
+                      setKernelPackage(String(selection));
+                      setIsKernelPackageOpen(false);
+                    }}
+                    onOpenChange={(isOpen) => setIsKernelPackageOpen(isOpen)}
+                    toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                      <MenuToggle 
+                        ref={toggleRef} 
+                        onClick={() => setIsKernelPackageOpen(!isKernelPackageOpen)}
+                        isExpanded={isKernelPackageOpen}
+                        style={{ width: '300px' }}
+                      >
+                        {kernelPackage}
+                      </MenuToggle>
+                    )}
+                  >
+                    <SelectList>
+                      <SelectOption value="kernel">kernel</SelectOption>
+                      <SelectOption value="kernel-debug">kernel-debug</SelectOption>
+                    </SelectList>
+                  </Select>
+                </FormGroup>
+
+                <FormGroup
+                  label="Append"
+                  fieldId="kernel-append"
+                  style={{ marginBottom: '0rem' }}
+                >
+                  <TextInput
+                    id="kernel-append"
+                    value={kernelAppend}
+                    onChange={(_event, value) => setKernelAppend(value)}
+                    placeholder="Enter kernel append options"
+                    style={{ width: '400px' }}
+                  />
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    color: '#666'
+                  }}>
+                    <MinusIcon style={{ fontSize: '0.875rem' }} />
+                    <span>Additional kernel boot parameters to append</span>
+                  </div>
+                </FormGroup>
+              </div>
+
+              {/* Divider */}
+              <div style={{ 
+                height: '1px', 
+                backgroundColor: '#d2d2d2', 
+                margin: '1rem 0' 
+              }} />
+
+              {/* Systemd Services Section */}
+              <div style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  Systemd services
+                </Title>
+                
+                <FormGroup
+                  label="Disabled services"
+                  fieldId="systemd-disabled-services"
+                  style={{ marginBottom: '1rem' }}
+                >
+                  <TextInput
+                    id="systemd-disabled-services"
+                    value={systemdDisabledServices}
+                    onChange={(_event, value) => setSystemdDisabledServices(value)}
+                    placeholder="Enter services to disable"
+                    style={{ width: '40%' }}
+                  />
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                    Comma-separated list of services to disable
+                  </div>
+                </FormGroup>
+
+                <FormGroup
+                  label="Masked services"
+                  fieldId="systemd-masked-services"
+                  style={{ marginBottom: '1rem' }}
+                >
+                  <TextInput
+                    id="systemd-masked-services"
+                    value={systemdMaskedServices}
+                    onChange={(_event, value) => setSystemdMaskedServices(value)}
+                    placeholder="Enter services to mask"
+                    style={{ width: '40%' }}
+                  />
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                    Comma-separated list of services to disable
+                  </div>
+                </FormGroup>
+
+                <FormGroup
+                  label="Enabled services"
+                  fieldId="systemd-enabled-services"
+                  style={{ marginBottom: '0rem' }}
+                >
+                  <TextInput
+                    id="systemd-enabled-services"
+                    value={systemdEnabledServices}
+                    onChange={(_event, value) => setSystemdEnabledServices(value)}
+                    placeholder="Enter services to enable"
+                    style={{ width: '40%' }}
+                  />
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                    Comma-separated list of services to disable
+                  </div>
+                </FormGroup>
+              </div>
+
+              {/* Divider */}
+              <div style={{ 
+                height: '1px', 
+                backgroundColor: '#d2d2d2', 
+                margin: '1rem 0' 
+              }} />
+
+              {/* Firewall Section */}
+              <div style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  Firewall
+                </Title>
+                
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                  <FormGroup
+                    label="Enabled ports"
+                    fieldId="firewall-enabled-ports"
+                    style={{ flex: 1 }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {firewallPorts.map((port, index) => (
+                        <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <TextInput
+                            id={`firewall-enabled-ports-${index}`}
+                            value={port}
+                            onChange={(_event, value) => updateFirewallPort(index, value)}
+                            placeholder="Enter port (e.g., 8080, 443)"
+                            style={{ flex: 1 }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </FormGroup>
+
+                  <FormGroup
+                    label="Disabled services"
+                    fieldId="firewall-disabled-services"
+                    style={{ flex: 1 }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {firewallDisabledServices.map((service, index) => (
+                        <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <TextInput
+                            id={`firewall-disabled-services-${index}`}
+                            value={service}
+                            onChange={(_event, value) => updateFirewallDisabledService(index, value)}
+                            placeholder="Enter service name"
+                            style={{ flex: 1 }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </FormGroup>
+
+                  <FormGroup
+                    label="Enabled services"
+                    fieldId="firewall-enabled-services"
+                    style={{ flex: 1 }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {firewallEnabledServices.map((service, index) => (
+                        <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <TextInput
+                            id={`firewall-enabled-services-${index}`}
+                            value={service}
+                            onChange={(_event, value) => updateFirewallEnabledService(index, value)}
+                            placeholder="Enter service name"
+                            style={{ flex: 1 }}
+                          />
+                          <MinusCircleIcon
+                            style={{ 
+                              fontSize: '1.25rem', 
+                              color: '#151515',
+                              cursor: firewallEnabledServices.length > 1 ? 'pointer' : 'not-allowed',
+                              opacity: firewallEnabledServices.length > 1 ? 1 : 0.3
+                            }}
+                            onClick={() => {
+                              if (firewallEnabledServices.length > 1) {
+                                removeFirewallRow(index);
+                              }
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </FormGroup>
+                </div>
+
+                <Button
+                  variant="secondary"
+                  onClick={addFirewallRow}
+                  style={{ marginBottom: '0rem' }}
+                >
+                  Add more
+                </Button>
+              </div>
+
+              {/* Divider */}
+              <div style={{ 
+                height: '1px', 
+                backgroundColor: '#d2d2d2', 
+                margin: '1rem 0' 
+              }} />
+
+              {/* Users Section */}
+              <div style={{ marginBottom: '1rem' }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  Users
+                </Title>
+                <p style={{ 
+                  fontSize: '14px', 
+                  lineHeight: '1.5',
+                  marginBottom: '1rem',
+                  color: '#666'
+                }}>
+                  Create user accounts for systems that will use this image.
+                </p>
+
+                {/* User management table would go here - simplified for now */}
+                <div style={{ border: '1px solid #d2d2d2', borderRadius: '4px', padding: '1rem' }}>
+                  <p style={{ fontSize: '14px', color: '#666' }}>
+                    User management interface - add users, set passwords, configure SSH keys, assign groups
+                  </p>
+                </div>
+              </div>
             </Form>
           </div>
         );
