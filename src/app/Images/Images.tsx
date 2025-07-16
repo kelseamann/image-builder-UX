@@ -1,32 +1,32 @@
 import * as React from 'react';
 import { 
-  PageSection, 
-  Title, 
-  Button,
-  Alert,
+  Alert, 
+  AlertActionCloseButton, 
   AlertVariant,
-  AlertActionCloseButton,
+  Badge,
+  Button,
+  Card,
+  CardBody,
+  ClipboardCopy,
+  Divider,
+  Dropdown,
+  DropdownItem,
+  DropdownList,
+  Flex,
+  FlexItem,
+  Label,
+  MenuToggle,
+  MenuToggleElement,
+  PageSection,
+  Pagination,
+  SearchInput,
+  Title,
   Toolbar,
   ToolbarContent,
   ToolbarItem,
-  SearchInput,
-  Badge,
-  Label,
-  Dropdown,
-  DropdownList,
-  DropdownItem,
-  MenuToggle,
-  MenuToggleElement,
-  Card,
-  CardBody,
-  Flex,
-  FlexItem,
-  Pagination,
-  ClipboardCopy,
-  Tooltip,
-  Divider
+  Tooltip
 } from '@patternfly/react-core';
-import { EllipsisVIcon, FilterIcon, TableIcon, MigrationIcon, CopyIcon, BuildIcon, StarIcon, OutlinedStarIcon, AngleRightIcon, AngleDownIcon, ExclamationTriangleIcon, InfoCircleIcon, CheckCircleIcon, ExclamationCircleIcon } from '@patternfly/react-icons';
+import { AngleDownIcon, AngleRightIcon, BuildIcon, CheckCircleIcon, CopyIcon, EllipsisVIcon, ExclamationCircleIcon, ExclamationTriangleIcon, FilterIcon, InfoCircleIcon, MigrationIcon, OutlinedStarIcon, StarIcon, TableIcon } from '@patternfly/react-icons';
 import { ImageInfo, MigrationData } from '../Dashboard/ImageMigrationModal';
 
 interface ImageTableRow extends ImageInfo {

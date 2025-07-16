@@ -1,70 +1,71 @@
 import React, { useState } from 'react';
 import { ImageInfo } from './ImageMigrationModal';
 import {
-  Modal,
-  ModalVariant,
-  Button,
-  Form,
-  FormGroup,
-  TextInput,
-  Radio,
-  Select,
-  SelectOption,
-  SelectList,
-  MenuToggle,
-  MenuToggleElement,
-  ClipboardCopy,
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionToggle,
   Alert,
-  Popover,
-  PopoverPosition,
-  Checkbox,
-  LabelGroup,
-  Label,
-  TextArea,
-  Tabs,
-  Tab,
-  TabTitleText,
-  Title,
-  Split,
-  SplitItem,
-  Content,
+  Badge,
+  Button,
   Card,
   CardBody,
-  Gallery,
+  Checkbox,
+  ClipboardCopy,
+  Content,
   DatePicker,
+  DescriptionList,
+  DescriptionListDescription,
+  DescriptionListGroup,
+  DescriptionListTerm,
+  Divider,
   FileUpload,
-  Accordion,
-  AccordionItem,
-  AccordionContent,
-  AccordionToggle,
+  Form,
+  FormGroup,
+  Gallery,
+  Grid,
+  GridItem,
+  Label,
+  LabelGroup,
+  MenuToggle,
+  MenuToggleElement,
+  Modal,
+  ModalVariant,
   Pagination,
+  Popover,
+  PopoverPosition,
+  Radio,
   SearchInput,
+  Select,
+  SelectList,
+  SelectOption,
+  Spinner,
+  Split,
+  SplitItem,
+  Stack,
+  StackItem,
+  Tab,
+  TabTitleText,
+  Tabs,
+  TextArea,
+  TextInput,
+  Title,
   Toolbar,
   ToolbarContent,
   ToolbarItem,
-  DescriptionList,
-  DescriptionListGroup,
-  DescriptionListTerm,
-  DescriptionListDescription,
-  Grid,
-  GridItem,
-  Stack,
-  StackItem,
-  Badge,
-  Tooltip,
-  Divider
+  Tooltip
 } from '@patternfly/react-core';
 import { 
-  InfoCircleIcon, 
-  ExternalLinkAltIcon, 
+  ArrowRightIcon, 
   CheckIcon, 
-  TimesIcon, 
+  EditIcon, 
+  ExternalLinkAltIcon, 
+  InfoCircleIcon,
+  MinusCircleIcon,
   MinusIcon,
-  EditIcon,
   PlusIcon,
   TimesCircleIcon,
-  ArrowRightIcon,
-  MinusCircleIcon
+  TimesIcon
 } from '@patternfly/react-icons';
 
 interface UserRow {
@@ -92,6 +93,26 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 }) => {
   const [activeTabKey, setActiveTabKey] = React.useState<string | number>(0);
   const contentAreaRef = React.useRef<HTMLDivElement>(null);
+  
+  // Section refs for navigation
+  const imageOutputRef = React.useRef<HTMLDivElement>(null);
+  const enableRepeatableRef = React.useRef<HTMLDivElement>(null);
+  const kickstartRef = React.useRef<HTMLDivElement>(null);
+  const complianceRef = React.useRef<HTMLDivElement>(null);
+  
+  // Advanced Settings section refs
+  const timezoneRef = React.useRef<HTMLDivElement>(null);
+  const localeRef = React.useRef<HTMLDivElement>(null);
+  const hostnameRef = React.useRef<HTMLDivElement>(null);
+  const kernelRef = React.useRef<HTMLDivElement>(null);
+  const systemdRef = React.useRef<HTMLDivElement>(null);
+  const firewallRef = React.useRef<HTMLDivElement>(null);
+  const usersRef = React.useRef<HTMLDivElement>(null);
+  
+  // Track current section index for each tab
+  const [currentBaseImageSection, setCurrentBaseImageSection] = React.useState<number>(0);
+  const [currentAdvancedSection, setCurrentAdvancedSection] = React.useState<number>(0);
+
   const [registrationMethod, setRegistrationMethod] = React.useState<string>('auto');
   const [selectedActivationKey, setSelectedActivationKey] = React.useState<string>('my-default-key');
   const [isActivationKeyOpen, setIsActivationKeyOpen] = React.useState<boolean>(false);
@@ -285,12 +306,15 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   interface RepositoryRow {
     id: string;
     repository: string;
+    repositorySearchTerm: string;
     packageSearchTerm: string;
     selectedPackage: any | null;
     isLocked: boolean;
     isRepositoryDropdownOpen: boolean;
     searchResults: any[];
     isOpenSCAPRequired: boolean;
+    isLoading: boolean;
+    isRepositorySearching: boolean;
   }
 
   const [repositoryRows, setRepositoryRows] = React.useState<RepositoryRow[]>([
@@ -298,32 +322,41 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     {
       id: 'openscap-1',
       repository: 'Red Hat',
+      repositorySearchTerm: 'Red Hat',
       packageSearchTerm: 'aide',
       selectedPackage: { id: 'aide', name: 'aide', version: '0.16', repository: 'BaseOS' },
       isLocked: true,
       isRepositoryDropdownOpen: false,
       searchResults: [],
-      isOpenSCAPRequired: true
+      isOpenSCAPRequired: true,
+      isLoading: false,
+      isRepositorySearching: false
     },
     {
       id: 'openscap-2', 
       repository: 'Red Hat',
+      repositorySearchTerm: 'Red Hat',
       packageSearchTerm: 'sudo',
       selectedPackage: { id: 'sudo', name: 'sudo', version: '1.9.5p2', repository: 'BaseOS' },
       isLocked: true,
       isRepositoryDropdownOpen: false,
       searchResults: [],
-      isOpenSCAPRequired: true
+      isOpenSCAPRequired: true,
+      isLoading: false,
+      isRepositorySearching: false
     },
     {
       id: 'row-1',
-      repository: 'Red Hat',
+      repository: '',
+      repositorySearchTerm: 'Custom Repository',
       packageSearchTerm: '',
       selectedPackage: null,
       isLocked: false,
       isRepositoryDropdownOpen: false,
       searchResults: [],
-      isOpenSCAPRequired: false
+      isOpenSCAPRequired: false,
+      isLoading: false,
+      isRepositorySearching: true
     }
   ]);
   
@@ -331,6 +364,29 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const [isSearchPackageTypeOpen, setIsSearchPackageTypeOpen] = React.useState<boolean>(false);
   const [searchResultsPage, setSearchResultsPage] = React.useState<number>(1);
   const [searchResultsPerPage, setSearchResultsPerPage] = React.useState<number>(10);
+
+  // Function to calculate dropdown position to avoid modal overflow
+  const getDropdownPosition = (inputElement: HTMLElement | null) => {
+    if (!inputElement) return { top: '100%', bottom: 'auto', marginTop: '4px', marginBottom: '0' };
+    
+    const inputRect = inputElement.getBoundingClientRect();
+    const modalElement = contentAreaRef.current;
+    const modalRect = modalElement?.getBoundingClientRect();
+    
+    if (!modalRect) return { top: '100%', bottom: 'auto', marginTop: '4px', marginBottom: '0' };
+    
+    const spaceBelow = modalRect.bottom - inputRect.bottom;
+    const spaceAbove = inputRect.top - modalRect.top;
+    const dropdownHeight = 200; // maxHeight of dropdown
+    
+    if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+      // Position above input
+      return { top: 'auto', bottom: '100%', marginTop: '0', marginBottom: '4px' };
+    } else {
+      // Position below input (default)
+      return { top: '100%', bottom: 'auto', marginTop: '4px', marginBottom: '0' };
+    }
+  };
 
 
   
@@ -473,7 +529,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   ];
 
   // Repository options
-  const availableRepositories = [
+  const [availableRepositories, setAvailableRepositories] = React.useState<string[]>([
     'Red Hat',
     'EPEL',
     'CentOS Stream',
@@ -481,7 +537,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     'RPM Fusion',
     'Custom Repository 1',
     'Custom Repository 2'
-  ];
+  ]);
 
   // Search package types
   const searchPackageTypes = [
@@ -554,6 +610,48 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     return languageOptions.filter(option => 
       option.toLowerCase().includes(filterValue.toLowerCase())
     );
+  };
+
+  // User management functions
+  const addUser = () => {
+    const newUser: UserRow = {
+      id: Date.now().toString(),
+      isAdministrator: false,
+      username: '',
+      password: '',
+      sshKey: '',
+      groups: [],
+      isEditing: false
+    };
+    setUsers([...users, newUser]);
+  };
+
+  const removeUser = (id: string) => {
+    setUsers(users.filter(user => user.id !== id));
+  };
+
+  const updateUser = (id: string, field: keyof UserRow, value: any) => {
+    setUsers(users.map(user => 
+      user.id === id ? { ...user, [field]: value } : user
+    ));
+  };
+
+  const addGroupToUser = (userId: string, groupName: string) => {
+    if (groupName.trim()) {
+      setUsers(users.map(user => 
+        user.id === userId 
+          ? { ...user, groups: [...user.groups, groupName.trim()] }
+          : user
+      ));
+    }
+  };
+
+  const removeGroupFromUser = (userId: string, groupName: string) => {
+    setUsers(users.map(user => 
+      user.id === userId 
+        ? { ...user, groups: user.groups.filter(g => g !== groupName) }
+        : user
+    ));
   };
 
   const onActivationKeySelect = (
@@ -766,17 +864,40 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
   // Repository row management functions
   const addRepositoryRow = () => {
+    // Lock all existing non-OpenSCAP rows when adding a new one
+    const lockedRows = repositoryRows.map(row => {
+      if (!row.isOpenSCAPRequired && row.repository) {
+        return {
+          ...row,
+          isLocked: true,
+          isRepositorySearching: false
+        };
+      }
+      return row;
+    });
+
     const newRow: RepositoryRow = {
       id: `row-${Date.now()}`,
       repository: 'Red Hat',
+      repositorySearchTerm: 'Red Hat',
       packageSearchTerm: '',
       selectedPackage: null,
       isLocked: false,
       isRepositoryDropdownOpen: false,
       searchResults: [],
-      isOpenSCAPRequired: false
+      isOpenSCAPRequired: false,
+      isLoading: false,
+      isRepositorySearching: false
     };
-    setRepositoryRows([...repositoryRows, newRow]);
+    setRepositoryRows([...lockedRows, newRow]);
+  };
+
+  const handleRepositorySearchClear = (rowId: string) => {
+    updateRepositoryRow(rowId, {
+      repositorySearchTerm: '',
+      repository: '',
+      isRepositorySearching: false
+    });
   };
 
   const updateRepositoryRow = (rowId: string, updates: Partial<RepositoryRow>) => {
@@ -790,12 +911,38 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const handleRepositorySelect = (rowId: string, repository: string) => {
     updateRepositoryRow(rowId, { 
       repository, 
+      repositorySearchTerm: repository,
       isRepositoryDropdownOpen: false,
       packageSearchTerm: '', // Reset search when repository changes
       searchResults: [],
       selectedPackage: null,
-      isLocked: false
+      isLocked: false,
+      isRepositorySearching: false
     });
+  };
+
+  const handleRepositorySearchInput = (rowId: string, searchTerm: string) => {
+    if (searchTerm.trim() === '') {
+      // Empty search term should have same effect as clear
+      updateRepositoryRow(rowId, {
+        repositorySearchTerm: '',
+        repository: '',
+        isRepositorySearching: false
+      });
+    } else {
+      updateRepositoryRow(rowId, { 
+        repositorySearchTerm: searchTerm,
+        isRepositorySearching: true
+      });
+    }
+  };
+
+  const handleRepositorySearchSelect = (rowId: string, repository: string) => {
+    // If it's a new repository not in the list, add it
+    if (!availableRepositories.includes(repository) && repository.trim()) {
+      setAvailableRepositories(prev => [...prev, repository.trim()]);
+    }
+    handleRepositorySelect(rowId, repository);
   };
 
   const handleRowPackageSearchInput = (rowId: string, searchTerm: string) => {
@@ -807,19 +954,26 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     // Perform search if repository is selected and term is not empty
     const row = repositoryRows.find(r => r.id === rowId);
     if (row && row.repository && row.packageSearchTerm.trim()) {
-      const filtered = allSearchResults.filter(pkg => 
-        pkg.name.toLowerCase().includes(row.packageSearchTerm.toLowerCase())
-      );
-      updateRepositoryRow(rowId, { searchResults: filtered });
+      // Set loading state
+      updateRepositoryRow(rowId, { isLoading: true, searchResults: [] });
+      
+      // Simulate async search with timeout (replace with real API call)
+      setTimeout(() => {
+        const filtered = allSearchResults.filter(pkg => 
+          pkg.name.toLowerCase().includes(row.packageSearchTerm.toLowerCase())
+        );
+        updateRepositoryRow(rowId, { searchResults: filtered, isLoading: false });
+      }, 800);
     } else {
-      updateRepositoryRow(rowId, { searchResults: [] });
+      updateRepositoryRow(rowId, { searchResults: [], isLoading: false });
     }
   };
 
   const handleRowPackageSearchClear = (rowId: string) => {
     updateRepositoryRow(rowId, { 
       packageSearchTerm: '',
-      searchResults: []
+      searchResults: [],
+      isLoading: false
     });
   };
 
@@ -875,8 +1029,13 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     }
   };
 
-  const getFilteredRepositories = () => {
-    return availableRepositories;
+  const getFilteredRepositories = (searchTerm: string = '') => {
+    if (!searchTerm.trim()) {
+      return availableRepositories;
+    }
+    return availableRepositories.filter(repo => 
+      repo.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   };
 
   // Firewall helper functions
@@ -918,27 +1077,252 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const handleTabClick = (event: React.MouseEvent | React.KeyboardEvent, tabIndex: string | number) => {
     setActiveTabKey(tabIndex);
     
-    // Scroll to top when navigating to Review tab to ensure users see the cloud expiration alert
-    if (tabIndex === 3 && contentAreaRef.current) {
+    // Reset section indexes when switching tabs
+    setCurrentBaseImageSection(0);
+    setCurrentAdvancedSection(0);
+    
+    // Always scroll to top when changing tabs
+    if (contentAreaRef.current) {
       contentAreaRef.current.scrollTop = 0;
     }
   };
 
   const handleNext = () => {
-    if (typeof activeTabKey === 'number' && activeTabKey < 4) {
+    if (typeof activeTabKey === 'number' && activeTabKey < 3) {
       setActiveTabKey(activeTabKey + 1);
+      // Reset section indexes when advancing to next tab
+      setCurrentBaseImageSection(0);
+      setCurrentAdvancedSection(0);
+      // Scroll to top when changing tabs
+      if (contentAreaRef.current) {
+        contentAreaRef.current.scrollTop = 0;
+      }
     }
   };
 
   const handleBack = () => {
     if (typeof activeTabKey === 'number' && activeTabKey > 0) {
       setActiveTabKey(activeTabKey - 1);
+      // Scroll to top when changing tabs
+      if (contentAreaRef.current) {
+        contentAreaRef.current.scrollTop = 0;
+      }
+    }
+  };
+
+  const handleNextSection = () => {
+    if (typeof activeTabKey === 'number') {
+      switch (activeTabKey) {
+        case 0:
+          // Base image tab: cycle through sections (starting from Image Details)
+          const baseImageSections = [
+            imageOutputRef,
+            enableRepeatableRef, 
+            kickstartRef,
+            complianceRef
+          ];
+          
+          if (currentBaseImageSection < baseImageSections.length) {
+            // Move to next section within Base Image tab
+            const targetRef = baseImageSections[currentBaseImageSection];
+            setCurrentBaseImageSection(currentBaseImageSection + 1);
+            
+            if (targetRef.current && contentAreaRef.current) {
+              const element = targetRef.current;
+              const container = contentAreaRef.current;
+              const containerRect = container.getBoundingClientRect();
+              const elementRect = element.getBoundingClientRect();
+              const scrollTop = container.scrollTop + elementRect.top - containerRect.top - 20;
+              
+              container.scrollTo({
+                top: scrollTop,
+                behavior: 'smooth'
+              });
+            }
+          } else {
+            // All sections visited, go to next tab
+            setCurrentBaseImageSection(0);
+            handleNext();
+          }
+          break;
+        case 1:
+          // Repositories and packages tab: go to next tab (Advanced settings)
+          handleNext();
+          break;
+        case 2:
+          // Advanced settings tab: cycle through sections
+          const advancedSections = [
+            timezoneRef,
+            localeRef,
+            hostnameRef,
+            kernelRef,
+            systemdRef,
+            firewallRef,
+            usersRef
+          ];
+          
+          if (currentAdvancedSection < advancedSections.length) {
+            // Move to next section within Advanced Settings tab
+            const targetRef = advancedSections[currentAdvancedSection];
+            setCurrentAdvancedSection(currentAdvancedSection + 1);
+            
+            if (targetRef.current && contentAreaRef.current) {
+              const element = targetRef.current;
+              const container = contentAreaRef.current;
+              const containerRect = container.getBoundingClientRect();
+              const elementRect = element.getBoundingClientRect();
+              const scrollTop = container.scrollTop + elementRect.top - containerRect.top - 20;
+              
+              container.scrollTo({
+                top: scrollTop,
+                behavior: 'smooth'
+              });
+            }
+          } else {
+            // All sections visited, go to review
+            setCurrentAdvancedSection(0);
+            handleNext();
+          }
+          break;
+        case 3:
+          // Review tab: no next section
+          break;
+      }
     }
   };
 
   const isFirstTab = activeTabKey === 0;
   const isLastTab = activeTabKey === 3;
 
+
+  const renderChangeableContent = () => {
+    switch (registrationMethod) {
+      case 'auto':
+        return (
+          <div style={{ marginTop: '0rem', marginBottom: '0rem' }}>
+            <FormGroup
+              label="Activation key"
+              fieldId="activation-key"
+              style={{ marginBottom: '0rem' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Select
+                  id="activation-key-select"
+                  isOpen={isActivationKeyOpen}
+                  selected={selectedActivationKey}
+                  onSelect={onActivationKeySelect}
+                  onOpenChange={(isOpen) => setIsActivationKeyOpen(isOpen)}
+                  toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                    <MenuToggle 
+                      ref={toggleRef} 
+                      onClick={() => setIsActivationKeyOpen(!isActivationKeyOpen)}
+                      isExpanded={isActivationKeyOpen}
+                      style={{ width: '300px' }}
+                    >
+                      {selectedActivationKey}
+                    </MenuToggle>
+                  )}
+                >
+                  <SelectList>
+                    {activationKeys.map((key) => (
+                      <SelectOption key={key} value={key}>
+                        {key}
+                      </SelectOption>
+                    ))}
+                  </SelectList>
+                </Select>
+                
+                <Popover
+                  aria-label="Activation key details"
+                  position={PopoverPosition.right}
+                  bodyContent={
+                    <div style={{ minWidth: '300px' }}>
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Key</div>
+                        <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                          {selectedActivationKey}
+                        </div>
+                      </div>
+                      
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Environment</div>
+                        <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                          Production
+                        </div>
+                      </div>
+                      
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Usage</div>
+                        <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                          45/100 systems
+                        </div>
+                      </div>
+                      
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Auto-attach</div>
+                        <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                          Enabled
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Content view</div>
+                        <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                          RHEL-8-CV
+                        </div>
+                      </div>
+                    </div>
+                  }
+                >
+                  <Button variant="secondary" icon={<InfoCircleIcon />}>
+                    View details
+                  </Button>
+                </Popover>
+              </div>
+              <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                Image Builder provides and defaults to a no-cost activation key if none exist.{' '}
+                <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
+                  <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
+                  Manage Activation keys
+                </a>
+              </div>
+            </FormGroup>
+          </div>
+        );
+      case 'later':
+        return (
+          <Alert
+            variant="info"
+            isInline
+            title="Register with Red Hat Insights within 30 days"
+            style={{ marginTop: '1rem' }}
+          >
+            <p style={{ marginBottom: '0.5rem' }}>
+              If you don't register your systems within 30 days, you will not be able to use Red Hat Insights capabilities.
+            </p>
+            <p>
+              <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
+                <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
+                Learn more about registration
+              </a>
+            </p>
+          </Alert>
+        );
+      case 'satellite':
+        return (
+          <Alert
+            variant="warning"
+            isInline
+            title="Work in Progress"
+            style={{ marginTop: '1rem' }}
+          >
+            Satellite registration is currently being developed and will be available in a future release.
+          </Alert>
+        );
+      default:
+        return null;
+    }
+  };
 
 
   const renderTabContent = () => {
@@ -990,6 +1374,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               </div>
               
               {/* Divider between Image details and Image output */}
+
               <div style={{ 
                 height: '1px', 
                 backgroundColor: '#d2d2d2', 
@@ -1447,11 +1832,13 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 </FormGroup>
 
                 {/* Divider before Enable repeatable build */}
-                <div style={{ 
-                  height: '1px', 
-                  backgroundColor: '#d2d2d2', 
-                  margin: '2rem 0' 
-                }} />
+                <div 
+                  ref={enableRepeatableRef}
+                  style={{ 
+                    height: '1px', 
+                    backgroundColor: '#d2d2d2', 
+                    margin: '2rem 0' 
+                  }} />
                 
                 {/* Enable repeatable build Section */}
                 <div style={{ marginBottom: '2rem' }}>
@@ -1526,12 +1913,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   
                 {/* Kickstart File Section */}
                 <div style={{ marginBottom: '2rem' }}>
+
                     {/* Divider between sections */}
                     <div style={{ 
                       height: '1px', 
                       backgroundColor: '#d2d2d2', 
                       margin: '0rem 0 2rem 0' 
                     }} />
+
                     
               <div style={{ marginBottom: '1rem' }}>
                   <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
@@ -1540,6 +1929,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
                   This is filler text for now.  
                   </Content>
+
                   </div>
                     
                     <div style={{
@@ -1571,12 +1961,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     
                 {/* Compliance Section */}
                 <div style={{ marginBottom: '2rem' }}>
+
                     {/* Divider after Kickstart File section */}
                     <div style={{ 
                       height: '1px', 
                       backgroundColor: '#d2d2d2', 
                     margin: '0rem 0 2rem 0' 
                     }} />
+
 
                   <div style={{ marginBottom: '2rem' }}>
                   <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
@@ -1841,223 +2233,321 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 </FormGroup>
 
               {/* Repository Rows - Grouped Layout */}
-                <Card style={{ overflow: 'visible' }}>
-                  <CardBody style={{ padding: '1.5rem', overflow: 'visible' }}>
-                    <Stack hasGutter>
-                      {repositoryRows.map((row, index) => (
-                        <StackItem key={row.id}>
-                          <Grid hasGutter>
-                            <GridItem span={3}>
-                      <FormGroup
-                                label={index === 0 ? "Package Type" : ""}
-                                fieldId={`package-type-${row.id}`}
-                      >
-                        <Select
-                                  id={`package-type-select-${row.id}`}
-                          isOpen={isSearchPackageTypeOpen}
-                          selected={searchPackageType === 'individual' ? 'Individual packages' : 'Package groups'}
-                          onSelect={onSearchPackageTypeSelect}
-                          onOpenChange={(isOpen) => setIsSearchPackageTypeOpen(isOpen)}
-                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                            <MenuToggle 
-                              ref={toggleRef} 
-                              onClick={() => setIsSearchPackageTypeOpen(!isSearchPackageTypeOpen)}
-                              isExpanded={isSearchPackageTypeOpen}
-                              style={{ width: '100%' }}
-                                      isDisabled={row.isOpenSCAPRequired}
-                            >
-                              {searchPackageType === 'individual' ? 'Individual packages' : 'Package groups'}
-                            </MenuToggle>
-                          )}
-                        >
-                          <SelectList>
-                            <SelectOption value="individual">Individual packages</SelectOption>
-                            <SelectOption value="groups">Package groups</SelectOption>
-                          </SelectList>
-                        </Select>
-                      </FormGroup>
-                            </GridItem>
 
-                            <GridItem span={3}>
-                      <FormGroup
-                                label={index === 0 ? "Repository" : ""}
-                                fieldId={`repository-${row.id}`}
-                      >
-                        <Select
-                                  id={`repository-select-${row.id}`}
-                                  isOpen={row.isRepositoryDropdownOpen}
-                                  selected={row.repository}
-                          onSelect={(_, selection) => {
-                                    handleRepositorySelect(row.id, String(selection));
-                          }}
-                                  onOpenChange={(isOpen) => updateRepositoryRow(row.id, { isRepositoryDropdownOpen: isOpen })}
-                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                            <MenuToggle 
-                              ref={toggleRef} 
-                                      onClick={() => updateRepositoryRow(row.id, { isRepositoryDropdownOpen: !row.isRepositoryDropdownOpen })}
-                                      isExpanded={row.isRepositoryDropdownOpen}
-                              style={{ width: '100%' }}
-                                      isDisabled={row.isOpenSCAPRequired}
-                            >
-                                      {row.repository || 'Select repository'}
-                            </MenuToggle>
-                          )}
+              <Stack hasGutter>
+                {repositoryRows.map((row, index) => (
+                  <StackItem key={row.id}>
+                    <Grid hasGutter>
+                      <GridItem span={3}>
+                        <FormGroup
+                          label={index === 0 ? "Package Type" : ""}
+                          fieldId={`package-type-${row.id}`}
                         >
-                          <SelectList>
-                            {getFilteredRepositories().map((repo) => (
-                              <SelectOption key={repo} value={repo}>
-                                {repo}
-                              </SelectOption>
-                            ))}
-                          </SelectList>
-                        </Select>
-                      </FormGroup>
-                            </GridItem>
-
-                            <GridItem span={6} style={{ overflow: 'visible' }}>
-                      <FormGroup
-                                label={index === 0 ? "Package" : ""}
-                                fieldId={`package-${row.id}`}
-                                style={{ position: 'relative', overflow: 'visible' }}
+                          <Select
+                            id={`package-type-select-${row.id}`}
+                            isOpen={isSearchPackageTypeOpen}
+                            selected={searchPackageType === 'individual' ? 'Individual packages' : 'Package groups'}
+                            onSelect={onSearchPackageTypeSelect}
+                            onOpenChange={(isOpen) => setIsSearchPackageTypeOpen(isOpen)}
+                            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                              <MenuToggle 
+                                ref={toggleRef} 
+                                onClick={() => setIsSearchPackageTypeOpen(!isSearchPackageTypeOpen)}
+                                isExpanded={isSearchPackageTypeOpen}
+                                style={{ width: '100%' }}
+                                isDisabled={row.isOpenSCAPRequired || row.isLocked}
                               >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  {row.isLocked && row.selectedPackage ? (
-                                    <>
-                                      <TextInput
-                                        value={`${row.selectedPackage.name} v${row.selectedPackage.version}`}
-                                        readOnly
-                                        style={{ flex: 1 }}
-                                      />
-                                      {row.isOpenSCAPRequired ? (
-                                        <Tooltip content="Added by OpenSCAP">
-                                          <Button
-                                            variant="plain"
-                                            style={{ padding: '8px', minWidth: 'auto', cursor: 'default' }}
-                                            aria-label="Package added by OpenSCAP"
-                                            isDisabled
-                                          >
-                                            <svg
-                                              style={{ fontSize: '0.875rem', color: '#666' }}
-                                              fill="currentColor"
-                                              height="1em"
-                                              width="1em"
-                                              viewBox="0 0 512 512"
-                                            >
-                                              <path d="M336 208v-95a80 80 0 0 0-160 0v95" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="32"/>
-                                              <rect x="96" y="208" width="320" height="272" rx="48" ry="48" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="32"/>
-                                            </svg>
-                                          </Button>
-                                        </Tooltip>
-                                      ) : (
-                                        <Button
-                                          variant="plain"
-                                          onClick={() => removeRepositoryRow(row.id)}
-                                          style={{ padding: '8px', minWidth: 'auto' }}
-                                          aria-label="Remove row"
-                                        >
-                                          <MinusIcon style={{ fontSize: '0.875rem' }} />
-                                        </Button>
-                                      )}
-                                    </>
-                                  ) : (
-                                    <>
-                        <SearchInput
-                                        placeholder={row.repository ? "Search for packages..." : "Select repository first"}
-                                        value={row.packageSearchTerm}
-                                        onChange={(_event, value) => handleRowPackageSearchInput(row.id, value)}
-                                        onSearch={() => performRowPackageSearch(row.id)}
-                                        onClear={() => handleRowPackageSearchClear(row.id)}
-                                        onKeyDown={(event) => {
-                                          if (event.key === 'Enter') {
-                                            performRowPackageSearch(row.id);
-                                          }
-                                        }}
-                                        isDisabled={!row.repository}
-                                        style={{ flex: 1 }}
-                                      />
-                                      {!row.isOpenSCAPRequired && (
-                      <Button
-                                          variant="plain"
-                                          onClick={() => removeRepositoryRow(row.id)}
-                                          style={{ padding: '8px', minWidth: 'auto' }}
-                                          aria-label="Remove row"
-                                        >
-                                          <MinusIcon style={{ fontSize: '0.875rem' }} />
-                      </Button>
-                                      )}
-                                    </>
-                                  )}
-                    </div>
-                                {row.isOpenSCAPRequired && row.isLocked && (
-                                  <div style={{ 
-                                    fontSize: '0.75rem', 
-                                    color: '#666', 
-                                    marginTop: '4px',
-                                    fontStyle: 'italic'
-                                  }}>
-                                    Added by OpenSCAP
-                  </div>
+                                {searchPackageType === 'individual' ? 'Individual packages' : 'Package groups'}
+                              </MenuToggle>
+                            )}
+                          >
+                            <SelectList>
+                              <SelectOption value="individual">Individual packages</SelectOption>
+                              <SelectOption value="groups">Package groups</SelectOption>
+                            </SelectList>
+                          </Select>
+                        </FormGroup>
+                      </GridItem>
+                      
+                      <GridItem span={3}>
+                        <FormGroup
+                          label={index === 0 ? "Repository" : ""}
+                          fieldId={`repository-${row.id}`}
+                          style={{ position: 'relative' }}
+                        >
+                          {row.isOpenSCAPRequired || row.isLocked ? (
+                            <TextInput
+                              value={row.repositorySearchTerm}
+                              readOnly
+                              style={{ width: '100%' }}
+                            />
+                          ) : (
+                            <SearchInput
+                              ref={(el) => { (window as any)[`repositoryInput-${row.id}`] = el; }}
+                              placeholder="Search or add repository..."
+                              value={row.repositorySearchTerm}
+                              onChange={(_event, value) => handleRepositorySearchInput(row.id, value)}
+                              onSearch={() => handleRepositorySearchSelect(row.id, row.repositorySearchTerm)}
+                              onClear={() => handleRepositorySearchClear(row.id)}
+                              onKeyDown={(event) => {
+                                if (event.key === 'Enter' && row.repositorySearchTerm.trim()) {
+                                  handleRepositorySearchSelect(row.id, row.repositorySearchTerm);
+                                }
+                              }}
+                              onFocus={() => updateRepositoryRow(row.id, { isRepositorySearching: true })}
+                              onBlur={() => {
+                                // Small delay to allow dropdown clicks to register
+                                setTimeout(() => updateRepositoryRow(row.id, { isRepositorySearching: false }), 200);
+                              }}
+                              style={{ width: '100%' }}
+                            />
+                          )}
+                          
+                          {/* Repository dropdown for search results */}
+                          {!row.isOpenSCAPRequired && row.isRepositorySearching && (
+                            (row.repositorySearchTerm && getFilteredRepositories(row.repositorySearchTerm).length > 0) ||
+                            (!row.repositorySearchTerm && availableRepositories.length > 0)
+                          ) && (
+                            <div style={{ 
+                              position: 'absolute',
+                              top: '100%',
+                              left: 0,
+                              right: 0,
+                              backgroundColor: 'white',
+                              border: '1px solid #d2d2d2',
+                              borderRadius: '4px',
+                              boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                              zIndex: 9999,
+                              maxHeight: '200px',
+                              overflowY: 'auto',
+                              marginTop: '4px'
+                            }}>
+                              {(row.repositorySearchTerm ? getFilteredRepositories(row.repositorySearchTerm) : availableRepositories).map((repo) => (
+                                <div
+                                  key={repo}
+                                  style={{ 
+                                    padding: '12px 16px',
+                                    borderBottom: '1px solid #f0f0f0',
+                                    cursor: 'pointer',
+                                    fontSize: '0.875rem',
+                                    transition: 'background-color 0.15s ease'
+                                  }}
+                                  onClick={() => handleRepositorySearchSelect(row.id, repo)}
+                                  onMouseEnter={(e) => {
+                                    (e.target as HTMLElement).style.backgroundColor = '#f5f5f5';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    (e.target as HTMLElement).style.backgroundColor = 'white';
+                                  }}
+                                >
+                                  {repo}
+                                </div>
+                              ))}
+                              {!row.isOpenSCAPRequired && row.isRepositorySearching && row.repositorySearchTerm && 
+                               !getFilteredRepositories(row.repositorySearchTerm).some(repo => 
+                                 repo.toLowerCase() === row.repositorySearchTerm.toLowerCase()
+                               ) && (
+                                <div
+                                  style={{ 
+                                    padding: '12px 16px',
+                                    borderBottom: '1px solid #f0f0f0',
+                                    cursor: 'pointer',
+                                    fontSize: '0.875rem',
+                                    transition: 'background-color 0.15s ease',
+                                    fontStyle: 'italic',
+                                    color: '#0066cc'
+                                  }}
+                                  onClick={() => handleRepositorySearchSelect(row.id, row.repositorySearchTerm)}
+                                  onMouseEnter={(e) => {
+                                    (e.target as HTMLElement).style.backgroundColor = '#f5f5f5';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    (e.target as HTMLElement).style.backgroundColor = 'white';
+                                  }}
+                                >
+                                  Add new repository: "{row.repositorySearchTerm}"
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </FormGroup>
+                      </GridItem>
+                      
+                      <GridItem span={6} style={{ overflow: 'visible' }}>
+                        <FormGroup
+                          label={index === 0 ? "Package" : ""}
+                          fieldId={`package-${row.id}`}
+                          style={{ position: 'relative', overflow: 'visible' }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {row.isLocked && row.selectedPackage ? (
+                              <>
+                                <TextInput
+                                  value={`${row.selectedPackage.name} v${row.selectedPackage.version}`}
+                                  readOnly
+                                  style={{ flex: 1 }}
+                                />
+                                {!row.isOpenSCAPRequired && (
+                                  <MinusCircleIcon
+                                    style={{ 
+                                      fontSize: '1.25rem', 
+                                      color: '#151515',
+                                      cursor: 'pointer'
+                                    }}
+                                    onClick={() => removeRepositoryRow(row.id)}
+                                  />
                                 )}
-                                
-                                {/* Search Results Dropdown for this row */}
-                                {!row.isLocked && row.searchResults.length > 0 && (
-                    <div style={{ 
-                                    position: 'absolute',
-                                    top: '100%',
-                                    left: 0,
-                                    right: 0,
-                                    backgroundColor: 'white',
-                      border: '1px solid #d2d2d2',
-                      borderRadius: '4px',
-                                    boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-                                    zIndex: 9999,
-                                    maxHeight: '200px',
-                                    overflowY: 'auto',
-                                    marginTop: '4px'
-                                  }}>
-                                    {row.searchResults.slice(0, 5).map((pkg) => (
-                                      <div
-                                        key={pkg.id}
-                                        style={{ 
-                                          padding: '12px 16px',
-                                          borderBottom: '1px solid #f0f0f0',
-                                          cursor: 'pointer',
-                                          fontSize: '0.875rem',
-                                          transition: 'background-color 0.15s ease'
-                                        }}
-                                        onClick={() => handlePackageSelection(row.id, pkg)}
-                                        onMouseEnter={(e) => {
-                                          (e.target as HTMLElement).style.backgroundColor = '#f5f5f5';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                          (e.target as HTMLElement).style.backgroundColor = 'white';
-                                        }}
-                                      >
-                                        <div style={{ fontWeight: 500, marginBottom: '2px' }}>
-                                {pkg.name}
-                                        </div>
-                                        <div style={{ color: '#666', fontSize: '0.75rem' }}>
-                                          v{pkg.version} • {pkg.repository}
-                                        </div>
-                                      </div>
-                                    ))}
-                    </div>
+                              </>
+                            ) : (
+                              <>
+                                <SearchInput
+                                  placeholder={row.repository ? "Search for packages..." : "Select repository first"}
+                                  value={row.packageSearchTerm}
+                                  onChange={(_event, value) => handleRowPackageSearchInput(row.id, value)}
+                                  onSearch={() => performRowPackageSearch(row.id)}
+                                  onClear={() => handleRowPackageSearchClear(row.id)}
+                                  onKeyDown={(event) => {
+                                    if (event.key === 'Enter') {
+                                      performRowPackageSearch(row.id);
+                                    }
+                                  }}
+                                  isDisabled={!row.repository || row.isLocked}
+                                  style={{ flex: 1 }}
+                                />
+                                {!row.isOpenSCAPRequired && (
+                                  <MinusCircleIcon
+                                    style={{ 
+                                      fontSize: '1.25rem', 
+                                      color: '#151515',
+                                      cursor: 'pointer'
+                                    }}
+                                    onClick={() => removeRepositoryRow(row.id)}
+                                  />
+                                      
                                 )}
-                              </FormGroup>
-                            </GridItem>
-                          </Grid>
-                        </StackItem>
-                      ))}
-                    </Stack>
-                  </CardBody>
-                </Card>
+                              </>
+                            )}
+                          </div>
+                          {row.isOpenSCAPRequired && row.isLocked && (
+                            <div style={{ 
+                              fontSize: '0.75rem', 
+                              color: '#666', 
+                              marginTop: '4px',
+                              fontStyle: 'italic'
+                            }}>
+                              Added by OpenSCAP
+                            </div>
+                          )}
+                          {!row.isOpenSCAPRequired && row.isLocked && (
+                            <div style={{ 
+                              fontSize: '0.75rem', 
+                              color: '#666', 
+                              marginTop: '4px',
+                              fontStyle: 'italic'
+                            }}>
+                              Repository selected
+                            </div>
+                          )}
+                          
+                          {/* Search Results Dropdown for this row */}
+                          {!row.isLocked && (row.isLoading || row.searchResults.length > 0 || (row.packageSearchTerm.trim() && !row.isLoading)) && (
+                            <div style={{ 
+                              position: 'absolute',
+                              top: '100%',
+                              left: 0,
+                              right: 0,
+                              backgroundColor: 'white',
+                              border: '1px solid #d2d2d2',
+                              borderRadius: '4px',
+                              boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                              zIndex: 9999,
+                              maxHeight: '200px',
+                              overflowY: 'auto',
+                              marginTop: '4px'
+                            }}>
+                              {row.isLoading ? (
+                                <div style={{ 
+                                  padding: '16px',
+                                  textAlign: 'center',
+                                  color: '#666'
+                                }}>
+                                  <Spinner size="md" style={{ marginBottom: '8px' }} />
+                                  <div style={{ fontSize: '0.875rem', marginBottom: '4px' }}>
+                                    Searching packages...
+                                  </div>
+                                  <div style={{ fontSize: '0.75rem', color: '#888' }}>
+                                    <ArrowRightIcon style={{ marginRight: '4px', fontSize: '0.75rem' }} />
+                                    Click the arrow or press Enter to search
+                                  </div>
+                                  <div style={{ fontSize: '0.75rem', color: '#888', marginTop: '4px' }}>
+                                    Tip: Type the full package name for better results
+                                  </div>
+                                </div>
+                              ) : row.searchResults.length > 0 ? (
+                                row.searchResults.slice(0, 5).map((pkg) => (
+                                  <div
+                                    key={pkg.id}
+                                    style={{ 
+                                      padding: '12px 16px',
+                                      borderBottom: '1px solid #f0f0f0',
+                                      cursor: 'pointer',
+                                      fontSize: '0.875rem',
+                                      transition: 'background-color 0.15s ease'
+                                    }}
+                                    onClick={() => handlePackageSelection(row.id, pkg)}
+                                    onMouseEnter={(e) => {
+                                      (e.target as HTMLElement).style.backgroundColor = '#f5f5f5';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      (e.target as HTMLElement).style.backgroundColor = 'white';
+                                    }}
+                                  >
+                                    <div style={{ fontWeight: 500, marginBottom: '2px' }}>
+                                      {pkg.name}
+                                    </div>
+                                    <div style={{ color: '#666', fontSize: '0.75rem' }}>
+                                      v{pkg.version} • {pkg.repository}
+                                    </div>
+                                  </div>
+                                ))
+                              ) : row.packageSearchTerm.trim() ? (
+                                <div style={{ 
+                                  padding: '16px',
+                                  textAlign: 'center',
+                                  color: '#666'
+                                }}>
+                                  <div style={{ fontSize: '0.875rem', marginBottom: '8px' }}>
+                                    <ArrowRightIcon style={{ marginRight: '4px', fontSize: '0.75rem' }} />
+                                    Click the arrow or press Enter to search for "{row.packageSearchTerm}"
+                                  </div>
+                                  <div style={{ fontSize: '0.75rem', color: '#888' }}>
+                                    Tip: Type the full package name for better results
+                                  </div>
+                                </div>
+                              ) : (
+                                <div style={{ 
+                                  padding: '16px',
+                                  textAlign: 'center',
+                                  color: '#666',
+                                  fontSize: '0.875rem'
+                                }}>
+                                  No packages found. Try typing the full package name.
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </FormGroup>
+                      </GridItem>
+                    </Grid>
+                  </StackItem>
+                ))}
+              </Stack>
 
               {/* Add Repository Button */}
               <div style={{ marginTop: '1rem' }}>
                       <Button
                   variant="secondary"
                   onClick={addRepositoryRow}
-                  icon={<PlusIcon />}
                 >
                   Add Repository
                       </Button>
@@ -2264,6 +2754,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Timezone Section */}
+
               <div style={{ marginBottom: '2rem', marginTop : '1rem'}}>
                   <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
                     Timezone
@@ -2271,6 +2762,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
                     Create images that can be reproduced consistently with the same package versions and configurations.
                   </Content>
+
                 
                 <FormGroup
                   label="Timezone"
@@ -2369,6 +2861,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Locale Section */}
+
               <div style={{ marginBottom: '2rem', marginTop : '0rem'}}>
                   <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
                     Locale
@@ -2535,6 +3028,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Hostname Section */}
+
               <div style={{ marginBottom: '2rem', marginTop : '0rem'}}>
                   <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
                     Hostname
@@ -2542,6 +3036,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
                   This is filler text for now.                  
                   </Content>
+
                 
                 <FormGroup
                   label="Hostname"
@@ -2598,6 +3093,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Kernel Section */}
+
               <div style={{ marginBottom: '2rem', marginTop : '0rem'}}>
                   <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
                     Kernel
@@ -2605,6 +3101,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
                   This is filler text for now.                  
                   </Content>
+
                 
                 <FormGroup
                   label="Kernel package"
@@ -2691,6 +3188,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Systemd Services Section */}
+
               <div style={{ marginBottom: '2rem', marginTop : '0rem'}}>
                   <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
                     Systemd services
@@ -2759,6 +3257,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Firewall Section */}
+
               <div style={{ marginBottom: '2rem', marginTop : '0rem'}}>
                   <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
                     Firewall
@@ -2881,6 +3380,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Users Section */}
+
               <div style={{ marginBottom: '2rem', marginTop : '0rem'}}>
                   <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
                     Users
@@ -2888,6 +3388,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
                   Create user accounts for systems that will use this image.                  
                   </Content>
+
 
                 {/* User management table */}
                 <div style={{ border: '1px solid #d2d2d2', borderRadius: '4px', overflow: 'hidden' }}>
@@ -3455,9 +3956,21 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             </Button>
             {activeTabKey !== 3 && (
               <Button
+                variant="secondary"
+                onClick={handleNextSection}
+                isDisabled={isLoading}
+              >
+                Next
+              </Button>
+            )}
+            {activeTabKey !== 3 && (
+              <Button
                 variant="primary"
                 onClick={() => {
                   setActiveTabKey(3);
+                  // Reset section indexes when jumping to Review tab
+                  setCurrentBaseImageSection(0);
+                  setCurrentAdvancedSection(0);
                   // Scroll to top when navigating to Review tab to ensure users see the cloud expiration alert
                   if (contentAreaRef.current) {
                     contentAreaRef.current.scrollTop = 0;
@@ -3468,14 +3981,16 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 Review image
               </Button>
             )}
-            <Button
-              variant="primary"
-              onClick={handleConfirm}
-              isLoading={isLoading}
-              isDisabled={isLoading}
-            >
-              {isLoading ? 'Building...' : 'Build image'}
-            </Button>
+            {activeTabKey === 3 && (
+              <Button
+                variant="primary"
+                onClick={handleConfirm}
+                isLoading={isLoading}
+                isDisabled={isLoading}
+              >
+                {isLoading ? 'Building...' : 'Build image'}
+              </Button>
+            )}
           </div>
         </div>
       </div>
