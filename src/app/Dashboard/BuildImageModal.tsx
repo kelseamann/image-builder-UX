@@ -999,8 +999,8 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               {/* Image Output Section */}
               <div style={{ marginBottom: '2rem' }}>
                   <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
-                    Image output
-                  </Title>
+                  Image output
+                </Title>
                   <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
                   This is filler text for now.                  </Content>
                 
@@ -1455,344 +1455,344 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 
                 {/* Enable repeatable build Section */}
                 <div style={{ marginBottom: '2rem' }}>
-                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
-                    Enable repeatable build
-                  </Title>
-                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
-                    Create images that can be reproduced consistently with the same package versions and configurations.
-                  </Content>
-                
-                  <FormGroup
-                    label="Snapshot date"
-                    fieldId="snapshot-date"
-                  >
-                    <Split hasGutter>
-                      <SplitItem>
-                        <DatePicker
-                          id="snapshot-date"
-                          value={snapshotDate}
-                          onChange={(_event, value) => setSnapshotDate(value)}
-                          placeholder="MM-DD-YYYY"
+                    <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                      Enable repeatable build
+                    </Title>
+                    <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                      Create images that can be reproduced consistently with the same package versions and configurations.
+                    </Content>
+                  
+                    <FormGroup
+                      label="Snapshot date"
+                      fieldId="snapshot-date"
+                    >
+                      <Split hasGutter>
+                        <SplitItem>
+                          <DatePicker
+                            id="snapshot-date"
+                            value={snapshotDate}
+                            onChange={(_event, value) => setSnapshotDate(value)}
+                            placeholder="MM-DD-YYYY"
                           popoverProps={{ position: "bottom" }}
-                          dateFormat={(date: Date) => {
-                            const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                            const day = date.getDate().toString().padStart(2, '0');
-                            const year = date.getFullYear();
-                            return `${month}-${day}-${year}`;
-                          }}
-                          dateParse={(value: string) => {
-                            const parts = value.split('-');
-                            if (parts.length === 3) {
-                              const month = parseInt(parts[0], 10) - 1;
-                              const day = parseInt(parts[1], 10);
-                              const year = parseInt(parts[2], 10);
-                              return new Date(year, month, day);
-                            }
-                            return new Date(NaN);
-                          }}
-                          className="pf-v6-u-width-200px"
-                        />
-                      </SplitItem>
-                      <SplitItem>
-                        <Button
-                          variant="secondary"
-                          onClick={() => {
-                            const today = new Date();
-                            const month = (today.getMonth() + 1).toString().padStart(2, '0');
-                            const day = today.getDate().toString().padStart(2, '0');
-                            const year = today.getFullYear();
-                            setSnapshotDate(`${month}-${day}-${year}`);
-                          }}
-                          className="pf-v6-u-font-size-sm"
-                        >
-                          Today's date
-                        </Button>
-                      </SplitItem>
-                      <SplitItem>
-                        <Button
-                          variant="secondary"
-                          onClick={() => setSnapshotDate('')}
-                          className="pf-v6-u-font-size-sm"
-                        >
-                          Clear date
-                        </Button>
-                      </SplitItem>
-                    </Split>
-                    <div style={{ marginTop: '0.5rem', marginBottom: '1rem' ,fontSize: '0.875rem', color: '#666' }}>
+                            dateFormat={(date: Date) => {
+                              const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                              const day = date.getDate().toString().padStart(2, '0');
+                              const year = date.getFullYear();
+                              return `${month}-${day}-${year}`;
+                            }}
+                            dateParse={(value: string) => {
+                              const parts = value.split('-');
+                              if (parts.length === 3) {
+                                const month = parseInt(parts[0], 10) - 1;
+                                const day = parseInt(parts[1], 10);
+                                const year = parseInt(parts[2], 10);
+                                return new Date(year, month, day);
+                              }
+                              return new Date(NaN);
+                            }}
+                            className="pf-v6-u-width-200px"
+                          />
+                        </SplitItem>
+                        <SplitItem>
+                          <Button
+                            variant="secondary"
+                            onClick={() => {
+                              const today = new Date();
+                              const month = (today.getMonth() + 1).toString().padStart(2, '0');
+                              const day = today.getDate().toString().padStart(2, '0');
+                              const year = today.getFullYear();
+                              setSnapshotDate(`${month}-${day}-${year}`);
+                            }}
+                            className="pf-v6-u-font-size-sm"
+                          >
+                            Today's date
+                          </Button>
+                        </SplitItem>
+                        <SplitItem>
+                          <Button
+                            variant="secondary"
+                            onClick={() => setSnapshotDate('')}
+                            className="pf-v6-u-font-size-sm"
+                          >
+                            Clear date
+                          </Button>
+                        </SplitItem>
+                      </Split>
+                      <div style={{ marginTop: '0.5rem', marginBottom: '1rem' ,fontSize: '0.875rem', color: '#666' }}>
                       Use packages from this date to ensure reproducible builds.
-                    </div>
-                  </FormGroup>
+                      </div>
+                    </FormGroup>
                 </div>
-                
+                  
                 {/* Kickstart File Section */}
                 <div style={{ marginBottom: '2rem' }}>
-                  {/* Divider between sections */}
-                  <div style={{ 
-                    height: '1px', 
-                    backgroundColor: '#d2d2d2', 
-                    margin: '0rem 0 2rem 0' 
-                  }} />
-                  
+                    {/* Divider between sections */}
+                    <div style={{ 
+                      height: '1px', 
+                      backgroundColor: '#d2d2d2', 
+                      margin: '0rem 0 2rem 0' 
+                    }} />
+                    
               <div style={{ marginBottom: '1rem' }}>
                   <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
-                    Kickstart File
-                  </Title>
+                      Kickstart File
+                    </Title>
                   <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
                   This is filler text for now.  
                   </Content>
                   </div>
-
-                  <div style={{
-                    '--pf-v5-c-file-upload__file-details-textarea--FontFamily': '"Red Hat Mono", "Monaco", "Menlo", "Ubuntu Mono", monospace'
-                  } as React.CSSProperties}>
-                    <FileUpload
-                      id="kickstart-file"
-                      type="text" 
+                    
+                    <div style={{
+                      '--pf-v5-c-file-upload__file-details-textarea--FontFamily': '"Red Hat Mono", "Monaco", "Menlo", "Ubuntu Mono", monospace'
+                    } as React.CSSProperties}>
+                      <FileUpload
+                        id="kickstart-file"
+                        type="text"
                       value={kickstartFile || 'Manually enter the kickstart CSV data here.'} 
                       style={{color: '#000000' }}
-                      filename={kickstartFilename}
-                      onTextChange={(event: React.ChangeEvent<HTMLTextAreaElement>, text: string) => {
-                        setKickstartFile(text);
-                        setKickstartFilename('');
-                      }}
-                      onClearClick={() => {
-                        setKickstartFile('');
-                        setKickstartFilename('');
-                      }}
-                      isLoading={isKickstartLoading}
-                      browseButtonText="Upload"
-                      clearButtonText="Clear"
-                    />
-                    <div className="pf-v6-u-font-size-sm pf-v6-u-color-200 pf-v6-u-mt-xs">
-                      Upload a CSV file
+                        filename={kickstartFilename}
+                        onTextChange={(event: React.ChangeEvent<HTMLTextAreaElement>, text: string) => {
+                          setKickstartFile(text);
+                          setKickstartFilename('');
+                        }}
+                        onClearClick={() => {
+                          setKickstartFile('');
+                          setKickstartFilename('');
+                        }}
+                        isLoading={isKickstartLoading}
+                        browseButtonText="Upload"
+                        clearButtonText="Clear"
+                      />
+                      <div className="pf-v6-u-font-size-sm pf-v6-u-color-200 pf-v6-u-mt-xs">
+                        Upload a CSV file
                     </div>
-                  </div>
-                </div>
-
+                      </div>
+                    </div>
+                    
                 {/* Compliance Section */}
                 <div style={{ marginBottom: '2rem' }}>
-                  {/* Divider after Kickstart File section */}
-                  <div style={{ 
-                    height: '1px', 
-                    backgroundColor: '#d2d2d2', 
+                    {/* Divider after Kickstart File section */}
+                    <div style={{ 
+                      height: '1px', 
+                      backgroundColor: '#d2d2d2', 
                     margin: '0rem 0 2rem 0' 
-                  }} />
-                  
+                    }} />
+
                   <div style={{ marginBottom: '2rem' }}>
                   <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
-                    Compliance
-                  </Title>
+                      Compliance
+                    </Title>
                   <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
-                    Below you can select which Insights compliance policy or OpenSCAP profile your image will be compliant to. Insights compliance allows the use of tailored policies, whereas OpenSCAP gives you the default versions. This will automatically help monitor the adherence of your registered RHEL systems to a selected policy or profile.
+                      Below you can select which Insights compliance policy or OpenSCAP profile your image will be compliant to. Insights compliance allows the use of tailored policies, whereas OpenSCAP gives you the default versions. This will automatically help monitor the adherence of your registered RHEL systems to a selected policy or profile.
                     This is filler text for now.  
                   </Content>
                   </div>
 
-                  {/* Custom Compliance Policy */}
-                  <FormGroup
-                    style={{ marginBottom: '1.5rem' }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                      <Radio
-                        isChecked={complianceType === 'custom'}
-                        name="compliance-type"
-                        onChange={() => setComplianceType('custom')}
-                        label=""
-                        id="compliance-custom"
-                      />
-                      <label htmlFor="compliance-custom" style={{ fontWeight: 600, fontSize: '14px' }}>
-                        Use a custom Compliance policy
-                      </label>
-                    </div>
-                    
-                    <div style={{ marginLeft: '1.75rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Select
-                          id="custom-compliance-policy-select"
-                          isOpen={isCustomCompliancePolicyOpen}
-                          selected={customCompliancePolicy}
-                          onSelect={onCustomCompliancePolicySelect}
-                          onOpenChange={(isOpen) => setIsCustomCompliancePolicyOpen(isOpen)}
-                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                            <MenuToggle 
-                              ref={toggleRef} 
-                              onClick={() => setIsCustomCompliancePolicyOpen(!isCustomCompliancePolicyOpen)}
-                              isExpanded={isCustomCompliancePolicyOpen}
-                              style={{ width: '400px' }}
-                            >
-                              {customCompliancePolicy || 'Select a compliance policy'}
-                            </MenuToggle>
-                          )}
-                        >
-                          <SelectList>
-                            {customCompliancePolicyOptions.map((policy) => (
-                              <SelectOption key={policy} value={policy}>
-                                {policy}
-                              </SelectOption>
-                            ))}
-                          </SelectList>
-                        </Select>
-                        
-                        {complianceType === 'custom' && (
-                          <Popover
-                            aria-label="Custom compliance policy details"
-                            position={PopoverPosition.right}
-                            bodyContent={
-                              <div style={{ minWidth: '300px' }}>
-                                <div style={{ marginBottom: '1rem' }}>
-                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Policy type</div>
-                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                    {customCompliancePolicy ? 'Custom Insights Compliance Policy' : 'No policy selected'}
-                                  </div>
-                                </div>
-                                
-                                <div style={{ marginBottom: '1rem' }}>
-                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Policy description</div>
-                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                    {customCompliancePolicy 
-                                      ? 'This policy provides comprehensive security controls and compliance requirements tailored for enterprise environments.'
-                                      : 'Select a policy to view description'
-                                    }
-                                  </div>
-                                </div>
-                                
-                                <div style={{ marginBottom: '1rem' }}>
-                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Compliance score</div>
-                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                    {customCompliancePolicy ? '85% compliant' : 'N/A'}
-                                  </div>
-                                </div>
-                                
-                                <div>
-                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Business objective</div>
-                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                    {customCompliancePolicy 
-                                      ? 'Maintain security standards and regulatory compliance for critical business systems.'
-                                      : 'Select a policy to view objective'
-                                    }
-                                  </div>
-                                </div>
-                              </div>
-                            }
-                          >
-                            <Button variant="secondary" icon={<InfoCircleIcon />}>
-                              View details
-                            </Button>
-                          </Popover>
-                        )}
+                    {/* Custom Compliance Policy */}
+                    <FormGroup
+                      style={{ marginBottom: '1.5rem' }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                        <Radio
+                          isChecked={complianceType === 'custom'}
+                          name="compliance-type"
+                          onChange={() => setComplianceType('custom')}
+                          label=""
+                          id="compliance-custom"
+                        />
+                        <label htmlFor="compliance-custom" style={{ fontWeight: 600, fontSize: '14px' }}>
+                          Use a custom Compliance policy
+                        </label>
                       </div>
                       
-                      <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
-                        <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
-                          <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
-                          Manage with Insights Compliance
-                        </a>
+                      <div style={{ marginLeft: '1.75rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <Select
+                            id="custom-compliance-policy-select"
+                            isOpen={isCustomCompliancePolicyOpen}
+                            selected={customCompliancePolicy}
+                            onSelect={onCustomCompliancePolicySelect}
+                            onOpenChange={(isOpen) => setIsCustomCompliancePolicyOpen(isOpen)}
+                            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                              <MenuToggle 
+                                ref={toggleRef} 
+                                onClick={() => setIsCustomCompliancePolicyOpen(!isCustomCompliancePolicyOpen)}
+                                isExpanded={isCustomCompliancePolicyOpen}
+                                style={{ width: '400px' }}
+                              >
+                                {customCompliancePolicy || 'Select a compliance policy'}
+                              </MenuToggle>
+                            )}
+                          >
+                            <SelectList>
+                              {customCompliancePolicyOptions.map((policy) => (
+                                <SelectOption key={policy} value={policy}>
+                                  {policy}
+                                </SelectOption>
+                              ))}
+                            </SelectList>
+                          </Select>
+                          
+                          {complianceType === 'custom' && (
+                            <Popover
+                              aria-label="Custom compliance policy details"
+                              position={PopoverPosition.right}
+                              bodyContent={
+                                <div style={{ minWidth: '300px' }}>
+                                  <div style={{ marginBottom: '1rem' }}>
+                                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Policy type</div>
+                                    <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                      {customCompliancePolicy ? 'Custom Insights Compliance Policy' : 'No policy selected'}
+                                    </div>
+                                  </div>
+                                  
+                                  <div style={{ marginBottom: '1rem' }}>
+                                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Policy description</div>
+                                    <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                      {customCompliancePolicy 
+                                        ? 'This policy provides comprehensive security controls and compliance requirements tailored for enterprise environments.'
+                                        : 'Select a policy to view description'
+                                      }
+                                    </div>
+                                  </div>
+                                  
+                                  <div style={{ marginBottom: '1rem' }}>
+                                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Compliance score</div>
+                                    <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                      {customCompliancePolicy ? '85% compliant' : 'N/A'}
+                                    </div>
+                                  </div>
+                                  
+                                  <div>
+                                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Business objective</div>
+                                    <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                      {customCompliancePolicy 
+                                        ? 'Maintain security standards and regulatory compliance for critical business systems.'
+                                        : 'Select a policy to view objective'
+                                      }
+                                    </div>
+                                  </div>
+                                </div>
+                              }
+                            >
+                              <Button variant="secondary" icon={<InfoCircleIcon />}>
+                                View details
+                              </Button>
+                            </Popover>
+                          )}
+                        </div>
+                        
+                        <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                          <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
+                            <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
+                            Manage with Insights Compliance
+                          </a>
+                        </div>
                       </div>
-                    </div>
-                  </FormGroup>
+                    </FormGroup>
 
-                  {/* OpenSCAP Profile */}
-                  <FormGroup
-                    style={{ marginBottom: '1.5rem' }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                      <Radio
-                        isChecked={complianceType === 'openscap'}
-                        name="compliance-type"
-                        onChange={() => setComplianceType('openscap')}
-                        label=""
-                        id="compliance-openscap"
-                      />
-                      <label htmlFor="compliance-openscap" style={{ fontWeight: 600, fontSize: '14px' }}>
-                        Use a default OpenSCAP profile
-                      </label>
-                    </div>
-                    
-                    <div style={{ marginLeft: '1.75rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Select
-                          id="openscap-profile-select"
-                          isOpen={isOpenscapProfileOpen}
-                          selected={openscapProfile}
-                          onSelect={onOpenscapProfileSelect}
-                          onOpenChange={(isOpen) => setIsOpenscapProfileOpen(isOpen)}
-                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                            <MenuToggle 
-                              ref={toggleRef} 
-                              onClick={() => setIsOpenscapProfileOpen(!isOpenscapProfileOpen)}
-                              isExpanded={isOpenscapProfileOpen}
-                              style={{ width: '400px' }}
-                            >
-                              {openscapProfile || 'Select an OpenSCAP profile'}
-                            </MenuToggle>
-                          )}
-                        >
-                          <SelectList>
-                            {openscapProfileOptions.map((profile) => (
-                              <SelectOption key={profile} value={profile}>
-                                {profile}
-                              </SelectOption>
-                            ))}
-                          </SelectList>
-                        </Select>
-                        
-                        {complianceType === 'openscap' && (
-                          <Popover
-                            aria-label="OpenSCAP profile details"
-                            position={PopoverPosition.right}
-                            bodyContent={
-                              <div style={{ minWidth: '300px' }}>
-                                <div style={{ marginBottom: '1rem' }}>
-                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Policy type</div>
-                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                    {openscapProfile ? 'Default OpenSCAP Security Profile' : 'No profile selected'}
-                                  </div>
-                                </div>
-                                
-                                <div style={{ marginBottom: '1rem' }}>
-                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Policy description</div>
-                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                    {openscapProfile 
-                                      ? 'Standard security configuration profile based on industry best practices and security benchmarks.'
-                                      : 'Select a profile to view description'
-                                    }
-                                  </div>
-                                </div>
-                                
-                                <div style={{ marginBottom: '1rem' }}>
-                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Compliance score</div>
-                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                    {openscapProfile ? '92% compliant' : 'N/A'}
-                                  </div>
-                                </div>
-                                
-                                <div>
-                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Business objective</div>
-                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                    {openscapProfile 
-                                      ? 'Implement standardized security configurations to reduce vulnerabilities and ensure baseline protection.'
-                                      : 'Select a profile to view objective'
-                                    }
-                                  </div>
-                                </div>
-                              </div>
-                            }
-                          >
-                            <Button variant="secondary" icon={<InfoCircleIcon />}>
-                              View details
-                            </Button>
-                          </Popover>
-                        )}
+                    {/* OpenSCAP Profile */}
+                    <FormGroup
+                      style={{ marginBottom: '1.5rem' }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                        <Radio
+                          isChecked={complianceType === 'openscap'}
+                          name="compliance-type"
+                          onChange={() => setComplianceType('openscap')}
+                          label=""
+                          id="compliance-openscap"
+                        />
+                        <label htmlFor="compliance-openscap" style={{ fontWeight: 600, fontSize: '14px' }}>
+                          Use a default OpenSCAP profile
+                        </label>
                       </div>
                       
-                      <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
-                        <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
-                          <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
-                          Learn more about OpenSCAP profiles
-                        </a>
+                      <div style={{ marginLeft: '1.75rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <Select
+                            id="openscap-profile-select"
+                            isOpen={isOpenscapProfileOpen}
+                            selected={openscapProfile}
+                            onSelect={onOpenscapProfileSelect}
+                            onOpenChange={(isOpen) => setIsOpenscapProfileOpen(isOpen)}
+                            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                              <MenuToggle 
+                                ref={toggleRef} 
+                                onClick={() => setIsOpenscapProfileOpen(!isOpenscapProfileOpen)}
+                                isExpanded={isOpenscapProfileOpen}
+                                style={{ width: '400px' }}
+                              >
+                                {openscapProfile || 'Select an OpenSCAP profile'}
+                              </MenuToggle>
+                            )}
+                          >
+                            <SelectList>
+                              {openscapProfileOptions.map((profile) => (
+                                <SelectOption key={profile} value={profile}>
+                                  {profile}
+                                </SelectOption>
+                              ))}
+                            </SelectList>
+                          </Select>
+                          
+                          {complianceType === 'openscap' && (
+                            <Popover
+                              aria-label="OpenSCAP profile details"
+                              position={PopoverPosition.right}
+                              bodyContent={
+                                <div style={{ minWidth: '300px' }}>
+                                  <div style={{ marginBottom: '1rem' }}>
+                                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Policy type</div>
+                                    <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                      {openscapProfile ? 'Default OpenSCAP Security Profile' : 'No profile selected'}
+                                    </div>
+                                  </div>
+                                  
+                                  <div style={{ marginBottom: '1rem' }}>
+                                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Policy description</div>
+                                    <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                      {openscapProfile 
+                                        ? 'Standard security configuration profile based on industry best practices and security benchmarks.'
+                                        : 'Select a profile to view description'
+                                      }
+                                    </div>
+                                  </div>
+                                  
+                                  <div style={{ marginBottom: '1rem' }}>
+                                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Compliance score</div>
+                                    <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                      {openscapProfile ? '92% compliant' : 'N/A'}
+                                    </div>
+                                  </div>
+                                  
+                                  <div>
+                                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Business objective</div>
+                                    <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                      {openscapProfile 
+                                        ? 'Implement standardized security configurations to reduce vulnerabilities and ensure baseline protection.'
+                                        : 'Select a profile to view objective'
+                                      }
+                                    </div>
+                                  </div>
+                                </div>
+                              }
+                            >
+                              <Button variant="secondary" icon={<InfoCircleIcon />}>
+                                View details
+                              </Button>
+                            </Popover>
+                          )}
+                        </div>
+                        
+                        <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                          <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
+                            <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
+                            Learn more about OpenSCAP profiles
+                          </a>
+                        </div>
                       </div>
-                    </div>
-                  </FormGroup>
+                    </FormGroup>
                 </div>
               </div>
             </Form>
@@ -1810,35 +1810,35 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             
             <Form>
               {/* Extended Support Subscription */}
-              <FormGroup
-                label="Extended support subscription"
-                fieldId="extended-support"
+                <FormGroup
+                  label="Extended support subscription"
+                  fieldId="extended-support"
                 style={{ marginBottom: '2rem' }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <Radio
-                    isChecked={extendedSupport === 'none'}
-                    name="extended-support"
-                    onChange={() => setExtendedSupport('none')}
-                    label="None"
-                    id="extended-support-none"
-                  />
-                  <Radio
-                    isChecked={extendedSupport === 'eus'}
-                    name="extended-support"
-                    onChange={() => setExtendedSupport('eus')}
-                    label="Extended update support (EUS)"
-                    id="extended-support-eus"
-                  />
-                  <Radio
-                    isChecked={extendedSupport === 'eeus'}
-                    name="extended-support"
-                    onChange={() => setExtendedSupport('eeus')}
-                    label="Enhanced extended update support (EEUS)"
-                    id="extended-support-eeus"
-                  />
-                </div>
-              </FormGroup>
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <Radio
+                      isChecked={extendedSupport === 'none'}
+                      name="extended-support"
+                      onChange={() => setExtendedSupport('none')}
+                      label="None"
+                      id="extended-support-none"
+                    />
+                    <Radio
+                      isChecked={extendedSupport === 'eus'}
+                      name="extended-support"
+                      onChange={() => setExtendedSupport('eus')}
+                      label="Extended update support (EUS)"
+                      id="extended-support-eus"
+                    />
+                    <Radio
+                      isChecked={extendedSupport === 'eeus'}
+                      name="extended-support"
+                      onChange={() => setExtendedSupport('eeus')}
+                      label="Enhanced extended update support (EEUS)"
+                      id="extended-support-eeus"
+                    />
+                  </div>
+                </FormGroup>
 
               {/* Repository Rows - Grouped Layout */}
                 <Card style={{ overflow: 'visible' }}>
@@ -1848,74 +1848,74 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                         <StackItem key={row.id}>
                           <Grid hasGutter>
                             <GridItem span={3}>
-                              <FormGroup
+                      <FormGroup
                                 label={index === 0 ? "Package Type" : ""}
                                 fieldId={`package-type-${row.id}`}
-                              >
-                                <Select
+                      >
+                        <Select
                                   id={`package-type-select-${row.id}`}
-                                  isOpen={isSearchPackageTypeOpen}
-                                  selected={searchPackageType === 'individual' ? 'Individual packages' : 'Package groups'}
-                                  onSelect={onSearchPackageTypeSelect}
-                                  onOpenChange={(isOpen) => setIsSearchPackageTypeOpen(isOpen)}
-                                  toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                                    <MenuToggle 
-                                      ref={toggleRef} 
-                                      onClick={() => setIsSearchPackageTypeOpen(!isSearchPackageTypeOpen)}
-                                      isExpanded={isSearchPackageTypeOpen}
-                                      style={{ width: '100%' }}
+                          isOpen={isSearchPackageTypeOpen}
+                          selected={searchPackageType === 'individual' ? 'Individual packages' : 'Package groups'}
+                          onSelect={onSearchPackageTypeSelect}
+                          onOpenChange={(isOpen) => setIsSearchPackageTypeOpen(isOpen)}
+                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                            <MenuToggle 
+                              ref={toggleRef} 
+                              onClick={() => setIsSearchPackageTypeOpen(!isSearchPackageTypeOpen)}
+                              isExpanded={isSearchPackageTypeOpen}
+                              style={{ width: '100%' }}
                                       isDisabled={row.isOpenSCAPRequired}
-                                    >
-                                      {searchPackageType === 'individual' ? 'Individual packages' : 'Package groups'}
-                                    </MenuToggle>
-                                  )}
-                                >
-                                  <SelectList>
-                                    <SelectOption value="individual">Individual packages</SelectOption>
-                                    <SelectOption value="groups">Package groups</SelectOption>
-                                  </SelectList>
-                                </Select>
-                              </FormGroup>
+                            >
+                              {searchPackageType === 'individual' ? 'Individual packages' : 'Package groups'}
+                            </MenuToggle>
+                          )}
+                        >
+                          <SelectList>
+                            <SelectOption value="individual">Individual packages</SelectOption>
+                            <SelectOption value="groups">Package groups</SelectOption>
+                          </SelectList>
+                        </Select>
+                      </FormGroup>
                             </GridItem>
-                            
+
                             <GridItem span={3}>
-                              <FormGroup
+                      <FormGroup
                                 label={index === 0 ? "Repository" : ""}
                                 fieldId={`repository-${row.id}`}
-                              >
-                                <Select
+                      >
+                        <Select
                                   id={`repository-select-${row.id}`}
                                   isOpen={row.isRepositoryDropdownOpen}
                                   selected={row.repository}
-                                  onSelect={(_, selection) => {
+                          onSelect={(_, selection) => {
                                     handleRepositorySelect(row.id, String(selection));
-                                  }}
+                          }}
                                   onOpenChange={(isOpen) => updateRepositoryRow(row.id, { isRepositoryDropdownOpen: isOpen })}
-                                  toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                                    <MenuToggle 
-                                      ref={toggleRef} 
+                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                            <MenuToggle 
+                              ref={toggleRef} 
                                       onClick={() => updateRepositoryRow(row.id, { isRepositoryDropdownOpen: !row.isRepositoryDropdownOpen })}
                                       isExpanded={row.isRepositoryDropdownOpen}
-                                      style={{ width: '100%' }}
+                              style={{ width: '100%' }}
                                       isDisabled={row.isOpenSCAPRequired}
-                                    >
+                            >
                                       {row.repository || 'Select repository'}
-                                    </MenuToggle>
-                                  )}
-                                >
-                                  <SelectList>
-                                    {getFilteredRepositories().map((repo) => (
-                                      <SelectOption key={repo} value={repo}>
-                                        {repo}
-                                      </SelectOption>
-                                    ))}
-                                  </SelectList>
-                                </Select>
-                              </FormGroup>
+                            </MenuToggle>
+                          )}
+                        >
+                          <SelectList>
+                            {getFilteredRepositories().map((repo) => (
+                              <SelectOption key={repo} value={repo}>
+                                {repo}
+                              </SelectOption>
+                            ))}
+                          </SelectList>
+                        </Select>
+                      </FormGroup>
                             </GridItem>
-                            
+
                             <GridItem span={6} style={{ overflow: 'visible' }}>
-                              <FormGroup
+                      <FormGroup
                                 label={index === 0 ? "Package" : ""}
                                 fieldId={`package-${row.id}`}
                                 style={{ position: 'relative', overflow: 'visible' }}
@@ -1961,7 +1961,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                                     </>
                                   ) : (
                                     <>
-                                      <SearchInput
+                        <SearchInput
                                         placeholder={row.repository ? "Search for packages..." : "Select repository first"}
                                         value={row.packageSearchTerm}
                                         onChange={(_event, value) => handleRowPackageSearchInput(row.id, value)}
@@ -1976,18 +1976,18 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                                         style={{ flex: 1 }}
                                       />
                                       {!row.isOpenSCAPRequired && (
-                                        <Button
+                      <Button
                                           variant="plain"
                                           onClick={() => removeRepositoryRow(row.id)}
                                           style={{ padding: '8px', minWidth: 'auto' }}
                                           aria-label="Remove row"
                                         >
                                           <MinusIcon style={{ fontSize: '0.875rem' }} />
-                                        </Button>
+                      </Button>
                                       )}
                                     </>
                                   )}
-                                </div>
+                    </div>
                                 {row.isOpenSCAPRequired && row.isLocked && (
                                   <div style={{ 
                                     fontSize: '0.75rem', 
@@ -1996,19 +1996,19 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                                     fontStyle: 'italic'
                                   }}>
                                     Added by OpenSCAP
-                                  </div>
+                  </div>
                                 )}
                                 
                                 {/* Search Results Dropdown for this row */}
                                 {!row.isLocked && row.searchResults.length > 0 && (
-                                  <div style={{ 
+                    <div style={{ 
                                     position: 'absolute',
                                     top: '100%',
                                     left: 0,
                                     right: 0,
                                     backgroundColor: 'white',
-                                    border: '1px solid #d2d2d2',
-                                    borderRadius: '4px',
+                      border: '1px solid #d2d2d2',
+                      borderRadius: '4px',
                                     boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
                                     zIndex: 9999,
                                     maxHeight: '200px',
@@ -2034,14 +2034,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                                         }}
                                       >
                                         <div style={{ fontWeight: 500, marginBottom: '2px' }}>
-                                          {pkg.name}
+                                {pkg.name}
                                         </div>
                                         <div style={{ color: '#666', fontSize: '0.75rem' }}>
                                           v{pkg.version} • {pkg.repository}
                                         </div>
                                       </div>
                                     ))}
-                                  </div>
+                    </div>
                                 )}
                               </FormGroup>
                             </GridItem>
@@ -2054,13 +2054,13 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
               {/* Add Repository Button */}
               <div style={{ marginTop: '1rem' }}>
-                <Button
+                      <Button
                   variant="secondary"
                   onClick={addRepositoryRow}
                   icon={<PlusIcon />}
                 >
                   Add Repository
-                </Button>
+                      </Button>
               </div>
             </Form>
           </div>
@@ -2079,8 +2079,8 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               {/* Register Section */}
               <div style={{ marginBottom: '2rem', marginTop : '1rem'}}>
                   <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
-                    Register
-                  </Title>
+                  Register
+                </Title>
                   <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
                   Configure registration settings for systems that will use this image.
                   </Content>
@@ -2177,8 +2177,8 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                               <div style={{ fontSize: '0.875rem', color: '#666' }}>
                                 {selectedActivationKey}
                               </div>
-                            </div>
-                            
+              </div>
+
                             <div style={{ marginBottom: '1rem' }}>
                               <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Environment</div>
                               <div style={{ fontSize: '0.875rem', color: '#666' }}>
@@ -3430,12 +3430,12 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
         <div 
           ref={contentAreaRef}
           style={{ 
-            flex: 1,
-            minHeight: 0,
-            padding: '24px 24px 24px 32px',
-            overflowY: 'auto',
-            overflowX: 'hidden'
-          }}>
+          flex: 1,
+          minHeight: 0,
+          padding: '24px 24px 24px 32px',
+          overflowY: 'auto',
+          overflowX: 'hidden'
+        }}>
           {renderTabContent()}
         </div>
 
