@@ -93,6 +93,26 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 }) => {
   const [activeTabKey, setActiveTabKey] = React.useState<string | number>(0);
   const contentAreaRef = React.useRef<HTMLDivElement>(null);
+  
+  // Section refs for navigation
+  const imageOutputRef = React.useRef<HTMLDivElement>(null);
+  const enableRepeatableRef = React.useRef<HTMLDivElement>(null);
+  const kickstartRef = React.useRef<HTMLDivElement>(null);
+  const complianceRef = React.useRef<HTMLDivElement>(null);
+  
+  // Advanced Settings section refs
+  const timezoneRef = React.useRef<HTMLDivElement>(null);
+  const localeRef = React.useRef<HTMLDivElement>(null);
+  const hostnameRef = React.useRef<HTMLDivElement>(null);
+  const kernelRef = React.useRef<HTMLDivElement>(null);
+  const systemdRef = React.useRef<HTMLDivElement>(null);
+  const firewallRef = React.useRef<HTMLDivElement>(null);
+  const usersRef = React.useRef<HTMLDivElement>(null);
+  
+  // Track current section index for each tab
+  const [currentBaseImageSection, setCurrentBaseImageSection] = React.useState<number>(0);
+  const [currentAdvancedSection, setCurrentAdvancedSection] = React.useState<number>(0);
+
   const [registrationMethod, setRegistrationMethod] = React.useState<string>('auto');
   const [selectedActivationKey, setSelectedActivationKey] = React.useState<string>('my-default-key');
   const [isActivationKeyOpen, setIsActivationKeyOpen] = React.useState<boolean>(false);
@@ -980,21 +1000,117 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const handleTabClick = (event: React.MouseEvent | React.KeyboardEvent, tabIndex: string | number) => {
     setActiveTabKey(tabIndex);
     
-    // Scroll to top when navigating to Review tab to ensure users see the cloud expiration alert
-    if (tabIndex === 3 && contentAreaRef.current) {
+    // Reset section indexes when switching tabs
+    setCurrentBaseImageSection(0);
+    setCurrentAdvancedSection(0);
+    
+    // Always scroll to top when changing tabs
+    if (contentAreaRef.current) {
       contentAreaRef.current.scrollTop = 0;
     }
   };
 
   const handleNext = () => {
-    if (typeof activeTabKey === 'number' && activeTabKey < 4) {
+    if (typeof activeTabKey === 'number' && activeTabKey < 3) {
       setActiveTabKey(activeTabKey + 1);
+      // Reset section indexes when advancing to next tab
+      setCurrentBaseImageSection(0);
+      setCurrentAdvancedSection(0);
+      // Scroll to top when changing tabs
+      if (contentAreaRef.current) {
+        contentAreaRef.current.scrollTop = 0;
+      }
     }
   };
 
   const handleBack = () => {
     if (typeof activeTabKey === 'number' && activeTabKey > 0) {
       setActiveTabKey(activeTabKey - 1);
+      // Scroll to top when changing tabs
+      if (contentAreaRef.current) {
+        contentAreaRef.current.scrollTop = 0;
+      }
+    }
+  };
+
+  const handleNextSection = () => {
+    if (typeof activeTabKey === 'number') {
+      switch (activeTabKey) {
+        case 0:
+          // Base image tab: cycle through sections (starting from Image Details)
+          const baseImageSections = [
+            imageOutputRef,
+            enableRepeatableRef, 
+            kickstartRef,
+            complianceRef
+          ];
+          
+          if (currentBaseImageSection < baseImageSections.length) {
+            // Move to next section within Base Image tab
+            const targetRef = baseImageSections[currentBaseImageSection];
+            setCurrentBaseImageSection(currentBaseImageSection + 1);
+            
+            if (targetRef.current && contentAreaRef.current) {
+              const element = targetRef.current;
+              const container = contentAreaRef.current;
+              const containerRect = container.getBoundingClientRect();
+              const elementRect = element.getBoundingClientRect();
+              const scrollTop = container.scrollTop + elementRect.top - containerRect.top - 20;
+              
+              container.scrollTo({
+                top: scrollTop,
+                behavior: 'smooth'
+              });
+            }
+          } else {
+            // All sections visited, go to next tab
+            setCurrentBaseImageSection(0);
+            handleNext();
+          }
+          break;
+        case 1:
+          // Repositories and packages tab: go to next tab (Advanced settings)
+          handleNext();
+          break;
+        case 2:
+          // Advanced settings tab: cycle through sections
+          const advancedSections = [
+            timezoneRef,
+            localeRef,
+            hostnameRef,
+            kernelRef,
+            systemdRef,
+            firewallRef,
+            usersRef
+          ];
+          
+          if (currentAdvancedSection < advancedSections.length) {
+            // Move to next section within Advanced Settings tab
+            const targetRef = advancedSections[currentAdvancedSection];
+            setCurrentAdvancedSection(currentAdvancedSection + 1);
+            
+            if (targetRef.current && contentAreaRef.current) {
+              const element = targetRef.current;
+              const container = contentAreaRef.current;
+              const containerRect = container.getBoundingClientRect();
+              const elementRect = element.getBoundingClientRect();
+              const scrollTop = container.scrollTop + elementRect.top - containerRect.top - 20;
+              
+              container.scrollTo({
+                top: scrollTop,
+                behavior: 'smooth'
+              });
+            }
+          } else {
+            // All sections visited, go to review
+            setCurrentAdvancedSection(0);
+            handleNext();
+          }
+          break;
+        case 3:
+          // Review tab: no next section
+          break;
+      }
     }
   };
 
@@ -1086,6 +1202,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 </Popover>
               </div>
               <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                Image Builder provides and defaults to a no-cost activation key if none exist.{' '}
                 <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
                   <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
                   Manage Activation keys
@@ -1178,11 +1295,13 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               </div>
               
               {/* Divider between Image details and Image output */}
-              <div style={{ 
-                height: '1px', 
-                backgroundColor: '#d2d2d2', 
-                margin: '0px 0 0px 0' 
-              }} />
+              <div 
+                ref={imageOutputRef}
+                style={{ 
+                  height: '1px', 
+                  backgroundColor: '#d2d2d2', 
+                  margin: '0px 0 0px 0' 
+                }} />
 
               {/* Image Output Section */}
               <div style={{ marginBottom: '2rem' }}>
@@ -1633,11 +1752,13 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 </FormGroup>
 
                 {/* Divider before Enable repeatable build */}
-                <div style={{ 
-                  height: '1px', 
-                  backgroundColor: '#d2d2d2', 
-                  margin: '2rem 0' 
-                }} />
+                <div 
+                  ref={enableRepeatableRef}
+                  style={{ 
+                    height: '1px', 
+                    backgroundColor: '#d2d2d2', 
+                    margin: '2rem 0' 
+                  }} />
                 
                 {/* Enable repeatable build Section */}
                 <div style={{ marginBottom: '2rem' }}>
@@ -1713,11 +1834,13 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 {/* Kickstart File Section */}
                 <div style={{ marginBottom: '2rem' }}>
                   {/* Divider between sections */}
-                  <div style={{ 
-                    height: '1px', 
-                    backgroundColor: '#d2d2d2', 
-                    margin: '0rem 0 2rem 0' 
-                  }} />
+                  <div 
+                    ref={kickstartRef}
+                    style={{ 
+                      height: '1px', 
+                      backgroundColor: '#d2d2d2', 
+                      margin: '0rem 0 2rem 0' 
+                    }} />
                   
                   <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-xs">
                     Kickstart File
@@ -1752,11 +1875,13 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 {/* Compliance Section */}
                 <div style={{ marginBottom: '2rem' }}>
                   {/* Divider after Kickstart File section */}
-                  <div style={{ 
-                    height: '1px', 
-                    backgroundColor: '#d2d2d2', 
-                    margin: '0rem 0 2rem 0' 
-                  }} />
+                  <div 
+                    ref={complianceRef}
+                    style={{ 
+                      height: '1px', 
+                      backgroundColor: '#d2d2d2', 
+                      margin: '0rem 0 2rem 0' 
+                    }} />
                   
                   <Title headingLevel="h3" size="lg" style={{ marginBottom: '0rem' }}>
                     Compliance
@@ -2427,7 +2552,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Timezone Section */}
-              <div style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
+              <div ref={timezoneRef} style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
                 <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                   Timezone
                 </Title>
@@ -2496,7 +2621,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Locale Section */}
-              <div style={{ marginBottom: '0rem' }}>
+              <div ref={localeRef} style={{ marginBottom: '0rem' }}>
                 <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                   Locale
                 </Title>
@@ -2659,7 +2784,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Hostname Section */}
-              <div style={{ marginBottom: '1rem' }}>
+              <div ref={hostnameRef} style={{ marginBottom: '1rem' }}>
                 <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                   Hostname
                 </Title>
@@ -2686,7 +2811,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Kernel Section */}
-              <div style={{ marginBottom: '0rem' }}>
+              <div ref={kernelRef} style={{ marginBottom: '0rem' }}>
                 <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                   Kernel
                 </Title>
@@ -2757,7 +2882,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Systemd Services Section */}
-              <div style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
+              <div ref={systemdRef} style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
                 <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                   Systemd services
                 </Title>
@@ -2822,7 +2947,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Firewall Section */}
-              <div style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
+              <div ref={firewallRef} style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
                 <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                   Firewall
                 </Title>
@@ -2919,7 +3044,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Users Section */}
-              <div style={{ marginBottom: '1rem' }}>
+              <div ref={usersRef} style={{ marginBottom: '1rem' }}>
                 <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                   Users
                 </Title>
@@ -3399,9 +3524,21 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             </Button>
             {activeTabKey !== 3 && (
               <Button
+                variant="secondary"
+                onClick={handleNextSection}
+                isDisabled={isLoading}
+              >
+                Next
+              </Button>
+            )}
+            {activeTabKey !== 3 && (
+              <Button
                 variant="primary"
                 onClick={() => {
                   setActiveTabKey(3);
+                  // Reset section indexes when jumping to Review tab
+                  setCurrentBaseImageSection(0);
+                  setCurrentAdvancedSection(0);
                   // Scroll to top when navigating to Review tab to ensure users see the cloud expiration alert
                   if (contentAreaRef.current) {
                     contentAreaRef.current.scrollTop = 0;
@@ -3412,14 +3549,16 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 Review image
               </Button>
             )}
-            <Button
-              variant="primary"
-              onClick={handleConfirm}
-              isLoading={isLoading}
-              isDisabled={isLoading}
-            >
-              {isLoading ? 'Building...' : 'Build image'}
-            </Button>
+            {activeTabKey === 3 && (
+              <Button
+                variant="primary"
+                onClick={handleConfirm}
+                isLoading={isLoading}
+                isDisabled={isLoading}
+              >
+                {isLoading ? 'Building...' : 'Build image'}
+              </Button>
+            )}
           </div>
         </div>
       </div>
