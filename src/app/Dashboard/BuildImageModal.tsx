@@ -577,6 +577,48 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     );
   };
 
+  // User management functions
+  const addUser = () => {
+    const newUser: UserRow = {
+      id: Date.now().toString(),
+      isAdministrator: false,
+      username: '',
+      password: '',
+      sshKey: '',
+      groups: [],
+      isEditing: false
+    };
+    setUsers([...users, newUser]);
+  };
+
+  const removeUser = (id: string) => {
+    setUsers(users.filter(user => user.id !== id));
+  };
+
+  const updateUser = (id: string, field: keyof UserRow, value: any) => {
+    setUsers(users.map(user => 
+      user.id === id ? { ...user, [field]: value } : user
+    ));
+  };
+
+  const addGroupToUser = (userId: string, groupName: string) => {
+    if (groupName.trim()) {
+      setUsers(users.map(user => 
+        user.id === userId 
+          ? { ...user, groups: [...user.groups, groupName.trim()] }
+          : user
+      ));
+    }
+  };
+
+  const removeGroupFromUser = (userId: string, groupName: string) => {
+    setUsers(users.map(user => 
+      user.id === userId 
+        ? { ...user, groups: user.groups.filter(g => g !== groupName) }
+        : user
+    ));
+  };
+
   const onActivationKeySelect = (
     _event: React.MouseEvent<Element, MouseEvent> | undefined,
     selection: string | number | undefined
@@ -3057,12 +3099,112 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   Create user accounts for systems that will use this image.
                 </p>
 
-                {/* User management table would go here - simplified for now */}
-                <div style={{ border: '1px solid #d2d2d2', borderRadius: '4px', padding: '1rem' }}>
-                  <p style={{ fontSize: '14px', color: '#666' }}>
-                    User management interface - add users, set passwords, configure SSH keys, assign groups
-                  </p>
+                {/* User management table */}
+                <div style={{ border: '1px solid #d2d2d2', borderRadius: '4px', overflow: 'hidden' }}>
+                  {/* Table header */}
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: '100px 1fr 1fr 1fr 1fr 40px', 
+                    gap: '1rem',
+                    padding: '12px 16px',
+                    backgroundColor: '#f5f5f5',
+                    borderBottom: '1px solid #d2d2d2',
+                    fontWeight: 'bold',
+                    fontSize: '14px'
+                  }}>
+                    <div>Administrator</div>
+                    <div>Username</div>
+                    <div>Password</div>
+                    <div>SSH key</div>
+                    <div>Groups</div>
+                    <div></div>
+                  </div>
+                  
+                  {/* Table rows */}
+                  {users.map((user) => (
+                    <div key={user.id} style={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: '100px 1fr 1fr 1fr 1fr 40px', 
+                      gap: '1rem',
+                      padding: '12px 16px',
+                      borderBottom: users.indexOf(user) === users.length - 1 ? 'none' : '1px solid #d2d2d2',
+                      alignItems: 'center'
+                    }}>
+                      {/* Administrator checkbox */}
+                      <Checkbox
+                        id={`admin-${user.id}`}
+                        isChecked={user.isAdministrator}
+                        onChange={(event, checked) => updateUser(user.id, 'isAdministrator', checked)}
+                      />
+                      
+                      {/* Username */}
+                      <TextInput
+                        type="text"
+                        value={user.username}
+                        onChange={(event, value) => updateUser(user.id, 'username', value)}
+                        placeholder="Username"
+                        style={{ fontSize: '14px' }}
+                      />
+                      
+                      {/* Password */}
+                      <TextInput
+                        type="password"
+                        value={user.password}
+                        onChange={(event, value) => updateUser(user.id, 'password', value)}
+                        placeholder="Password"
+                        style={{ fontSize: '14px' }}
+                      />
+                      
+                      {/* SSH key */}
+                      <TextInput
+                        type="text"
+                        value={user.sshKey}
+                        onChange={(event, value) => updateUser(user.id, 'sshKey', value)}
+                        placeholder="SSH key"
+                        style={{ fontSize: '14px' }}
+                      />
+                      
+                      {/* Groups */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', alignItems: 'center' }}>
+                        {user.groups.map((group) => (
+                          <Label key={group} onClose={() => removeGroupFromUser(user.id, group)} closeBtnAriaLabel={`Remove ${group}`}>
+                            {group}
+                          </Label>
+                        ))}
+                        <Button
+                          variant="link"
+                          onClick={() => {
+                            const group = prompt('Enter group name:');
+                            if (group) addGroupToUser(user.id, group);
+                          }}
+                          style={{ padding: '2px 8px', fontSize: '12px' }}
+                        >
+                          Add group
+                        </Button>
+                      </div>
+                      
+                      {/* Remove button */}
+                      <Button
+                        variant="plain"
+                        onClick={() => removeUser(user.id)}
+                        isDisabled={users.length === 1}
+                        style={{ minWidth: 'auto', padding: '4px' }}
+                      >
+                        <MinusCircleIcon />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
+                
+                {/* Add user button */}
+                <Button
+                  variant="secondary"
+                  onClick={addUser}
+                  style={{ marginTop: '1rem' }}
+                  icon={<PlusIcon />}
+                >
+                  Add another user
+                </Button>
               </div>
             </Form>
           </div>
