@@ -1,20 +1,20 @@
 import * as React from 'react';
 import {
   Button,
-  Modal,
-  ModalVariant,
-  Title,
   Card,
   CardBody,
-  Grid,
-  GridItem,
+  ClipboardCopy,
+  Divider,
   Flex,
   FlexItem,
-  Divider,
+  Grid,
+  GridItem,
+  Modal,
+  ModalVariant,
   Popover,
-  ClipboardCopy,
+  Title,
 } from '@patternfly/react-core';
-import { BuilderImageIcon, InfoCircleIcon, NetworkIcon, VirtualMachineIcon, OptimizeIcon } from '@patternfly/react-icons';
+import { BuilderImageIcon, InfoCircleIcon, NetworkIcon, OptimizeIcon, VirtualMachineIcon } from '@patternfly/react-icons';
 
 interface UseBaseImageModalProps {
   isOpen: boolean;

@@ -1,7 +1,10 @@
 import * as React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
+  Badge,
   Button,
+  Flex,
+  FlexItem,
   Masthead,
   MastheadBrand,
   MastheadLogo,
@@ -15,9 +18,6 @@ import {
   PageSidebar,
   PageSidebarBody,
   SkipToContent,
-  Badge,
-  Flex,
-  FlexItem,
 } from '@patternfly/react-core';
 import { IAppRoute, IAppRouteGroup, routes } from '@app/routes';
 import { BarsIcon } from '@patternfly/react-icons';
