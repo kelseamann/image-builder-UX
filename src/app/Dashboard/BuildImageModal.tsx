@@ -233,6 +233,41 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const [specialtyKeyboard, setSpecialtyKeyboard] = React.useState<string>('');
   const [isSpecialtyKeyboardOpen, setIsSpecialtyKeyboardOpen] = React.useState<boolean>(false);
 
+  // User management helper functions
+  const addUser = () => {
+    const newUser: UserRow = {
+      id: Date.now().toString(),
+      isAdministrator: false,
+      username: '',
+      password: '',
+      sshKey: '',
+      groups: [],
+      isEditing: false
+    };
+    setUsers(prev => [...prev, newUser]);
+  };
+
+  const removeUser = (userId: string) => {
+    setUsers(prev => prev.filter(user => user.id !== userId));
+  };
+
+  const updateUser = (userId: string, field: keyof UserRow, value: any) => {
+    setUsers(prev => prev.map(user => 
+      user.id === userId ? { ...user, [field]: value } : user
+    ));
+  };
+
+  const addGroupToUser = (userId: string, group: string) => {
+    if (!group.trim()) return;
+    updateUser(userId, 'groups', [...(users.find(u => u.id === userId)?.groups || []), group.trim()]);
+  };
+
+  const removeGroupFromUser = (userId: string, groupToRemove: string) => {
+    const user = users.find(u => u.id === userId);
+    if (user) {
+      updateUser(userId, 'groups', user.groups.filter(g => g !== groupToRemove));
+    }
+  };
 
   
   // Track what the user has modified to detect migration-only changes
@@ -1159,6 +1194,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const isFirstTab = activeTabKey === 0;
   const isLastTab = activeTabKey === 3;
 
+
   const renderChangeableContent = () => {
     switch (registrationMethod) {
       case 'auto':
@@ -1288,6 +1324,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     }
   };
 
+
   const renderTabContent = () => {
     switch (activeTabKey) {
       case 0:
@@ -1323,7 +1360,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 </FormGroup>
 
                 <FormGroup
-                  label="Details"
+                  label="Description"
                   fieldId="image-details"
                   style={{ marginTop: '12px', marginBottom: '1rem' }}
                 >
@@ -1337,19 +1374,20 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               </div>
               
               {/* Divider between Image details and Image output */}
-              <div 
-                ref={imageOutputRef}
-                style={{ 
-                  height: '1px', 
-                  backgroundColor: '#d2d2d2', 
-                  margin: '0px 0 0px 0' 
-                }} />
+
+              <div style={{ 
+                height: '1px', 
+                backgroundColor: '#d2d2d2', 
+                margin: '0 0 1rem 0' 
+              }} />
 
               {/* Image Output Section */}
               <div style={{ marginBottom: '2rem' }}>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
                   Image output
                 </Title>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                  This is filler text for now.                  </Content>
                 
                 <FormGroup
                   label="Release"
@@ -1804,344 +1842,349 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 
                 {/* Enable repeatable build Section */}
                 <div style={{ marginBottom: '2rem' }}>
-                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
-                    Enable repeatable build
-                  </Title>
-                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
-                    Create images that can be reproduced consistently with the same package versions and configurations.
-                  </Content>
-                
-                  <FormGroup
-                    label="Snapshot date"
-                    fieldId="snapshot-date"
-                  >
-                    <Split hasGutter>
-                      <SplitItem>
-                        <DatePicker
-                          id="snapshot-date"
-                          value={snapshotDate}
-                          onChange={(_event, value) => setSnapshotDate(value)}
-                          placeholder="MM-DD-YYYY"
+                    <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                      Enable repeatable build
+                    </Title>
+                    <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                      Create images that can be reproduced consistently with the same package versions and configurations.
+                    </Content>
+                  
+                    <FormGroup
+                      label="Snapshot date"
+                      fieldId="snapshot-date"
+                    >
+                      <Split hasGutter>
+                        <SplitItem>
+                          <DatePicker
+                            id="snapshot-date"
+                            value={snapshotDate}
+                            onChange={(_event, value) => setSnapshotDate(value)}
+                            placeholder="MM-DD-YYYY"
                           popoverProps={{ position: "bottom" }}
-                          dateFormat={(date: Date) => {
-                            const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                            const day = date.getDate().toString().padStart(2, '0');
-                            const year = date.getFullYear();
-                            return `${month}-${day}-${year}`;
-                          }}
-                          dateParse={(value: string) => {
-                            const parts = value.split('-');
-                            if (parts.length === 3) {
-                              const month = parseInt(parts[0], 10) - 1;
-                              const day = parseInt(parts[1], 10);
-                              const year = parseInt(parts[2], 10);
-                              return new Date(year, month, day);
-                            }
-                            return new Date(NaN);
-                          }}
-                          className="pf-v6-u-width-200px"
-                        />
-                      </SplitItem>
-                      <SplitItem>
-                        <Button
-                          variant="secondary"
-                          onClick={() => {
-                            const today = new Date();
-                            const month = (today.getMonth() + 1).toString().padStart(2, '0');
-                            const day = today.getDate().toString().padStart(2, '0');
-                            const year = today.getFullYear();
-                            setSnapshotDate(`${month}-${day}-${year}`);
-                          }}
-                          className="pf-v6-u-font-size-sm"
-                        >
-                          Today's date
-                        </Button>
-                      </SplitItem>
-                      <SplitItem>
-                        <Button
-                          variant="secondary"
-                          onClick={() => setSnapshotDate('')}
-                          className="pf-v6-u-font-size-sm"
-                        >
-                          Clear date
-                        </Button>
-                      </SplitItem>
-                    </Split>
-                    <div style={{ marginTop: '0.5rem', marginBottom: '1rem' ,fontSize: '0.875rem', color: '#666' }}>
-                      Use packages from this date to ensure reproducible builds
-                    </div>
-                  </FormGroup>
+                            dateFormat={(date: Date) => {
+                              const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                              const day = date.getDate().toString().padStart(2, '0');
+                              const year = date.getFullYear();
+                              return `${month}-${day}-${year}`;
+                            }}
+                            dateParse={(value: string) => {
+                              const parts = value.split('-');
+                              if (parts.length === 3) {
+                                const month = parseInt(parts[0], 10) - 1;
+                                const day = parseInt(parts[1], 10);
+                                const year = parseInt(parts[2], 10);
+                                return new Date(year, month, day);
+                              }
+                              return new Date(NaN);
+                            }}
+                            className="pf-v6-u-width-200px"
+                          />
+                        </SplitItem>
+                        <SplitItem>
+                          <Button
+                            variant="secondary"
+                            onClick={() => {
+                              const today = new Date();
+                              const month = (today.getMonth() + 1).toString().padStart(2, '0');
+                              const day = today.getDate().toString().padStart(2, '0');
+                              const year = today.getFullYear();
+                              setSnapshotDate(`${month}-${day}-${year}`);
+                            }}
+                            className="pf-v6-u-font-size-sm"
+                          >
+                            Today's date
+                          </Button>
+                        </SplitItem>
+                        <SplitItem>
+                          <Button
+                            variant="secondary"
+                            onClick={() => setSnapshotDate('')}
+                            className="pf-v6-u-font-size-sm"
+                          >
+                            Clear date
+                          </Button>
+                        </SplitItem>
+                      </Split>
+                      <div style={{ marginTop: '0.5rem', marginBottom: '1rem' ,fontSize: '0.875rem', color: '#666' }}>
+                      Use packages from this date to ensure reproducible builds.
+                      </div>
+                    </FormGroup>
                 </div>
-                
+                  
                 {/* Kickstart File Section */}
                 <div style={{ marginBottom: '2rem' }}>
-                  {/* Divider between sections */}
-                  <div 
-                    ref={kickstartRef}
-                    style={{ 
+
+                    {/* Divider between sections */}
+                    <div style={{ 
                       height: '1px', 
                       backgroundColor: '#d2d2d2', 
                       margin: '0rem 0 2rem 0' 
                     }} />
-                  
-                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-xs">
-                    Kickstart File
-                  </Title>
-                  
-                  <div style={{
-                    '--pf-v5-c-file-upload__file-details-textarea--FontFamily': '"Red Hat Mono", "Monaco", "Menlo", "Ubuntu Mono", monospace'
-                  } as React.CSSProperties}>
-                    <FileUpload
-                      id="kickstart-file"
-                      type="text" 
-                      value={kickstartFile || 'Manually enter the kickstart CSV data here.'} style={{color: 'blue' }}
-                      filename={kickstartFilename}
-                      onTextChange={(event: React.ChangeEvent<HTMLTextAreaElement>, text: string) => {
-                        setKickstartFile(text);
-                        setKickstartFilename('');
-                      }}
-                      onClearClick={() => {
-                        setKickstartFile('');
-                        setKickstartFilename('');
-                      }}
-                      isLoading={isKickstartLoading}
-                      browseButtonText="Upload"
-                      clearButtonText="Clear"
-                    />
-                    <div className="pf-v6-u-font-size-sm pf-v6-u-color-200 pf-v6-u-mt-xs">
-                      Upload a CSV file
-                    </div>
-                  </div>
-                </div>
 
+                    
+              <div style={{ marginBottom: '1rem' }}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                      Kickstart File
+                    </Title>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                  This is filler text for now.  
+                  </Content>
+
+                  </div>
+                    
+                    <div style={{
+                      '--pf-v5-c-file-upload__file-details-textarea--FontFamily': '"Red Hat Mono", "Monaco", "Menlo", "Ubuntu Mono", monospace'
+                    } as React.CSSProperties}>
+                      <FileUpload
+                        id="kickstart-file"
+                        type="text"
+                      value={kickstartFile || 'Manually enter the kickstart CSV data here.'} 
+                      style={{color: '#000000' }}
+                        filename={kickstartFilename}
+                        onTextChange={(event: React.ChangeEvent<HTMLTextAreaElement>, text: string) => {
+                          setKickstartFile(text);
+                          setKickstartFilename('');
+                        }}
+                        onClearClick={() => {
+                          setKickstartFile('');
+                          setKickstartFilename('');
+                        }}
+                        isLoading={isKickstartLoading}
+                        browseButtonText="Upload"
+                        clearButtonText="Clear"
+                      />
+                      <div className="pf-v6-u-font-size-sm pf-v6-u-color-200 pf-v6-u-mt-xs">
+                        Upload a CSV file
+                    </div>
+                      </div>
+                    </div>
+                    
                 {/* Compliance Section */}
                 <div style={{ marginBottom: '2rem' }}>
-                  {/* Divider after Kickstart File section */}
-                  <div 
-                    ref={complianceRef}
-                    style={{ 
+
+                    {/* Divider after Kickstart File section */}
+                    <div style={{ 
                       height: '1px', 
                       backgroundColor: '#d2d2d2', 
-                      margin: '0rem 0 2rem 0' 
+                    margin: '0rem 0 2rem 0' 
                     }} />
-                  
-                  <Title headingLevel="h3" size="lg" style={{ marginBottom: '0rem' }}>
-                    Compliance
-                  </Title>
-                  <p style={{ 
-                    fontSize: '14px', 
-                    lineHeight: '1.5',
-                    marginBottom: '1.5rem', marginTop: '1rem',
-                    color: '#666'
-                  }}>
-                    Below you can select which Insights compliance policy or OpenSCAP profile your image will be compliant to. Insights compliance allows the use of tailored policies, whereas OpenSCAP gives you the default versions. This will automatically help monitor the adherence of your registered RHEL systems to a selected policy or profile.
-                  </p>
 
-                  {/* Custom Compliance Policy */}
-                  <FormGroup
-                    style={{ marginBottom: '1.5rem' }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                      <Radio
-                        isChecked={complianceType === 'custom'}
-                        name="compliance-type"
-                        onChange={() => setComplianceType('custom')}
-                        label=""
-                        id="compliance-custom"
-                      />
-                      <label htmlFor="compliance-custom" style={{ fontWeight: 600, fontSize: '14px' }}>
-                        Use a custom Compliance policy
-                      </label>
-                    </div>
-                    
-                    <div style={{ marginLeft: '1.75rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Select
-                          id="custom-compliance-policy-select"
-                          isOpen={isCustomCompliancePolicyOpen}
-                          selected={customCompliancePolicy}
-                          onSelect={onCustomCompliancePolicySelect}
-                          onOpenChange={(isOpen) => setIsCustomCompliancePolicyOpen(isOpen)}
-                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                            <MenuToggle 
-                              ref={toggleRef} 
-                              onClick={() => setIsCustomCompliancePolicyOpen(!isCustomCompliancePolicyOpen)}
-                              isExpanded={isCustomCompliancePolicyOpen}
-                              style={{ width: '400px' }}
-                            >
-                              {customCompliancePolicy || 'Select a compliance policy'}
-                            </MenuToggle>
-                          )}
-                        >
-                          <SelectList>
-                            {customCompliancePolicyOptions.map((policy) => (
-                              <SelectOption key={policy} value={policy}>
-                                {policy}
-                              </SelectOption>
-                            ))}
-                          </SelectList>
-                        </Select>
-                        
-                        {complianceType === 'custom' && (
-                          <Popover
-                            aria-label="Custom compliance policy details"
-                            position={PopoverPosition.right}
-                            bodyContent={
-                              <div style={{ minWidth: '300px' }}>
-                                <div style={{ marginBottom: '1rem' }}>
-                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Policy type</div>
-                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                    {customCompliancePolicy ? 'Custom Insights Compliance Policy' : 'No policy selected'}
-                                  </div>
-                                </div>
-                                
-                                <div style={{ marginBottom: '1rem' }}>
-                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Policy description</div>
-                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                    {customCompliancePolicy 
-                                      ? 'This policy provides comprehensive security controls and compliance requirements tailored for enterprise environments.'
-                                      : 'Select a policy to view description'
-                                    }
-                                  </div>
-                                </div>
-                                
-                                <div style={{ marginBottom: '1rem' }}>
-                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Compliance score</div>
-                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                    {customCompliancePolicy ? '85% compliant' : 'N/A'}
-                                  </div>
-                                </div>
-                                
-                                <div>
-                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Business objective</div>
-                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                    {customCompliancePolicy 
-                                      ? 'Maintain security standards and regulatory compliance for critical business systems.'
-                                      : 'Select a policy to view objective'
-                                    }
-                                  </div>
-                                </div>
-                              </div>
-                            }
-                          >
-                            <Button variant="secondary" icon={<InfoCircleIcon />}>
-                              View details
-                            </Button>
-                          </Popover>
-                        )}
+
+                  <div style={{ marginBottom: '2rem' }}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                      Compliance
+                    </Title>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                      Below you can select which Insights compliance policy or OpenSCAP profile your image will be compliant to. Insights compliance allows the use of tailored policies, whereas OpenSCAP gives you the default versions. This will automatically help monitor the adherence of your registered RHEL systems to a selected policy or profile.
+                    This is filler text for now.  
+                  </Content>
+                  </div>
+
+                    {/* Custom Compliance Policy */}
+                    <FormGroup
+                      style={{ marginBottom: '1.5rem' }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                        <Radio
+                          isChecked={complianceType === 'custom'}
+                          name="compliance-type"
+                          onChange={() => setComplianceType('custom')}
+                          label=""
+                          id="compliance-custom"
+                        />
+                        <label htmlFor="compliance-custom" style={{ fontWeight: 600, fontSize: '14px' }}>
+                          Use a custom Compliance policy
+                        </label>
                       </div>
                       
-                      <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
-                        <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
-                          <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
-                          Manage with Insights Compliance
-                        </a>
-                      </div>
-                    </div>
-                  </FormGroup>
-
-                  {/* OpenSCAP Profile */}
-                  <FormGroup
-                    style={{ marginBottom: '1.5rem' }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                      <Radio
-                        isChecked={complianceType === 'openscap'}
-                        name="compliance-type"
-                        onChange={() => setComplianceType('openscap')}
-                        label=""
-                        id="compliance-openscap"
-                      />
-                      <label htmlFor="compliance-openscap" style={{ fontWeight: 600, fontSize: '14px' }}>
-                        Use a default OpenSCAP profile
-                      </label>
-                    </div>
-                    
-                    <div style={{ marginLeft: '1.75rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Select
-                          id="openscap-profile-select"
-                          isOpen={isOpenscapProfileOpen}
-                          selected={openscapProfile}
-                          onSelect={onOpenscapProfileSelect}
-                          onOpenChange={(isOpen) => setIsOpenscapProfileOpen(isOpen)}
-                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                            <MenuToggle 
-                              ref={toggleRef} 
-                              onClick={() => setIsOpenscapProfileOpen(!isOpenscapProfileOpen)}
-                              isExpanded={isOpenscapProfileOpen}
-                              style={{ width: '400px' }}
-                            >
-                              {openscapProfile || 'Select an OpenSCAP profile'}
-                            </MenuToggle>
-                          )}
-                        >
-                          <SelectList>
-                            {openscapProfileOptions.map((profile) => (
-                              <SelectOption key={profile} value={profile}>
-                                {profile}
-                              </SelectOption>
-                            ))}
-                          </SelectList>
-                        </Select>
-                        
-                        {complianceType === 'openscap' && (
-                          <Popover
-                            aria-label="OpenSCAP profile details"
-                            position={PopoverPosition.right}
-                            bodyContent={
-                              <div style={{ minWidth: '300px' }}>
-                                <div style={{ marginBottom: '1rem' }}>
-                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Policy type</div>
-                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                    {openscapProfile ? 'Default OpenSCAP Security Profile' : 'No profile selected'}
-                                  </div>
-                                </div>
-                                
-                                <div style={{ marginBottom: '1rem' }}>
-                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Policy description</div>
-                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                    {openscapProfile 
-                                      ? 'Standard security configuration profile based on industry best practices and security benchmarks.'
-                                      : 'Select a profile to view description'
-                                    }
-                                  </div>
-                                </div>
-                                
-                                <div style={{ marginBottom: '1rem' }}>
-                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Compliance score</div>
-                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                    {openscapProfile ? '92% compliant' : 'N/A'}
-                                  </div>
-                                </div>
-                                
-                                <div>
-                                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Business objective</div>
-                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                    {openscapProfile 
-                                      ? 'Implement standardized security configurations to reduce vulnerabilities and ensure baseline protection.'
-                                      : 'Select a profile to view objective'
-                                    }
-                                  </div>
-                                </div>
-                              </div>
-                            }
+                      <div style={{ marginLeft: '1.75rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <Select
+                            id="custom-compliance-policy-select"
+                            isOpen={isCustomCompliancePolicyOpen}
+                            selected={customCompliancePolicy}
+                            onSelect={onCustomCompliancePolicySelect}
+                            onOpenChange={(isOpen) => setIsCustomCompliancePolicyOpen(isOpen)}
+                            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                              <MenuToggle 
+                                ref={toggleRef} 
+                                onClick={() => setIsCustomCompliancePolicyOpen(!isCustomCompliancePolicyOpen)}
+                                isExpanded={isCustomCompliancePolicyOpen}
+                                style={{ width: '400px' }}
+                              >
+                                {customCompliancePolicy || 'Select a compliance policy'}
+                              </MenuToggle>
+                            )}
                           >
-                            <Button variant="secondary" icon={<InfoCircleIcon />}>
-                              View details
-                            </Button>
-                          </Popover>
-                        )}
+                            <SelectList>
+                              {customCompliancePolicyOptions.map((policy) => (
+                                <SelectOption key={policy} value={policy}>
+                                  {policy}
+                                </SelectOption>
+                              ))}
+                            </SelectList>
+                          </Select>
+                          
+                          {complianceType === 'custom' && (
+                            <Popover
+                              aria-label="Custom compliance policy details"
+                              position={PopoverPosition.right}
+                              bodyContent={
+                                <div style={{ minWidth: '300px' }}>
+                                  <div style={{ marginBottom: '1rem' }}>
+                                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Policy type</div>
+                                    <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                      {customCompliancePolicy ? 'Custom Insights Compliance Policy' : 'No policy selected'}
+                                    </div>
+                                  </div>
+                                  
+                                  <div style={{ marginBottom: '1rem' }}>
+                                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Policy description</div>
+                                    <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                      {customCompliancePolicy 
+                                        ? 'This policy provides comprehensive security controls and compliance requirements tailored for enterprise environments.'
+                                        : 'Select a policy to view description'
+                                      }
+                                    </div>
+                                  </div>
+                                  
+                                  <div style={{ marginBottom: '1rem' }}>
+                                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Compliance score</div>
+                                    <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                      {customCompliancePolicy ? '85% compliant' : 'N/A'}
+                                    </div>
+                                  </div>
+                                  
+                                  <div>
+                                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Business objective</div>
+                                    <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                      {customCompliancePolicy 
+                                        ? 'Maintain security standards and regulatory compliance for critical business systems.'
+                                        : 'Select a policy to view objective'
+                                      }
+                                    </div>
+                                  </div>
+                                </div>
+                              }
+                            >
+                              <Button variant="secondary" icon={<InfoCircleIcon />}>
+                                View details
+                              </Button>
+                            </Popover>
+                          )}
+                        </div>
+                        
+                        <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                          <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
+                            <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
+                            Manage with Insights Compliance
+                          </a>
+                        </div>
+                      </div>
+                    </FormGroup>
+
+                    {/* OpenSCAP Profile */}
+                    <FormGroup
+                      style={{ marginBottom: '1.5rem' }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                        <Radio
+                          isChecked={complianceType === 'openscap'}
+                          name="compliance-type"
+                          onChange={() => setComplianceType('openscap')}
+                          label=""
+                          id="compliance-openscap"
+                        />
+                        <label htmlFor="compliance-openscap" style={{ fontWeight: 600, fontSize: '14px' }}>
+                          Use a default OpenSCAP profile
+                        </label>
                       </div>
                       
-                      <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
-                        <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
-                          <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
-                          Learn more about OpenSCAP profiles
-                        </a>
+                      <div style={{ marginLeft: '1.75rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <Select
+                            id="openscap-profile-select"
+                            isOpen={isOpenscapProfileOpen}
+                            selected={openscapProfile}
+                            onSelect={onOpenscapProfileSelect}
+                            onOpenChange={(isOpen) => setIsOpenscapProfileOpen(isOpen)}
+                            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                              <MenuToggle 
+                                ref={toggleRef} 
+                                onClick={() => setIsOpenscapProfileOpen(!isOpenscapProfileOpen)}
+                                isExpanded={isOpenscapProfileOpen}
+                                style={{ width: '400px' }}
+                              >
+                                {openscapProfile || 'Select an OpenSCAP profile'}
+                              </MenuToggle>
+                            )}
+                          >
+                            <SelectList>
+                              {openscapProfileOptions.map((profile) => (
+                                <SelectOption key={profile} value={profile}>
+                                  {profile}
+                                </SelectOption>
+                              ))}
+                            </SelectList>
+                          </Select>
+                          
+                          {complianceType === 'openscap' && (
+                            <Popover
+                              aria-label="OpenSCAP profile details"
+                              position={PopoverPosition.right}
+                              bodyContent={
+                                <div style={{ minWidth: '300px' }}>
+                                  <div style={{ marginBottom: '1rem' }}>
+                                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Policy type</div>
+                                    <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                      {openscapProfile ? 'Default OpenSCAP Security Profile' : 'No profile selected'}
+                                    </div>
+                                  </div>
+                                  
+                                  <div style={{ marginBottom: '1rem' }}>
+                                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Policy description</div>
+                                    <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                      {openscapProfile 
+                                        ? 'Standard security configuration profile based on industry best practices and security benchmarks.'
+                                        : 'Select a profile to view description'
+                                      }
+                                    </div>
+                                  </div>
+                                  
+                                  <div style={{ marginBottom: '1rem' }}>
+                                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Compliance score</div>
+                                    <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                      {openscapProfile ? '92% compliant' : 'N/A'}
+                                    </div>
+                                  </div>
+                                  
+                                  <div>
+                                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Business objective</div>
+                                    <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                      {openscapProfile 
+                                        ? 'Implement standardized security configurations to reduce vulnerabilities and ensure baseline protection.'
+                                        : 'Select a profile to view objective'
+                                      }
+                                    </div>
+                                  </div>
+                                </div>
+                              }
+                            >
+                              <Button variant="secondary" icon={<InfoCircleIcon />}>
+                                View details
+                              </Button>
+                            </Popover>
+                          )}
+                        </div>
+                        
+                        <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                          <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
+                            <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
+                            Learn more about OpenSCAP profiles
+                          </a>
+                        </div>
                       </div>
-                    </div>
-                  </FormGroup>
+                    </FormGroup>
                 </div>
               </div>
             </Form>
@@ -2159,37 +2202,38 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             
             <Form>
               {/* Extended Support Subscription */}
-              <FormGroup
-                label="Extended support subscription"
-                fieldId="extended-support"
+                <FormGroup
+                  label="Extended support subscription"
+                  fieldId="extended-support"
                 style={{ marginBottom: '2rem' }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <Radio
-                    isChecked={extendedSupport === 'none'}
-                    name="extended-support"
-                    onChange={() => setExtendedSupport('none')}
-                    label="None"
-                    id="extended-support-none"
-                  />
-                  <Radio
-                    isChecked={extendedSupport === 'eus'}
-                    name="extended-support"
-                    onChange={() => setExtendedSupport('eus')}
-                    label="Extended update support (EUS)"
-                    id="extended-support-eus"
-                  />
-                  <Radio
-                    isChecked={extendedSupport === 'eeus'}
-                    name="extended-support"
-                    onChange={() => setExtendedSupport('eeus')}
-                    label="Enhanced extended update support (EEUS)"
-                    id="extended-support-eeus"
-                  />
-                </div>
-              </FormGroup>
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <Radio
+                      isChecked={extendedSupport === 'none'}
+                      name="extended-support"
+                      onChange={() => setExtendedSupport('none')}
+                      label="None"
+                      id="extended-support-none"
+                    />
+                    <Radio
+                      isChecked={extendedSupport === 'eus'}
+                      name="extended-support"
+                      onChange={() => setExtendedSupport('eus')}
+                      label="Extended update support (EUS)"
+                      id="extended-support-eus"
+                    />
+                    <Radio
+                      isChecked={extendedSupport === 'eeus'}
+                      name="extended-support"
+                      onChange={() => setExtendedSupport('eeus')}
+                      label="Enhanced extended update support (EEUS)"
+                      id="extended-support-eeus"
+                    />
+                  </div>
+                </FormGroup>
 
               {/* Repository Rows - Grouped Layout */}
+
               <Stack hasGutter>
                 {repositoryRows.map((row, index) => (
                   <StackItem key={row.id}>
@@ -2379,6 +2423,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                                     }}
                                     onClick={() => removeRepositoryRow(row.id)}
                                   />
+                                      
                                 )}
                               </>
                             )}
@@ -2500,12 +2545,12 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
               {/* Add Repository Button */}
               <div style={{ marginTop: '1rem' }}>
-                <Button
+                      <Button
                   variant="secondary"
                   onClick={addRepositoryRow}
                 >
                   Add Repository
-                </Button>
+                      </Button>
               </div>
             </Form>
           </div>
@@ -2516,28 +2561,24 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             <Title headingLevel="h2" size="xl" style={{ marginBottom: '0rem' }}>
               Advanced Settings
             </Title>
-            <p style={{ fontSize: '16px', color: '#666', marginBottom: '2rem' }}>
+            <p style={{ fontSize: '16px', color: '#666', marginBottom: '1rem' }}>
               Configure advanced system settings including registration, timezone, locale, and security options.
             </p>
             <Form>
+              
               {/* Register Section */}
-              <div style={{ marginBottom: '0rem' }}>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+              <div style={{ marginBottom: '2rem', marginTop : '1rem'}}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
                   Register
                 </Title>
-                <p style={{ 
-                  fontSize: '14px', 
-                  lineHeight: '1.5',
-                  marginBottom: '1rem',
-                  color: '#666'
-                }}>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
                   Configure registration settings for systems that will use this image.
-                </p>
+                  </Content>
                 
                 <FormGroup
                   label="Organization ID"
                   fieldId="organization-id"
-                  style={{ marginBottom: '1rem' }}
+                  style={{ marginBottom: '2rem' }}
                 >
                   <ClipboardCopy 
                     isReadOnly 
@@ -2556,7 +2597,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 <FormGroup
                   label="Registration method"
                   fieldId="registration-method"
-                  style={{ marginBottom: '0rem' }}
+                  style={{ marginTop: '1rem', marginBottom: '1rem' }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <Radio
@@ -2582,9 +2623,128 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     />
                   </div>
                 </FormGroup>
+
+                {registrationMethod === 'auto' && (
+                  <FormGroup
+                    label="Activation key"
+                    fieldId="activation-key"
+                    style={{ marginBottom: '0rem' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Select
+                        id="activation-key-select"
+                        isOpen={isActivationKeyOpen}
+                        selected={selectedActivationKey}
+                        onSelect={onActivationKeySelect}
+                        onOpenChange={(isOpen) => setIsActivationKeyOpen(isOpen)}
+                        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                          <MenuToggle 
+                            ref={toggleRef} 
+                            onClick={() => setIsActivationKeyOpen(!isActivationKeyOpen)}
+                            isExpanded={isActivationKeyOpen}
+                            style={{ width: '300px' }}
+                          >
+                            {selectedActivationKey}
+                          </MenuToggle>
+                        )}
+                      >
+                        <SelectList>
+                          {activationKeys.map((key) => (
+                            <SelectOption key={key} value={key}>
+                              {key}
+                            </SelectOption>
+                          ))}
+                        </SelectList>
+                      </Select>
+                      
+                      <Popover
+                        aria-label="Activation key details"
+                        position={PopoverPosition.right}
+                        bodyContent={
+                          <div style={{ minWidth: '300px' }}>
+                            <div style={{ marginBottom: '1rem' }}>
+                              <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Key</div>
+                              <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                {selectedActivationKey}
+                              </div>
               </div>
 
-              {renderChangeableContent()}
+                            <div style={{ marginBottom: '1rem' }}>
+                              <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Environment</div>
+                              <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                Production
+                              </div>
+                            </div>
+                            
+                            <div style={{ marginBottom: '1rem' }}>
+                              <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Usage</div>
+                              <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                45/100 systems
+                              </div>
+                            </div>
+                            
+                            <div style={{ marginBottom: '1rem' }}>
+                              <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Auto-attach</div>
+                              <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                Enabled
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Content view</div>
+                              <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                RHEL-8-CV
+                              </div>
+                            </div>
+                          </div>
+                        }
+                      >
+                        <Button variant="secondary" icon={<InfoCircleIcon />}>
+                          View details
+                        </Button>
+                      </Popover>
+                    </div>
+                    <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                      <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
+                        <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
+                        Manage Activation keys
+                      </a>
+                    </div>
+                  </FormGroup>
+                )}
+
+                {registrationMethod === 'later' && (
+                  <div style={{ marginTop: '1rem' }}>
+                    <Alert
+                      variant="info"
+                      isInline
+                      title="Register with Red Hat Insights within 30 days"
+                    >
+                      <p style={{ marginBottom: '0.5rem' }}>
+                        If you don't register your systems within 30 days, you will not be able to use Red Hat Insights capabilities.
+                      </p>
+                      <p>
+                        <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
+                          <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
+                          Learn more about registration
+                        </a>
+                      </p>
+                    </Alert>
+                  </div>
+                )}
+
+                {registrationMethod === 'satellite' && (
+                  <div style={{ marginTop: '1rem' }}>
+                    <Alert
+                      variant="warning"
+                      isInline
+                      title="Work in Progress"
+                    >
+                      Satellite registration is currently being developed and will be available in a future release.
+                    </Alert>
+                  </div>
+                                )}
+                </div>
 
               {/* Divider */}
               <div style={{ 
@@ -2594,10 +2754,15 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Timezone Section */}
-              <div ref={timezoneRef} style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                  Timezone
-                </Title>
+
+              <div style={{ marginBottom: '2rem', marginTop : '1rem'}}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                    Timezone
+                  </Title>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                    Create images that can be reproduced consistently with the same package versions and configurations.
+                  </Content>
+
                 
                 <FormGroup
                   label="Timezone"
@@ -2652,6 +2817,39 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
                     Comma-separated list of NTP servers
                   </div>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    color: '#666'
+                  }}>
+                    <MinusIcon style={{ fontSize: '0.875rem' }} />
+                    <span>Additional kernel boot parameters to append</span>
+                  </div>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    color: '#666'
+                  }}>
+                    <MinusIcon style={{ fontSize: '0.875rem' }} />
+                    <span>Additional kernel boot parameters to append</span>
+                  </div>
+                      <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    color: '#666'
+                  }}>
+                    <MinusIcon style={{ fontSize: '0.875rem' }} />
+                    <span>Additional kernel boot parameters to append</span>
+                  </div>
                 </FormGroup>
               </div>
 
@@ -2659,14 +2857,18 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               <div style={{ 
                 height: '1px', 
                 backgroundColor: '#d2d2d2', 
-                margin: '0rem 0 1.5rem 0' 
+                margin: '0rem 0 1rem 0' 
               }} />
 
               {/* Locale Section */}
-              <div ref={localeRef} style={{ marginBottom: '0rem' }}>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                  Locale
-                </Title>
+
+              <div style={{ marginBottom: '2rem', marginTop : '0rem'}}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                    Locale
+                  </Title>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                  This is filler text for now.                  
+                  </Content>
                 
                 <FormGroup
                   label="Suggest keyboards from these languages"
@@ -2826,10 +3028,15 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Hostname Section */}
-              <div ref={hostnameRef} style={{ marginBottom: '1rem' }}>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                  Hostname
-                </Title>
+
+              <div style={{ marginBottom: '2rem', marginTop : '0rem'}}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                    Hostname
+                  </Title>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                  This is filler text for now.                  
+                  </Content>
+
                 
                 <FormGroup
                   label="Hostname"
@@ -2842,6 +3049,39 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     onChange={(_event, value) => setHostname(value)}
                     placeholder="Enter hostname"
                   />
+                    <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    color: '#666'
+                  }}>
+                    <MinusIcon style={{ fontSize: '0.875rem' }} />
+                    <span>Additional kernel boot parameters to append</span>
+                  </div>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    color: '#666'
+                  }}>
+                    <MinusIcon style={{ fontSize: '0.875rem' }} />
+                    <span>Additional kernel boot parameters to append</span>
+                  </div>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    color: '#666'
+                  }}>
+                    <MinusIcon style={{ fontSize: '0.875rem' }} />
+                    <span>Additional kernel boot parameters to append</span>
+                  </div>
                 </FormGroup>
               </div>
 
@@ -2853,10 +3093,15 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Kernel Section */}
-              <div ref={kernelRef} style={{ marginBottom: '0rem' }}>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                  Kernel
-                </Title>
+
+              <div style={{ marginBottom: '2rem', marginTop : '0rem'}}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                    Kernel
+                  </Title>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                  This is filler text for now.                  
+                  </Content>
+
                 
                 <FormGroup
                   label="Kernel package"
@@ -2895,13 +3140,32 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   fieldId="kernel-append"
                   style={{ marginBottom: '0rem' }}
                 >
-                  <TextInput
-                    id="kernel-append"
-                    value={kernelAppend}
-                    onChange={(_event, value) => setKernelAppend(value)}
-                    placeholder="Enter kernel append options"
-                    style={{ width: '400px' }}
-                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <TextInput
+                      id="kernel-append"
+                      value={kernelAppend}
+                      onChange={(_event, value) => setKernelAppend(value)}
+                      placeholder="Enter kernel append options"
+                      style={{ width: '100%' }}
+                    />
+                    <Button
+                      variant="secondary"
+                      style={{ marginLeft: '0.5rem' }}
+                    >
+                      Add more
+                    </Button>
+                  </div>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    color: '#666'
+                  }}>
+                    <MinusIcon style={{ fontSize: '0.875rem' }} />
+                    <span>Additional kernel boot parameters to append</span>
+                  </div>
                   <div style={{ 
                     display: 'flex', 
                     alignItems: 'center', 
@@ -2924,10 +3188,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Systemd Services Section */}
-              <div ref={systemdRef} style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                  Systemd services
-                </Title>
+
+              <div style={{ marginBottom: '2rem', marginTop : '0rem'}}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                    Systemd services
+                  </Title>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                  This is filler text for now.                  
+                  </Content>
                 
                 <FormGroup
                   label="Disabled services"
@@ -2989,10 +3257,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Firewall Section */}
-              <div ref={firewallRef} style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                  Firewall
-                </Title>
+
+              <div style={{ marginBottom: '2rem', marginTop : '0rem'}}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                    Firewall
+                  </Title>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                  This is filler text for now.                  
+                  </Content>
                 
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', marginBottom: '1rem' }}>
                   <FormGroup
@@ -3013,6 +3285,28 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                         </div>
                       ))}
                     </div>
+                    <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    color: '#666'
+                  }}>
+                    <MinusIcon style={{ fontSize: '0.875rem' }} />
+                    <span>Additional kernel boot parameters to append</span>
+                  </div>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    color: '#666'
+                  }}>
+                    <MinusIcon style={{ fontSize: '0.875rem' }} />
+                    <span>Additional kernel boot parameters to append</span>
+                  </div>
                   </FormGroup>
 
                   <FormGroup
@@ -3086,18 +3380,15 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               }} />
 
               {/* Users Section */}
-              <div ref={usersRef} style={{ marginBottom: '1rem' }}>
-                <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
-                  Users
-                </Title>
-                <p style={{ 
-                  fontSize: '14px', 
-                  lineHeight: '1.5',
-                  marginBottom: '1rem',
-                  color: '#666'
-                }}>
-                  Create user accounts for systems that will use this image.
-                </p>
+
+              <div style={{ marginBottom: '2rem', marginTop : '0rem'}}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                    Users
+                  </Title>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                  Create user accounts for systems that will use this image.                  
+                  </Content>
+
 
                 {/* User management table */}
                 <div style={{ border: '1px solid #d2d2d2', borderRadius: '4px', overflow: 'hidden' }}>
@@ -3201,7 +3492,6 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   variant="secondary"
                   onClick={addUser}
                   style={{ marginTop: '1rem' }}
-                  icon={<PlusIcon />}
                 >
                   Add another user
                 </Button>
@@ -3641,12 +3931,12 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
         <div 
           ref={contentAreaRef}
           style={{ 
-            flex: 1,
-            minHeight: 0,
-            padding: '24px 24px 24px 32px',
-            overflowY: 'auto',
-            overflowX: 'hidden'
-          }}>
+          flex: 1,
+          minHeight: 0,
+          padding: '24px 24px 24px 32px',
+          overflowY: 'auto',
+          overflowX: 'hidden'
+        }}>
           {renderTabContent()}
         </div>
 
