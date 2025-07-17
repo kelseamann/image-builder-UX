@@ -160,7 +160,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const [kernelArguments, setKernelArguments] = React.useState<string[]>([]);
 
   // Public cloud state
-  const [selectedCloudProvider, setSelectedCloudProvider] = React.useState<string>('');
+  const [selectedCloudProvider, setSelectedCloudProvider] = React.useState<string[]>([]);
   
 
   
@@ -191,7 +191,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const [vmwareFormat, setVmwareFormat] = React.useState<string>('ova');
   
   // Other formats state
-  const [otherFormat, setOtherFormat] = React.useState<string>('');
+  const [otherFormat, setOtherFormat] = React.useState<string[]>([]);
   
   // Repeatable build state
   const [snapshotDate, setSnapshotDate] = React.useState<string>('');
@@ -284,10 +284,32 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
   // Helper function to handle cloud provider selection with tracking
   const handleCloudProviderSelect = (provider: string) => {
-    const newProvider = selectedCloudProvider === provider ? '' : provider;
-    setSelectedCloudProvider(newProvider);
+    setSelectedCloudProvider(prev => {
+      const isSelected = prev.includes(provider);
+      if (isSelected) {
+        // Remove provider if already selected
+        return prev.filter(p => p !== provider);
+      } else {
+        // Add provider if not selected
+        return [...prev, provider];
+      }
+    });
     // Track target environment change
     setModifiedFields(prev => new Set(prev.add('targetEnvironment')));
+  };
+
+  // Helper function to handle other format selection
+  const handleOtherFormatSelect = (format: string) => {
+    setOtherFormat(prev => {
+      const isSelected = prev.includes(format);
+      if (isSelected) {
+        // Remove format if already selected
+        return prev.filter(f => f !== format);
+      } else {
+        // Add format if not selected
+        return [...prev, format];
+      }
+    });
   };
 
 
@@ -1487,12 +1509,12 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   <Gallery hasGutter minWidths={{ default: '200px' }}>
                     <Card
                       isClickable
-                      isSelected={selectedCloudProvider === 'aws'}
+                      isSelected={selectedCloudProvider.includes('aws')}
                       onClick={() => handleCloudProviderSelect('aws')}
                       style={{ 
                         cursor: 'pointer',
-                        border: selectedCloudProvider === 'aws' ? '2px solid #0066cc' : '1px solid #d2d2d2',
-                        backgroundColor: selectedCloudProvider === 'aws' ? '#f0f8ff' : '#fff'
+                        border: selectedCloudProvider.includes('aws') ? '2px solid #0066cc' : '1px solid #d2d2d2',
+                        backgroundColor: selectedCloudProvider.includes('aws') ? '#f0f8ff' : '#fff'
                       }}
                     >
                       <CardBody style={{ textAlign: 'center', padding: '16px' }}>
@@ -1503,12 +1525,12 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     
                     <Card
                       isClickable
-                      isSelected={selectedCloudProvider === 'gcp'}
+                      isSelected={selectedCloudProvider.includes('gcp')}
                       onClick={() => handleCloudProviderSelect('gcp')}
                       style={{ 
                         cursor: 'pointer',
-                        border: selectedCloudProvider === 'gcp' ? '2px solid #0066cc' : '1px solid #d2d2d2',
-                        backgroundColor: selectedCloudProvider === 'gcp' ? '#f0f8ff' : '#fff'
+                        border: selectedCloudProvider.includes('gcp') ? '2px solid #0066cc' : '1px solid #d2d2d2',
+                        backgroundColor: selectedCloudProvider.includes('gcp') ? '#f0f8ff' : '#fff'
                       }}
                     >
                       <CardBody style={{ textAlign: 'center', padding: '16px' }}>
@@ -1519,12 +1541,12 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     
                     <Card
                       isClickable
-                      isSelected={selectedCloudProvider === 'azure'}
+                      isSelected={selectedCloudProvider.includes('azure')}
                       onClick={() => handleCloudProviderSelect('azure')}
                       style={{ 
                         cursor: 'pointer',
-                        border: selectedCloudProvider === 'azure' ? '2px solid #0066cc' : '1px solid #d2d2d2',
-                        backgroundColor: selectedCloudProvider === 'azure' ? '#f0f8ff' : '#fff'
+                        border: selectedCloudProvider.includes('azure') ? '2px solid #0066cc' : '1px solid #d2d2d2',
+                        backgroundColor: selectedCloudProvider.includes('azure') ? '#f0f8ff' : '#fff'
                       }}
                     >
                       <CardBody style={{ textAlign: 'center', padding: '16px' }}>
@@ -1536,12 +1558,12 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     <Tooltip content="No sign-in required for Oracle Cloud Infrastructure">
                       <Card
                         isClickable
-                        isSelected={selectedCloudProvider === 'oci'}
+                        isSelected={selectedCloudProvider.includes('oci')}
                         onClick={() => handleCloudProviderSelect('oci')}
                         style={{ 
                           cursor: 'pointer',
-                          border: selectedCloudProvider === 'oci' ? '2px solid #0066cc' : '1px solid #d2d2d2',
-                          backgroundColor: selectedCloudProvider === 'oci' ? '#f0f8ff' : '#fff'
+                          border: selectedCloudProvider.includes('oci') ? '2px solid #0066cc' : '1px solid #d2d2d2',
+                          backgroundColor: selectedCloudProvider.includes('oci') ? '#f0f8ff' : '#fff'
                         }}
                       >
                         <CardBody style={{ textAlign: 'center', padding: '16px' }}>
@@ -1554,7 +1576,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 </FormGroup>
 
                 {/* AWS Integration Section */}
-                {selectedCloudProvider === 'aws' && (
+                {selectedCloudProvider.includes('aws') && (
                   <div style={{ 
                     marginBottom: '1rem',
                     padding: '1.5rem',
@@ -1635,7 +1657,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 )}
 
                 {/* GCP Integration Section */}
-                {selectedCloudProvider === 'gcp' && (
+                {selectedCloudProvider.includes('gcp') && (
                   <div style={{ 
                     marginBottom: '1rem',
                     padding: '1.5rem',
@@ -1697,7 +1719,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 )}
 
                 {/* Azure Integration Section */}
-                {selectedCloudProvider === 'azure' && (
+                {selectedCloudProvider.includes('azure') && (
                   <div style={{ 
                     marginBottom: '1rem',
                     padding: '1.5rem',
@@ -1787,7 +1809,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 )}
 
                 {/* Oracle Cloud Infrastructure Section */}
-                {selectedCloudProvider === 'oci' && (
+                {selectedCloudProvider.includes('oci') && (
                   <div style={{ 
                     marginBottom: '1rem',
                     padding: '1.5rem',
@@ -1807,24 +1829,21 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   style={{ marginBottom: '1rem' }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <Radio
-                      isChecked={otherFormat === 'qcow2'}
-                      name="other-format"
-                      onChange={() => setOtherFormat('qcow2')}
+                    <Checkbox
+                      isChecked={otherFormat.includes('qcow2')}
+                      onChange={() => handleOtherFormatSelect('qcow2')}
                       label="Virtualization - Guest image (.qcow2)"
                       id="other-qcow2"
                     />
-                    <Radio
-                      isChecked={otherFormat === 'iso'}
-                      name="other-format"
-                      onChange={() => setOtherFormat('iso')}
+                    <Checkbox
+                      isChecked={otherFormat.includes('iso')}
+                      onChange={() => handleOtherFormatSelect('iso')}
                       label="Baremetal - Installer (.iso)"
                       id="other-iso"
                     />
-                    <Radio
-                      isChecked={otherFormat === 'tar.gz'}
-                      name="other-format"
-                      onChange={() => setOtherFormat('tar.gz')}
+                    <Checkbox
+                      isChecked={otherFormat.includes('tar.gz')}
+                      onChange={() => handleOtherFormatSelect('tar.gz')}
                       label="WSL - Windows Subsystem for Linux (.tar.gz)"
                       id="other-wsl"
                     />
@@ -3511,7 +3530,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             </p>
             
             {/* Cloud Environment Expiration Reminder */}
-            {(selectedCloudProvider === 'aws' || selectedCloudProvider === 'gcp' || selectedCloudProvider === 'azure') && (
+            {(selectedCloudProvider.includes('aws') || selectedCloudProvider.includes('gcp') || selectedCloudProvider.includes('azure')) && (
               <Alert
                 variant="warning"
                 title="Important: Cloud image expiration notice"
@@ -3519,16 +3538,20 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               >
                 <p>
                   You are seeing this notice because you selected <strong>
-                  {selectedCloudProvider === 'aws' ? 'Amazon Web Services' : 
-                   selectedCloudProvider === 'gcp' ? 'Google Cloud Platform' : 
-                   'Microsoft Azure'}
-                  </strong> as your target environment.
+                  {selectedCloudProvider.map(provider => {
+                    switch (provider) {
+                      case 'aws': return 'Amazon Web Services';
+                      case 'gcp': return 'Google Cloud Platform';
+                      case 'azure': return 'Microsoft Azure';
+                      case 'oci': return 'Oracle Cloud Infrastructure';
+                      default: return provider;
+                    }
+                  }).join(', ')}
+                  </strong> as your target environment{selectedCloudProvider.length > 1 ? 's' : ''}.
                 </p>
                 <p style={{ marginTop: '0.5rem', marginBottom: 0 }}>
                   <strong>The image will expire in 2 weeks</strong> after it's built. You must copy it to your own 
-                  {selectedCloudProvider === 'aws' ? ' AWS' : 
-                   selectedCloudProvider === 'gcp' ? ' GCP' : 
-                   ' Azure'} account to ensure continued access.
+                  cloud account{selectedCloudProvider.length > 1 ? 's' : ''} to ensure continued access.
                 </p>
               </Alert>
             )}
@@ -3575,22 +3598,35 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       <DescriptionListGroup>
                         <DescriptionListTerm>Target Environment</DescriptionListTerm>
                         <DescriptionListDescription>
-                          {selectedCloudProvider === 'aws' ? 'Amazon Web Services' :
-                           selectedCloudProvider === 'gcp' ? 'Google Cloud Platform' :
-                           selectedCloudProvider === 'azure' ? 'Microsoft Azure' :
-                           <span style={{ color: '#666', fontStyle: 'italic' }}>No cloud provider selected</span>}
+                          {selectedCloudProvider.length > 0 ? (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                              {selectedCloudProvider.map(provider => (
+                                <Badge key={provider} isRead>
+                                  {provider === 'aws' && 'Amazon Web Services'}
+                                  {provider === 'gcp' && 'Google Cloud Platform'}
+                                  {provider === 'azure' && 'Microsoft Azure'}
+                                  {provider === 'oci' && 'Oracle Cloud Infrastructure'}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : (
+                            <span style={{ color: '#666', fontStyle: 'italic' }}>No cloud provider selected</span>
+                          )}
                         </DescriptionListDescription>
                       </DescriptionListGroup>
-                      {selectedCloudProvider && (
+                      {otherFormat.length > 0 && (
                         <DescriptionListGroup>
-                          <DescriptionListTerm>Target Platform</DescriptionListTerm>
+                          <DescriptionListTerm>Other Formats</DescriptionListTerm>
                           <DescriptionListDescription>
-                            <Badge isRead>
-                              {selectedCloudProvider === 'aws' && 'Amazon Web Services'}
-                              {selectedCloudProvider === 'gcp' && 'Google Cloud Platform'}
-                              {selectedCloudProvider === 'azure' && 'Microsoft Azure'}
-                              {selectedCloudProvider === 'oci' && 'Oracle Cloud Infrastructure'}
-                            </Badge>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                              {otherFormat.map(format => (
+                                <Badge key={format} isRead>
+                                  {format === 'qcow2' && 'Virtualization (.qcow2)'}
+                                  {format === 'iso' && 'Baremetal (.iso)'}
+                                  {format === 'tar.gz' && 'WSL (.tar.gz)'}
+                                </Badge>
+                              ))}
+                            </div>
                           </DescriptionListDescription>
                         </DescriptionListGroup>
                       )}
