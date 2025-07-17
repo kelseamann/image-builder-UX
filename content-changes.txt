@@ -1,0 +1,19 @@
+CONTENT CHANGES FOR REVIEW
+=============================
+
+This file tracks UI text changes that need review by content writers.
+
+=============================
+
+CHANGE #1: Image Output Section Label
+Location: BuildImageModal.tsx - Image output section
+Date: [Current Date]
+
+Original Content: "Other"
+Current Content: "Additional Formats"
+Suggested Content: [TO BE FILLED BY CONTENT WRITERS]
+Notes: User requested to rename "Other" category to something more descriptive. No specific rationale provided.
+
+=============================
+
+[Future changes will be added below this line] 
