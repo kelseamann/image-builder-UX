@@ -634,47 +634,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     );
   };
 
-  // User management functions
-  const addUser = () => {
-    const newUser: UserRow = {
-      id: Date.now().toString(),
-      isAdministrator: false,
-      username: '',
-      password: '',
-      sshKey: '',
-      groups: [],
-      isEditing: false
-    };
-    setUsers([...users, newUser]);
-  };
 
-  const removeUser = (id: string) => {
-    setUsers(users.filter(user => user.id !== id));
-  };
-
-  const updateUser = (id: string, field: keyof UserRow, value: any) => {
-    setUsers(users.map(user => 
-      user.id === id ? { ...user, [field]: value } : user
-    ));
-  };
-
-  const addGroupToUser = (userId: string, groupName: string) => {
-    if (groupName.trim()) {
-      setUsers(users.map(user => 
-        user.id === userId 
-          ? { ...user, groups: [...user.groups, groupName.trim()] }
-          : user
-      ));
-    }
-  };
-
-  const removeGroupFromUser = (userId: string, groupName: string) => {
-    setUsers(users.map(user => 
-      user.id === userId 
-        ? { ...user, groups: user.groups.filter(g => g !== groupName) }
-        : user
-    ));
-  };
 
   const onActivationKeySelect = (
     _event: React.MouseEvent<Element, MouseEvent> | undefined,
@@ -1495,6 +1455,33 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 </FormGroup>
 
                 <FormGroup
+                  label="Additional Formats"
+                  fieldId="additional-formats"
+                  style={{ marginBottom: '1rem' }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <Checkbox
+                      isChecked={otherFormat.includes('qcow2')}
+                      onChange={() => handleOtherFormatSelect('qcow2')}
+                      label="Virtualization - Guest image (.qcow2)"
+                      id="other-qcow2"
+                    />
+                    <Checkbox
+                      isChecked={otherFormat.includes('iso')}
+                      onChange={() => handleOtherFormatSelect('iso')}
+                      label="Baremetal - Installer (.iso)"
+                      id="other-iso"
+                    />
+                    <Checkbox
+                      isChecked={otherFormat.includes('tar.gz')}
+                      onChange={() => handleOtherFormatSelect('tar.gz')}
+                      label="WSL - Windows Subsystem for Linux (.tar.gz)"
+                      id="other-wsl"
+                    />
+                  </div>
+                </FormGroup>
+
+                <FormGroup
                   label="Public cloud"
                   fieldId="public-cloud"
                   style={{ marginBottom: '1rem' }}
@@ -1823,32 +1810,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   </div>
                 )}
 
-                <FormGroup
-                  label="Other"
-                  fieldId="other-formats"
-                  style={{ marginBottom: '1rem' }}
-                >
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <Checkbox
-                      isChecked={otherFormat.includes('qcow2')}
-                      onChange={() => handleOtherFormatSelect('qcow2')}
-                      label="Virtualization - Guest image (.qcow2)"
-                      id="other-qcow2"
-                    />
-                    <Checkbox
-                      isChecked={otherFormat.includes('iso')}
-                      onChange={() => handleOtherFormatSelect('iso')}
-                      label="Baremetal - Installer (.iso)"
-                      id="other-iso"
-                    />
-                    <Checkbox
-                      isChecked={otherFormat.includes('tar.gz')}
-                      onChange={() => handleOtherFormatSelect('tar.gz')}
-                      label="WSL - Windows Subsystem for Linux (.tar.gz)"
-                      id="other-wsl"
-                    />
-                  </div>
-                </FormGroup>
+
 
                 {/* Divider before Enable repeatable build */}
                 <div 
@@ -3616,7 +3578,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       </DescriptionListGroup>
                       {otherFormat.length > 0 && (
                         <DescriptionListGroup>
-                          <DescriptionListTerm>Other Formats</DescriptionListTerm>
+                          <DescriptionListTerm>Additional Formats</DescriptionListTerm>
                           <DescriptionListDescription>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                               {otherFormat.map(format => (
