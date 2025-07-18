@@ -2,7 +2,6 @@ import * as React from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { Dashboard } from '@app/Dashboard/Dashboard';
 import { Images } from './Images/Images';
-import { SideBySideReview } from './Review/SideBySideReview';
 import { Support } from '@app/Support/Support';
 import { GeneralSettings } from '@app/Settings/General/GeneralSettings';
 import { ProfileSettings } from '@app/Settings/Profile/ProfileSettings';
@@ -38,13 +37,6 @@ const routes: AppRouteConfig[] = [
     label: 'HMS-8807',
     path: '/images',
     title: 'PatternFly Seed | HMS-8807',
-  },
-  {
-    element: <SideBySideReview />,
-    exact: true,
-    label: 'Side-by-Side Review',
-    path: '/review',
-    title: 'PatternFly Seed | Side-by-Side Review',
   },
   {
     element: <Support />,

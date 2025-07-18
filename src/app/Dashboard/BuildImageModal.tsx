@@ -22,9 +22,12 @@ import {
   FileUpload,
   Form,
   FormGroup,
+  FormHelperText,
   Gallery,
   Grid,
   GridItem,
+  HelperText,
+  HelperTextItem,
   Label,
   LabelGroup,
   MenuToggle,
@@ -57,12 +60,12 @@ import {
 } from '@patternfly/react-core';
 import { 
   ArrowRightIcon, 
-  CheckIcon, 
   EditIcon, 
   ExternalLinkAltIcon, 
   InfoCircleIcon,
   MinusCircleIcon,
   MinusIcon,
+  OutlinedQuestionCircleIcon,
   PlusIcon,
   TimesCircleIcon,
   TimesIcon
@@ -116,6 +119,8 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const [registrationMethod, setRegistrationMethod] = React.useState<string>('auto');
   const [selectedActivationKey, setSelectedActivationKey] = React.useState<string>('my-default-key');
   const [isActivationKeyOpen, setIsActivationKeyOpen] = React.useState<boolean>(false);
+  const [enablePredictiveAnalytics, setEnablePredictiveAnalytics] = React.useState<boolean>(true);
+  const [enableRemoteRemediations, setEnableRemoteRemediations] = React.useState<boolean>(true);
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   
   // Base image form state
@@ -193,8 +198,15 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   // Other formats state
   const [otherFormat, setOtherFormat] = React.useState<string[]>([]);
   
+  // Private cloud formats state
+  const [privateCloudFormat, setPrivateCloudFormat] = React.useState<string[]>([]);
+  
   // Repeatable build state
   const [snapshotDate, setSnapshotDate] = React.useState<string>('');
+  const [repeatableBuildOption, setRepeatableBuildOption] = React.useState<string>('disable');
+  
+  // Validation state
+  const [validationErrors, setValidationErrors] = React.useState<{[key: string]: string}>({});
   
   // Kickstart file state
   const [kickstartFile, setKickstartFile] = React.useState<File | string>('');
@@ -301,6 +313,20 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   // Helper function to handle other format selection
   const handleOtherFormatSelect = (format: string) => {
     setOtherFormat(prev => {
+      const isSelected = prev.includes(format);
+      if (isSelected) {
+        // Remove format if already selected
+        return prev.filter(f => f !== format);
+      } else {
+        // Add format if not selected
+        return [...prev, format];
+      }
+    });
+  };
+  
+  // Helper function to handle private cloud format selection
+  const handlePrivateCloudFormatSelect = (format: string) => {
+    setPrivateCloudFormat(prev => {
       const isSelected = prev.includes(format);
       if (isSelected) {
         // Remove format if already selected
@@ -640,7 +666,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     _event: React.MouseEvent<Element, MouseEvent> | undefined,
     selection: string | number | undefined
   ) => {
-    setSelectedActivationKey(String(selection));
+    const selectedValue = String(selection);
+    // For activation key, just set the selection (required field)
+    setSelectedActivationKey(selectedValue);
     setIsActivationKeyOpen(false);
   };
 
@@ -683,8 +711,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     selection: string | number | undefined,
   ) => {
     if (typeof selection === 'string') {
-      setCustomCompliancePolicy(selection);
-      setComplianceType('custom'); // Auto-select the custom radio button
+      if (customCompliancePolicy === selection) {
+        // Toggle off - clear selection and reset compliance type
+        setCustomCompliancePolicy('');
+        setComplianceType('');
+      } else {
+        setCustomCompliancePolicy(selection);
+        setComplianceType('custom'); // Auto-select the custom radio button
+      }
       setIsCustomCompliancePolicyOpen(false);
     }
   };
@@ -694,8 +728,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     selection: string | number | undefined,
   ) => {
     if (typeof selection === 'string') {
-      setOpenscapProfile(selection);
-      setComplianceType('openscap'); // Auto-select the OpenSCAP radio button
+      if (openscapProfile === selection) {
+        // Toggle off - clear selection and reset compliance type
+        setOpenscapProfile('');
+        setComplianceType('');
+      } else {
+        setOpenscapProfile(selection);
+        setComplianceType('openscap'); // Auto-select the OpenSCAP radio button
+      }
       setIsOpenscapProfileOpen(false);
     }
   };
@@ -705,23 +745,30 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     selection: string | number | undefined,
   ) => {
     if (typeof selection === 'string') {
-      setSelectedIntegration(selection);
-      setIsIntegrationOpen(false);
-      
-      // Handle clearing integration
-      if (selection === '') {
+      if (selectedIntegration === selection) {
+        // Toggle off - clear selection
+        setSelectedIntegration('');
         setAwsAccountId('');
-        return;
+      } else {
+        setSelectedIntegration(selection);
+        
+        // Clear AWS login validation error
+        if (validationErrors.awsLogin) {
+          const newErrors = { ...validationErrors };
+          delete newErrors.awsLogin;
+          setValidationErrors(newErrors);
+        }
+        
+        // Auto-fill AWS Account ID based on integration
+        if (selection === 'AWS Production Account') {
+          setAwsAccountId('123456789012');
+        } else if (selection === 'AWS Development Account') {
+          setAwsAccountId('234567890123');
+        } else if (selection === 'AWS Staging Account') {
+          setAwsAccountId('345678901234');
+        }
       }
-      
-      // Auto-fill AWS Account ID based on integration
-      if (selection === 'AWS Production Account') {
-        setAwsAccountId('123456789012');
-      } else if (selection === 'AWS Development Account') {
-        setAwsAccountId('234567890123');
-      } else if (selection === 'AWS Staging Account') {
-        setAwsAccountId('345678901234');
-      }
+      setIsIntegrationOpen(false);
     }
   };
 
@@ -742,6 +789,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     if (typeof selection === 'string') {
       setGcpAccountType(selection);
       setIsGcpAccountTypeOpen(false);
+      
+      // Clear GCP login validation error
+      if (validationErrors.gcpLogin && selection !== 'Google account') {
+        const newErrors = { ...validationErrors };
+        delete newErrors.gcpLogin;
+        setValidationErrors(newErrors);
+      }
+      
       // Clear the email/domain field when account type changes
       setGcpEmailOrDomain('');
     }
@@ -778,6 +833,13 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const handleAzureAuthorize = () => {
     if (azureId.trim()) {
       setIsAzureAuthorized(true);
+      
+      // Clear Azure login validation error
+      if (validationErrors.azureLogin) {
+        const newErrors = { ...validationErrors };
+        delete newErrors.azureLogin;
+        setValidationErrors(newErrors);
+      }
     }
   };
 
@@ -1069,6 +1131,38 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     }
   };
 
+  const validateBaseImageForm = (): boolean => {
+    const errors: {[key: string]: string} = {};
+    
+    // Check if image name is filled out
+    if (!imageName.trim()) {
+      errors.imageName = 'Image name is required';
+    }
+    
+    // Check repeatable build snapshot date if enabled
+    if (repeatableBuildOption === 'enable' && !snapshotDate.trim()) {
+      errors.snapshotDate = 'Snapshot date is required when repeatable build is enabled';
+    }
+    
+    // Check cloud provider login status
+    if (selectedCloudProvider.includes('aws') && !selectedIntegration.trim()) {
+      errors.awsLogin = 'Please sign in to your AWS account by selecting an integration';
+    }
+    
+    if (selectedCloudProvider.includes('gcp') && gcpAccountType === 'Google account') {
+      errors.gcpLogin = 'Please select a GCP account type to proceed';
+    }
+    
+    if (selectedCloudProvider.includes('azure') && !isAzureAuthorized) {
+      errors.azureLogin = 'Please authorize your Microsoft Azure account';
+    }
+    
+    // Release and architecture have defaults so we don't need to validate them as strictly
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleNext = () => {
     if (typeof activeTabKey === 'number' && activeTabKey < 3) {
       setActiveTabKey(activeTabKey + 1);
@@ -1096,6 +1190,25 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     if (typeof activeTabKey === 'number') {
       switch (activeTabKey) {
         case 0:
+          // Base image tab: validate current section before proceeding
+          let hasValidationError = false;
+          const newValidationErrors: {[key: string]: string} = {};
+          
+          // Check if we're on the Enable repeatable build section (index 1)
+          if (currentBaseImageSection === 1) {
+            // Validate snapshot date is required when "Enable repeatable build" is selected
+            if (repeatableBuildOption === 'enable' && !snapshotDate.trim()) {
+              newValidationErrors.snapshotDate = 'Snapshot date is required when Enable repeatable build is selected';
+              hasValidationError = true;
+            }
+          }
+          
+          setValidationErrors(newValidationErrors);
+          
+          if (hasValidationError) {
+            return; // Don't proceed if validation fails
+          }
+          
           // Base image tab: cycle through sections (starting from Image Details)
           const baseImageSections = [
             imageOutputRef,
@@ -1263,9 +1376,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               </div>
               <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
                 Image Builder provides and defaults to a no-cost activation key if none exist.{' '}
-                <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
-                  <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
+                <a href="#" style={{ color: '#0066cc', textDecoration: 'underline' }}>
                   Manage Activation keys
+                  <ExternalLinkAltIcon style={{ marginLeft: '0.25rem', fontSize: '0.75rem', color: '#0066cc' }} />
                 </a>
               </div>
             </FormGroup>
@@ -1283,9 +1396,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               If you don't register your systems within 30 days, you will not be able to use Red Hat Insights capabilities.
             </p>
             <p>
-              <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
-                <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
+              <a href="#" style={{ color: '#0066cc', textDecoration: 'underline' }}>
                 Learn more about registration
+                <ExternalLinkAltIcon style={{ marginLeft: '0.25rem', fontSize: '0.75rem', color: '#0066cc' }} />
               </a>
             </p>
           </Alert>
@@ -1316,12 +1429,22 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               Base Image Selection
             </Title>
             <p style={{ fontSize: '16px', color: '#666', marginBottom: '2rem' }}>
-              Choose the base operating system and version for your custom image.
+              The selections on this page may automatically add required packages and/or configurations you'll find in the Repositories and packages step and the Advanced Settings step.
             </p>
             
             <Form>
               {/* Image Details Section */}
               <div>
+                {validationErrors.imageName && (
+                  <Alert
+                    variant="warning"
+                    isInline
+                    title="Please complete the required fields"
+                    style={{ marginBottom: '1rem' }}
+                  >
+                    <p>{validationErrors.imageName}</p>
+                  </Alert>
+                )}
                 <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
                   Image details
                 </Title>
@@ -1335,7 +1458,15 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   <TextInput
                     id="image-name"
                     value={imageName}
-                    onChange={(_event, value) => setImageName(value)}
+                    onChange={(_event, value) => {
+                      setImageName(value);
+                      // Clear validation error when user starts typing
+                      if (validationErrors.imageName && value.trim()) {
+                        const newErrors = { ...validationErrors };
+                        delete newErrors.imageName;
+                        setValidationErrors(newErrors);
+                      }
+                    }}
                     placeholder="Enter image name"
                     isRequired
                   />
@@ -1365,11 +1496,32 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
               {/* Image Output Section */}
               <div style={{ marginBottom: '2rem' }}>
+                  {(validationErrors.awsLogin || validationErrors.gcpLogin || validationErrors.azureLogin) && (
+                    <Alert
+                      variant="warning"
+                      isInline
+                      title="Please sign in to your cloud accounts"
+                      style={{ marginBottom: '1rem' }}
+                    >
+                      {validationErrors.awsLogin && <p>{validationErrors.awsLogin}</p>}
+                      {validationErrors.gcpLogin && <p>{validationErrors.gcpLogin}</p>}
+                      {validationErrors.azureLogin && <p>{validationErrors.azureLogin}</p>}
+                    </Alert>
+                  )}
                   <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
                   Image output
                 </Title>
                   <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
-                  This is filler text for now.                  </Content>
+                  Select any number of target environments to simultaneously build this image from. Learn more about{' '}
+                  <a 
+                    href="https://docs.redhat.com/en/documentation/red_hat_insights/1-latest/html/deploying_and_managing_rhel_systems_in_hybrid_clouds/index" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{ color: '#0066cc', textDecoration: 'underline' }}
+                  >
+                    Deploying and managing RHEL systems in the hybrid cloud
+                    <ExternalLinkAltIcon style={{ marginLeft: '0.25rem', fontSize: '0.75rem', color: '#0066cc' }} />
+                  </a>                  </Content>
                 
                 <FormGroup
                   label="Release"
@@ -1455,7 +1607,60 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 </FormGroup>
 
                 <FormGroup
-                  label="Additional Formats"
+                  label="Private cloud"
+                  fieldId="private-cloud"
+                  style={{ marginBottom: '1rem' }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <Checkbox
+                      isChecked={privateCloudFormat.includes('ova')}
+                      onChange={() => handlePrivateCloudFormatSelect('ova')}
+                      label={
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span>VMware vSphere - Open virtualization format (.ova)</span>
+                          <Tooltip
+                            content="An OVA file is a virtual appliance used by virtualization platforms such as VMware vSphere. It is a package that contains files used to describe a virtual machine, which includes a VMDK image, OVF descriptor, and a manifest file."
+                            position="top"
+                          >
+                            <OutlinedQuestionCircleIcon 
+                              style={{ 
+                                color: '#6a6e73',
+                                cursor: 'pointer',
+                                fontSize: '0.875rem'
+                              }} 
+                            />
+                          </Tooltip>
+                        </div>
+                      }
+                      id="private-ova"
+                    />
+                    <Checkbox
+                      isChecked={privateCloudFormat.includes('vmdk')}
+                      onChange={() => handlePrivateCloudFormatSelect('vmdk')}
+                      label={
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span>VMware vSphere - Virtual disk (.vmdk)</span>
+                          <Tooltip
+                            content="A VMDK file is a virtual disk that stores the contents of a virtual machine. This disk has to be imported into vSphere using govc import.vmdk, use the OVA version when using the vSphere UI."
+                            position="top"
+                          >
+                            <OutlinedQuestionCircleIcon 
+                              style={{ 
+                                color: '#6a6e73',
+                                cursor: 'pointer',
+                                fontSize: '0.875rem'
+                              }} 
+                            />
+                          </Tooltip>
+                        </div>
+                      }
+                      id="private-vmdk"
+                    />
+                  </div>
+                </FormGroup>
+
+                <FormGroup
+                  label="Additional formats"
                   fieldId="additional-formats"
                   style={{ marginBottom: '1rem' }}
                 >
@@ -1475,7 +1680,36 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     <Checkbox
                       isChecked={otherFormat.includes('tar.gz')}
                       onChange={() => handleOtherFormatSelect('tar.gz')}
-                      label="WSL - Windows Subsystem for Linux (.tar.gz)"
+                      label={
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span>WSL - Windows Subsystem for Linux (.tar.gz)</span>
+                          <Tooltip
+                            content={
+                              <div>
+                                WSL is not officially supported by Red Hat. Using RHEL on Microsoft's Windows Subsystem for Linux (WSL) is permitted as a Validated Software Platform and Third Party Component Support Policy.{' '}
+                                <a
+                                  href="https://access.redhat.com/articles/7115538"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{ color: '#73bcf7', textDecoration: 'underline' }}
+                                >
+                                  More about RHEL on WSL Support
+                                  <ExternalLinkAltIcon style={{ marginLeft: '0.25rem', fontSize: '0.75rem', color: '#73bcf7' }} />
+                                </a>
+                              </div>
+                            }
+                            position="top"
+                          >
+                            <OutlinedQuestionCircleIcon 
+                              style={{ 
+                                color: '#6a6e73',
+                                cursor: 'pointer',
+                                fontSize: '0.875rem'
+                              }} 
+                            />
+                          </Tooltip>
+                        </div>
+                      }
                       id="other-wsl"
                     />
                   </div>
@@ -1823,25 +2057,87 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 
                 {/* Enable repeatable build Section */}
                 <div style={{ marginBottom: '2rem' }}>
+                    {validationErrors.snapshotDate && (
+                      <Alert
+                        variant="warning"
+                        isInline
+                        title="Please complete the required fields"
+                        style={{ marginBottom: '1rem' }}
+                      >
+                        <p>{validationErrors.snapshotDate}</p>
+                      </Alert>
+                    )}
                     <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
                       Enable repeatable build
                     </Title>
                     <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
-                      Create images that can be reproduced consistently with the same package versions and configurations.
+                      Create images that can be reproduced consistently with the same package versions and configurations.{' '}
+                      <a
+                        href="#"
+                        style={{ color: '#06c', textDecoration: 'underline' }}
+                      >
+                        Create and manage repositories here
+                      </a>{' '}
+                      <ExternalLinkAltIcon style={{ fontSize: '0.75rem', color: '#06c', marginLeft: '0.25rem' }} />
                     </Content>
+
+                    <FormGroup fieldId="repeatable-build-options" className="pf-v6-u-mb-md">
+                      <Radio
+                        id="disable-repeatable-build"
+                        name="repeatable-build-option"
+                        label="Disable repeatable build"
+                        description="Use the newest repository content available when building this image"
+                        isChecked={repeatableBuildOption === 'disable'}
+                        onChange={() => {
+                          setRepeatableBuildOption('disable');
+                          setSnapshotDate('');
+                        }}
+                      />
+                      <Radio
+                        id="enable-repeatable-build"
+                        name="repeatable-build-option"
+                        label="Enable repeatable build"
+                        description="Build this image with the repository content of a selected date"
+                        isChecked={repeatableBuildOption === 'enable'}
+                        onChange={() => setRepeatableBuildOption('enable')}
+                      />
+                      <Radio
+                        id="use-content-template"
+                        name="repeatable-build-option"
+                        label="Use a content template"
+                        description="Select a content template and build this image with repository snapshots included in that template"
+                        isChecked={repeatableBuildOption === 'template'}
+                        onChange={() => {
+                          setRepeatableBuildOption('template');
+                          setSnapshotDate('');
+                        }}
+                      />
+                    </FormGroup>
                   
-                    <FormGroup
-                      label="Snapshot date"
-                      fieldId="snapshot-date"
-                    >
+                    {repeatableBuildOption === 'enable' && (
+                      <FormGroup
+                        label="Snapshot date"
+                        fieldId="snapshot-date"
+                        isRequired={true}
+                      >
                       <Split hasGutter>
                         <SplitItem>
                           <DatePicker
                             id="snapshot-date"
                             value={snapshotDate}
-                            onChange={(_event, value) => setSnapshotDate(value)}
+                            onChange={(_event, value) => {
+                              setSnapshotDate(value);
+                              // Clear validation error when user starts typing
+                              if (validationErrors.snapshotDate) {
+                                setValidationErrors(prev => {
+                                  const newErrors = { ...prev };
+                                  delete newErrors.snapshotDate;
+                                  return newErrors;
+                                });
+                              }
+                            }}
                             placeholder="MM-DD-YYYY"
-                          popoverProps={{ position: "bottom" }}
+                            popoverProps={{ position: "bottom" }}
                             dateFormat={(date: Date) => {
                               const month = (date.getMonth() + 1).toString().padStart(2, '0');
                               const day = date.getDate().toString().padStart(2, '0');
@@ -1870,6 +2166,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                               const day = today.getDate().toString().padStart(2, '0');
                               const year = today.getFullYear();
                               setSnapshotDate(`${month}-${day}-${year}`);
+                              // Clear validation error when user sets date
+                              if (validationErrors.snapshotDate) {
+                                setValidationErrors(prev => {
+                                  const newErrors = { ...prev };
+                                  delete newErrors.snapshotDate;
+                                  return newErrors;
+                                });
+                              }
                             }}
                             className="pf-v6-u-font-size-sm"
                           >
@@ -1886,10 +2190,18 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                           </Button>
                         </SplitItem>
                       </Split>
+                      {validationErrors.snapshotDate && (
+                        <FormHelperText>
+                          <HelperText>
+                            <HelperTextItem variant="error">{validationErrors.snapshotDate}</HelperTextItem>
+                          </HelperText>
+                        </FormHelperText>
+                      )}
                       <div style={{ marginTop: '0.5rem', marginBottom: '1rem' ,fontSize: '0.875rem', color: '#666' }}>
                       Use packages from this date to ensure reproducible builds.
                       </div>
                     </FormGroup>
+                    )}
                 </div>
                   
                 {/* Kickstart File Section */}
@@ -1905,10 +2217,10 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     
               <div style={{ marginBottom: '1rem' }}>
                   <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
-                      Kickstart File
+                      First boot configuration
                     </Title>
                   <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
-                  This is filler text for now.  
+                  Configure the image with a custom script that will execute on its first boot.  
                   </Content>
 
                   </div>
@@ -1919,7 +2231,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       <FileUpload
                         id="kickstart-file"
                         type="text"
-                      value={kickstartFile || 'Manually enter the kickstart CSV data here.'} 
+                      value={kickstartFile || 'Manually enter the script here.'} 
                       style={{color: '#000000' }}
                         filename={kickstartFilename}
                         onTextChange={(event: React.ChangeEvent<HTMLTextAreaElement>, text: string) => {
@@ -1935,7 +2247,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                         clearButtonText="Clear"
                       />
                       <div className="pf-v6-u-font-size-sm pf-v6-u-color-200 pf-v6-u-mt-xs">
-                        Upload a CSV file
+                        Supports bash shell, python or Ansible playbooks
                     </div>
                       </div>
                     </div>
@@ -2056,9 +2368,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                         </div>
                         
                         <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
-                          <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
-                            <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
+                          <a href="#" style={{ color: '#0066cc', textDecoration: 'underline' }}>
                             Manage with Insights Compliance
+                            <ExternalLinkAltIcon style={{ marginLeft: '0.25rem', fontSize: '0.75rem', color: '#0066cc' }} />
                           </a>
                         </div>
                       </div>
@@ -2159,13 +2471,219 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                         </div>
                         
                         <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
-                          <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
-                            <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
+                          <a href="#" style={{ color: '#0066cc', textDecoration: 'underline' }}>
                             Learn more about OpenSCAP profiles
+                            <ExternalLinkAltIcon style={{ marginLeft: '0.25rem', fontSize: '0.75rem', color: '#0066cc' }} />
                           </a>
                         </div>
                       </div>
                     </FormGroup>
+                </div>
+
+                {/* Divider */}
+                <div style={{ 
+                  height: '1px', 
+                  backgroundColor: '#d2d2d2', 
+                  margin: '2rem 0' 
+                }} />
+
+                {/* Registration Section */}
+                <div style={{ marginBottom: '2rem' }}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                    Register
+                  </Title>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                    Configure registration settings for systems that will use this image.
+                  </Content>
+                
+                  <FormGroup
+                    label="Organization ID"
+                    fieldId="organization-id"
+                    style={{ marginBottom: '2rem' }}
+                  >
+                    <ClipboardCopy 
+                      isReadOnly 
+                      hoverTip="Copy Organization ID" 
+                      clickTip="Organization ID copied!"
+                      variant="inline"
+                      style={{ width: '25%' }}
+                    >
+                      {organizationId}
+                    </ClipboardCopy>
+                    <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                      If you're using an activation key with command line registration, you must provide your organization's ID
+                    </div>
+                  </FormGroup>
+
+                  <FormGroup
+                    label="Registration method"
+                    fieldId="registration-method"
+                    style={{ marginTop: '1rem', marginBottom: '1rem' }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <Radio
+                        isChecked={registrationMethod === 'auto'}
+                        name="registration-method"
+                        onChange={() => setRegistrationMethod('auto')}
+                        label="Automatically register and enable advanced capabilities"
+                        id="auto-register"
+                      />
+                      
+                      {registrationMethod === 'auto' && (
+                        <div style={{ marginLeft: '1.5rem', marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          <Checkbox
+                            isChecked={enablePredictiveAnalytics}
+                            onChange={() => setEnablePredictiveAnalytics(!enablePredictiveAnalytics)}
+                            label="Enable predictive analytics and management capabilities"
+                            id="enable-predictive-analytics"
+                          />
+                          <Checkbox
+                            isChecked={enableRemoteRemediations}
+                            onChange={() => setEnableRemoteRemediations(!enableRemoteRemediations)}
+                            label="Enable remote remediations and system management with automation"
+                            id="enable-remote-remediations"
+                          />
+                        </div>
+                      )}
+                      
+                      <Radio
+                        isChecked={registrationMethod === 'later'}
+                        name="registration-method"
+                        onChange={() => setRegistrationMethod('later')}
+                        label="Register later"
+                        id="register-later"
+                      />
+                      <Radio
+                        isChecked={registrationMethod === 'satellite'}
+                        name="registration-method"
+                        onChange={() => setRegistrationMethod('satellite')}
+                        label="Register with Satellite"
+                        id="register-satellite"
+                      />
+                    </div>
+                  </FormGroup>
+
+                  {registrationMethod === 'auto' && (
+                    <FormGroup
+                      label="Activation key"
+                      fieldId="activation-key"
+                      style={{ marginBottom: '0rem' }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Select
+                          id="activation-key-select"
+                          isOpen={isActivationKeyOpen}
+                          selected={selectedActivationKey}
+                          onSelect={onActivationKeySelect}
+                          onOpenChange={(isOpen) => setIsActivationKeyOpen(isOpen)}
+                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                            <MenuToggle 
+                              ref={toggleRef} 
+                              onClick={() => setIsActivationKeyOpen(!isActivationKeyOpen)}
+                              isExpanded={isActivationKeyOpen}
+                              style={{ width: '300px' }}
+                            >
+                              {selectedActivationKey}
+                            </MenuToggle>
+                          )}
+                        >
+                          <SelectList>
+                            {activationKeys.map((key) => (
+                              <SelectOption key={key} value={key}>
+                                {key}
+                              </SelectOption>
+                            ))}
+                          </SelectList>
+                        </Select>
+                        
+                        <Popover
+                          aria-label="Activation key details"
+                          position={PopoverPosition.right}
+                          bodyContent={
+                            <div style={{ minWidth: '300px' }}>
+                              <div style={{ marginBottom: '1rem' }}>
+                                <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Name</div>
+                                <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                  {selectedActivationKey}
+                                </div>
+                              </div>
+
+                              <div style={{ marginBottom: '1rem' }}>
+                                <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Role</div>
+                                <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                  Development Environment
+                                </div>
+                              </div>
+                              
+                              <div style={{ marginBottom: '1rem' }}>
+                                <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>SLA</div>
+                                <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                  Standard (Business Hours)
+                                </div>
+                              </div>
+                              
+                              <div style={{ marginBottom: '1rem' }}>
+                                <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Usage</div>
+                                <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                  45/100 systems
+                                </div>
+                              </div>
+                              
+                              <div>
+                                <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Additional repositories</div>
+                                <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                  EPEL, Red Hat Codeready Builder
+                                </div>
+                              </div>
+                            </div>
+                          }
+                        >
+                          <Button variant="secondary" icon={<InfoCircleIcon />}>
+                            View details
+                          </Button>
+                        </Popover>
+                      </div>
+                      <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                        Image Builder provides and defaults to a no-cost activation key if none exist.{' '}
+                        <a href="#" style={{ color: '#0066cc', textDecoration: 'underline' }}>
+                          Manage Activation keys
+                          <ExternalLinkAltIcon style={{ marginLeft: '0.25rem', fontSize: '0.75rem', color: '#0066cc' }} />
+                        </a>
+                      </div>
+                    </FormGroup>
+                  )}
+
+                  {registrationMethod === 'later' && (
+                    <div style={{ marginTop: '1rem' }}>
+                      <Alert
+                        variant="info"
+                        isInline
+                        title="Register with Red Hat Insights within 30 days"
+                      >
+                        <p style={{ marginBottom: '0.5rem' }}>
+                          If you don't register your systems within 30 days, you will not be able to use Red Hat Insights capabilities.
+                        </p>
+                        <p>
+                          <a href="#" style={{ color: '#0066cc', textDecoration: 'underline' }}>
+                            Learn more about registration
+                            <ExternalLinkAltIcon style={{ marginLeft: '0.25rem', fontSize: '0.75rem', color: '#0066cc' }} />
+                          </a>
+                        </p>
+                      </Alert>
+                    </div>
+                  )}
+
+                  {registrationMethod === 'satellite' && (
+                    <div style={{ marginTop: '1rem' }}>
+                      <Alert
+                        variant="warning"
+                        isInline
+                        title="Work in Progress"
+                      >
+                        Satellite registration is currently being developed and will be available in a future release.
+                      </Alert>
+                    </div>
+                  )}
                 </div>
               </div>
             </Form>
@@ -2547,192 +3065,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             </p>
             <Form>
               
-              {/* Register Section */}
-              <div style={{ marginBottom: '2rem', marginTop : '1rem'}}>
-                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
-                  Register
-                </Title>
-                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
-                  Configure registration settings for systems that will use this image.
-                  </Content>
-                
-                <FormGroup
-                  label="Organization ID"
-                  fieldId="organization-id"
-                  style={{ marginBottom: '2rem' }}
-                >
-                  <ClipboardCopy 
-                    isReadOnly 
-                    hoverTip="Copy Organization ID" 
-                    clickTip="Organization ID copied!"
-                    variant="inline"
-                    style={{ width: '25%' }}
-                  >
-                    {organizationId}
-                  </ClipboardCopy>
-                  <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
-                    If you're using an activation key with command line registration, you must provide your organization's ID
-                  </div>
-                </FormGroup>
 
-                <FormGroup
-                  label="Registration method"
-                  fieldId="registration-method"
-                  style={{ marginTop: '1rem', marginBottom: '1rem' }}
-                >
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <Radio
-                      isChecked={registrationMethod === 'auto'}
-                      name="registration-method"
-                      onChange={() => setRegistrationMethod('auto')}
-                      label="Automatically register and enable advanced capabilities"
-                      id="auto-register"
-                    />
-                    <Radio
-                      isChecked={registrationMethod === 'later'}
-                      name="registration-method"
-                      onChange={() => setRegistrationMethod('later')}
-                      label="Register later"
-                      id="register-later"
-                    />
-                    <Radio
-                      isChecked={registrationMethod === 'satellite'}
-                      name="registration-method"
-                      onChange={() => setRegistrationMethod('satellite')}
-                      label="Register with Satellite"
-                      id="register-satellite"
-                    />
-                  </div>
-                </FormGroup>
-
-                {registrationMethod === 'auto' && (
-                  <FormGroup
-                    label="Activation key"
-                    fieldId="activation-key"
-                    style={{ marginBottom: '0rem' }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Select
-                        id="activation-key-select"
-                        isOpen={isActivationKeyOpen}
-                        selected={selectedActivationKey}
-                        onSelect={onActivationKeySelect}
-                        onOpenChange={(isOpen) => setIsActivationKeyOpen(isOpen)}
-                        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                          <MenuToggle 
-                            ref={toggleRef} 
-                            onClick={() => setIsActivationKeyOpen(!isActivationKeyOpen)}
-                            isExpanded={isActivationKeyOpen}
-                            style={{ width: '300px' }}
-                          >
-                            {selectedActivationKey}
-                          </MenuToggle>
-                        )}
-                      >
-                        <SelectList>
-                          {activationKeys.map((key) => (
-                            <SelectOption key={key} value={key}>
-                              {key}
-                            </SelectOption>
-                          ))}
-                        </SelectList>
-                      </Select>
-                      
-                      <Popover
-                        aria-label="Activation key details"
-                        position={PopoverPosition.right}
-                        bodyContent={
-                          <div style={{ minWidth: '300px' }}>
-                            <div style={{ marginBottom: '1rem' }}>
-                              <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Key</div>
-                              <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                {selectedActivationKey}
-                              </div>
-              </div>
-
-                            <div style={{ marginBottom: '1rem' }}>
-                              <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Environment</div>
-                              <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                Production
-                              </div>
-                            </div>
-                            
-                            <div style={{ marginBottom: '1rem' }}>
-                              <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Usage</div>
-                              <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                45/100 systems
-                              </div>
-                            </div>
-                            
-                            <div style={{ marginBottom: '1rem' }}>
-                              <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Auto-attach</div>
-                              <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                Enabled
-                              </div>
-                            </div>
-                            
-                            <div>
-                              <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Content view</div>
-                              <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                RHEL-8-CV
-                              </div>
-                            </div>
-                          </div>
-                        }
-                      >
-                        <Button variant="secondary" icon={<InfoCircleIcon />}>
-                          View details
-                        </Button>
-                      </Popover>
-                    </div>
-                    <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
-                      <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
-                        <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
-                        Manage Activation keys
-                      </a>
-                    </div>
-                  </FormGroup>
-                )}
-
-                {registrationMethod === 'later' && (
-                  <div style={{ marginTop: '1rem' }}>
-                    <Alert
-                      variant="info"
-                      isInline
-                      title="Register with Red Hat Insights within 30 days"
-                    >
-                      <p style={{ marginBottom: '0.5rem' }}>
-                        If you don't register your systems within 30 days, you will not be able to use Red Hat Insights capabilities.
-                      </p>
-                      <p>
-                        <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>
-                          <ExternalLinkAltIcon style={{ marginRight: '0.25rem', fontSize: '0.75rem' }} />
-                          Learn more about registration
-                        </a>
-                      </p>
-                    </Alert>
-                  </div>
-                )}
-
-                {registrationMethod === 'satellite' && (
-                  <div style={{ marginTop: '1rem' }}>
-                    <Alert
-                      variant="warning"
-                      isInline
-                      title="Work in Progress"
-                    >
-                      Satellite registration is currently being developed and will be available in a future release.
-                    </Alert>
-                  </div>
-                                )}
-                </div>
-
-              {/* Divider */}
-              <div style={{ 
-                height: '1px', 
-                backgroundColor: '#d2d2d2', 
-                margin: '0rem, 0, 2rem, 0' 
-              }} />
 
               {/* Timezone Section */}
 
@@ -2755,7 +3088,13 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     isOpen={isTimezoneOpen}
                     selected={timezone}
                     onSelect={(_, selection) => {
-                      setTimezone(String(selection));
+                      const selectedValue = String(selection);
+                      if (timezone === selectedValue) {
+                        // Toggle off - clear selection
+                        setTimezone('');
+                      } else {
+                        setTimezone(selectedValue);
+                      }
                       setIsTimezoneOpen(false);
                     }}
                     onOpenChange={(isOpen) => setIsTimezoneOpen(isOpen)}
@@ -3576,9 +3915,24 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                           )}
                         </DescriptionListDescription>
                       </DescriptionListGroup>
+                      {privateCloudFormat.length > 0 && (
+                        <DescriptionListGroup>
+                          <DescriptionListTerm>Private Cloud Formats</DescriptionListTerm>
+                          <DescriptionListDescription>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                              {privateCloudFormat.map(format => (
+                                <Badge key={format} isRead>
+                                  {format === 'ova' && 'VMware vSphere (.ova)'}
+                                  {format === 'vmdk' && 'VMware vSphere (.vmdk)'}
+                                </Badge>
+                              ))}
+                            </div>
+                          </DescriptionListDescription>
+                        </DescriptionListGroup>
+                      )}
                       {otherFormat.length > 0 && (
                         <DescriptionListGroup>
-                          <DescriptionListTerm>Additional Formats</DescriptionListTerm>
+                          <DescriptionListTerm>Additional formats</DescriptionListTerm>
                           <DescriptionListDescription>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                               {otherFormat.map(format => (
@@ -3859,9 +4213,6 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   <p>
                     Your image configuration is complete and ready to build. The build process may take several minutes depending on the size and complexity of your image.
                   </p>
-                  <p style={{ marginTop: '8px', marginBottom: 0 }}>
-                    <strong>Estimated build time:</strong> 5-15 minutes
-                  </p>
                 </Alert>
               </StackItem>
 
@@ -3965,6 +4316,17 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               <Button
                 variant="primary"
                 onClick={() => {
+                  // Only navigate to review if on base image tab and validation passes
+                  if (activeTabKey === 0) {
+                    if (!validateBaseImageForm()) {
+                      // Validation failed, stay on current tab and scroll to first error
+                      if (contentAreaRef.current) {
+                        contentAreaRef.current.scrollTop = 0;
+                      }
+                      return;
+                    }
+                  }
+                  
                   setActiveTabKey(3);
                   // Reset section indexes when jumping to Review tab
                   setCurrentBaseImageSection(0);
