@@ -16,4 +16,438 @@ Notes: User requested to rename "Other" category to something more descriptive. 
 
 =============================
 
+CHANGE #2: Base Image Selection Description
+Location: BuildImageModal.tsx - Base Image Selection section
+Date: [Current Date]
+
+Original Content: "Choose the base operating system and version for your custom image."
+Current Content: "The selections on this page may automatically add required packages and/or configurations you'll find in the Repositories and packages step and the Advanced Settings step."
+Suggested Content: [TO BE FILLED BY CONTENT WRITERS]
+Notes: User rationale - giving users a heads up about inherited selections. Corrected to say "the selections on this page" instead of "Basic Settings" since there is no Basic Settings section. Updated to specify "Repositories and packages step" instead of just "Packages" for better clarity.
+
+=============================
+
+CHANGE #3: Image Output Description
+Location: BuildImageModal.tsx - Image output section
+Date: [Current Date]
+
+Original Content: "This is filler text for now."
+Current Content: "Select any number of target environments to simultaneously build this image from."
+Suggested Content: [TO BE FILLED BY CONTENT WRITERS]
+Notes: User rationale - users in interviewing didn't appear to know if they'd do one process per environment, or if building would be simultaneous.
+
+=============================
+
+CHANGE #4: Image Output Description Link Addition
+Location: BuildImageModal.tsx - Image output section
+Date: [Current Date]
+
+Original Content: "Select any number of target environments to simultaneously build this image from."
+Current Content: "Select any number of target environments to simultaneously build this image from. Learn more about Deploying and managing RHEL systems in the hybrid cloud [external link]"
+Suggested Content: [TO BE FILLED BY CONTENT WRITERS]
+Notes: User requested to add a link to Red Hat documentation at the end of the sentence with text "Deploying and managing RHEL systems in the hybrid cloud" and an external link icon. All documentation links in the project are formatted this way.
+
+=============================
+
+CHANGE #5: OVA File Help Icon and Tooltip
+Location: BuildImageModal.tsx - Private cloud section (.ova option)
+Date: [Current Date]
+
+Original Content: No help text
+Current Content: "An OVA file is a virtual appliance used by virtualization platforms such as VMware vSphere. It is a package that contains files used to describe a virtual machine, which includes a VMDK image, OVF descriptor, and a manifest file."
+Suggested Content: [TO BE FILLED BY CONTENT WRITERS]
+Notes: User requested to add an outlined question circle icon with hover tooltip to explain what .ova files are. Switched from Popover (click-triggered) to Tooltip (hover-triggered) for better user experience as requested by user.
+
+=============================
+
+CHANGE #6: VMDK File Help Icon and Tooltip
+Location: BuildImageModal.tsx - Private cloud section (.vmdk option)
+Date: [Current Date]
+
+Original Content: No help text
+Current Content: "A VMDK file is a virtual disk that stores the contents of a virtual machine. This disk has to be imported into vSphere using govc import.vmdk, use the OVA version when using the vSphere UI."
+Suggested Content: [TO BE FILLED BY CONTENT WRITERS]
+Notes: User requested to add the same question mark icon with tooltip pattern used for .ova files. Uses outlined question circle icon with hover tooltip to explain VMDK files and provide guidance on import methods.
+
+=============================
+
+CHANGE #7: WSL File Help Icon and Tooltip
+Location: BuildImageModal.tsx - Additional Formats section (WSL option)
+Date: [Current Date]
+
+Original Content: No help text
+Current Content: "WSL is not officially supported by Red Hat. Using RHEL on Microsoft's Windows Subsystem for Linux (WSL) is permitted as a Validated Software Platform and Third Party Component Support Policy. More about RHEL on WSL Support [external link to https://access.redhat.com/articles/7115538]"
+Suggested Content: [TO BE FILLED BY CONTENT WRITERS]
+Notes: User requested to add tooltip with support disclaimer and policy information. Includes external link to Red Hat documentation about WSL support with external link icon. Uses same question mark icon pattern established for other tooltips. Link color updated to #73bcf7 for better contrast against dark tooltip background.
+
+=============================
+
+CHANGE #5: New Private Cloud Section Addition
+Location: BuildImageModal.tsx - Image output section
+Date: [Current Date]
+
+Original Content: [No Private cloud section existed]
+Current Content: "Private cloud" section with VMware vSphere options:
+- VMware vSphere - Open virtualization format (.ova)
+- VMware vSphere - Virtual disk (.vmdk)
+Suggested Content: [TO BE FILLED BY CONTENT WRITERS]
+Notes: User requested to add a new "Private cloud" section above "Additional Formats" with VMware vSphere checkbox options for .ova and .vmdk formats.
+
+=============================
+
+CHANGE #6: OVA File Popover Help Addition
+Location: BuildImageModal.tsx - Private cloud section (.ova checkbox)
+Date: [Current Date]
+
+Original Content: Simple checkbox with label "VMware vSphere - Open virtualization format (.ova)"
+Current Content: Checkbox with label plus question mark icon that shows popover with explanation: "An OVA file is a virtual appliance used by virtualization platforms such as VMware vSphere. It is a package that contains files used to describe a virtual machine, which includes a VMDK image, OVF descriptor, and a manifest file."
+Suggested Content: [TO BE FILLED BY CONTENT WRITERS]
+Notes: User requested to add popover help text with question mark icon to explain what OVA files are for better user understanding.
+
+=============================
+
+CHANGE #8: Enable Repeatable Build Documentation Link
+Location: BuildImageModal.tsx - Enable repeatable build section
+Date: [Current Date]
+
+Original Content: "Control the consistency of the packages in the repository used to build the image"
+Current Content: "Create images that can be reproduced consistently with the same package versions and configurations. Create and manage repositories here [external link]"
+Suggested Content: [TO BE FILLED BY CONTENT WRITERS]
+Notes: User requested to add documentation link "Create and manage repositories here" after the microcopy with external link icon. The original copy from the prototype was "Control the consistency of the packages in the repository used to build the image".
+
+=============================
+
+CHANGE #9: Enable Repeatable Build Radio Button Options
+Location: BuildImageModal.tsx - Enable repeatable build section
+Date: [Current Date]
+
+Original Content: [No radio buttons existed - only had snapshot date field]
+Current Content: Three radio button options:
+1. "Disable repeatable build" - "Use the newest repository content available when building this image" (default selected)
+2. "Enable repeatable build" - "Build this image with the repository content of a selected date" 
+3. "Use a content template" - "Select a content template and build this image with repository snapshots included in that template"
+
+Suggested Content: [TO BE FILLED BY CONTENT WRITERS]
+Notes: Added radio button group to allow users to choose between different repeatable build options. User requested to match screenshot copy exactly. 
+
+INTERACTIVE FUNCTIONALITY: 
+- Radio buttons are now fully functional with proper state management
+- When "Enable repeatable build" is selected, the snapshot date field appears with required asterisk
+- When "Disable repeatable build" is selected, the snapshot date field is hidden and any existing date is cleared
+- When "Use a content template" is selected, the snapshot date field is hidden and any existing date is cleared
+
+VALIDATION REQUIREMENT: If "Enable repeatable build" is selected, user must provide a snapshot date before proceeding to review. If they attempt to proceed without a snapshot date, they should be returned to this step with validation message.
+
+=============================
+
+CHANGE #10: Snapshot Date Validation Implementation
+Location: BuildImageModal.tsx - Enable repeatable build section
+Date: [Current Date]
+
+Original Content: No validation - users could proceed without snapshot date
+Current Content: Visual validation implemented with error message:
+- Error Message: "Snapshot date is required when Enable repeatable build is selected"
+- Error appears as red text below the snapshot date field
+- Next button is blocked until snapshot date is provided
+- Error clears when user provides a date (via date picker or "Today's date" button)
+
+Suggested Content: [TO BE FILLED BY CONTENT WRITERS]
+Notes: User requested validation to prevent proceeding when "Enable repeatable build" is selected but no snapshot date is provided. Implemented with PatternFly v6 FormHelperText/HelperText pattern for error display. Error message provides clear guidance on the requirement.
+
+=============================
+
+CHANGE #11: First Boot Configuration Section Rename and Content Updates
+Location: BuildImageModal.tsx - First boot configuration section (formerly Kickstart File)
+Date: [Current Date]
+
+Original Content: 
+- Section Title: "Kickstart File"
+- Description: "This is filler text for now."
+- Placeholder text: "Manually enter the kickstart CSV data here."
+- Helper text: "Upload a CSV file"
+
+Current Content:
+- Section Title: "First boot configuration" 
+- Description: "Configure the image with a custom script that will execute on its first boot."
+- Placeholder text: "Manually enter the script here."
+- Helper text: "Supports bash shell, python or Ansible playbooks"
+
+Suggested Content: [TO BE FILLED BY CONTENT WRITERS]
+Notes: User requested to rename the kickstart section to better reflect its purpose as first boot configuration. Updated terminology from "kickstart CSV" to "script" to be more accurate about the supported file types. Helper text now clearly indicates support for multiple scripting languages instead of referring to CSV files.
+
+=============================
+
+CHANGE #12: Dropdown Toggle Behavior and Visual Checkmarks Implementation
+Location: BuildImageModal.tsx - All dropdown/select components throughout the modal
+Date: [Current Date]
+
+Original Content: 
+- Dropdown selections were permanent once made
+- No visual indication of selected state within dropdown menus
+- No way to deselect an option without changing to a different option
+
+Current Content:
+- All dropdowns now support toggle behavior: clicking the same option deselects it
+- Blue checkmarks (CheckIcon) appear next to selected options in dropdown menus
+- Toggle-off behavior returns dropdowns to appropriate default states:
+  * Compliance dropdowns: clear selection and reset compliance type to empty
+  * Integration dropdowns: clear selection and reset related fields
+  * Optional dropdowns (timezone, etc.): clear to empty state
+  * Required dropdowns (activation keys, base image): maintain selection behavior
+
+Affected Components:
+- Custom compliance policy dropdown
+- OpenSCAP profile dropdown  
+- AWS integration dropdown
+- Timezone selection dropdown
+- AWS regions dropdown
+- Activation key dropdown (checkmarks only)
+- Base image release dropdown (checkmarks only)
+- Base image architecture dropdown (checkmarks only)
+
+Suggested Content: [TO BE FILLED BY CONTENT WRITERS]
+Notes: User requested consistent toggle behavior across all dropdowns with blue checkmarks for selected options. This improves UX by providing clear visual feedback and allowing users to easily deselect options. Required fields maintain selection to ensure form validity while optional fields can be cleared via toggle.
+
+=============================
+
+CHANGE #13: Double Checkmark Fix for Dropdown Components  
+Location: BuildImageModal.tsx - All dropdown/select components throughout the modal
+Date: [Current Date]
+
+Original Content: 
+- Custom CheckIcon implementations were added on top of PatternFly's native checkmarks
+- This caused double checkmarks to appear in dropdown menus when options were selected
+- Custom div layouts with flex styling were used to position checkmarks
+
+Current Content:
+- Removed all custom CheckIcon implementations and related styling divs
+- Simplified SelectOption components to use plain text content only
+- PatternFly v6 Select components now use their built-in checkmark functionality
+- Single blue checkmarks appear correctly for selected options
+
+Technical Changes:
+- Removed CheckIcon import from react-icons
+- Removed custom div containers with flex styling in SelectOption components
+- Simplified all SelectOption children to plain text (e.g., {key}, {policy}, {region})
+- Maintained toggle functionality while fixing visual duplication
+
+Affected Components: All dropdown components maintain toggle behavior with proper single checkmarks
+
+=============================
+
+CHANGE #14: Cloud Image Expiration Notice
+Location: BuildImageModal.tsx - Review tab (cloud environment expiration alert)
+Date: [Current Date]
+
+Original Content: [No cloud expiration notice existed]
+Current Content: 
+Alert Title: "Important: Cloud image expiration notice"
+Alert Content:
+"You are seeing this notice because you selected [Selected Cloud Provider Names] as your target environment(s).
+
+The image will expire in 2 weeks after it's built. You must copy it to your own cloud account(s) to ensure continued access."
+
+Suggested Content: [TO BE FILLED BY CONTENT WRITERS]
+Notes: Warning alert that appears in the Review tab when users select cloud environments. 
+
+TRIGGER CONDITIONS: Alert displays when user selects any combination of:
+- Amazon Web Services (AWS)
+- Google Cloud Platform (GCP) 
+- Microsoft Azure
+- Oracle Cloud Infrastructure (OCI)
+
+DYNAMIC BEHAVIOR:
+- Cloud provider names are dynamically inserted based on user selections
+- Text adjusts for singular/plural ("environment" vs "environments", "account" vs "accounts")
+- Alert appears at the top of the Review tab to ensure visibility
+- Page automatically scrolls to top when navigating to Review tab so users see the alert
+
+PURPOSE: Critical warning to inform users about temporary nature of cloud images and requirement to copy to personal accounts before expiration.
+
+=============================
+
+CHANGE #15: Build Time Estimate Removal
+Location: BuildImageModal.tsx - Review tab "Ready to build" alert
+Date: [Current Date]
+
+Original Content: 
+"Your image configuration is complete and ready to build. The build process may take several minutes depending on the size and complexity of your image.
+
+**Estimated build time:** 5-15 minutes"
+
+Current Content:
+"Your image configuration is complete and ready to build. The build process may take several minutes depending on the size and complexity of your image."
+
+Suggested Content: [TO BE FILLED BY CONTENT WRITERS]
+Notes: Removed the specific build time estimate ("Estimated build time: 5-15 minutes") as it isn't relevant for this implementation. The general guidance about the build process taking "several minutes" is retained to set user expectations without providing specific time estimates that may not be accurate.
+
+PURPOSE: Simplify messaging and remove potentially inaccurate time estimates while maintaining user awareness that builds take time.
+
+=============================
+
+CHANGE #16: Advanced Capabilities Checkboxes for Automatic Registration
+Location: BuildImageModal.tsx - Base Image tab, Registration section under "Automatically register" option
+Date: [Current Date]
+
+Original Content: [No checkboxes under automatic registration option]
+Current Content: Two checkboxes appear when "Automatically register and enable advanced capabilities" is selected:
+1. "Enable predictive analytics and management capabilities" (checked by default)
+2. "Enable remote remediations and system management with automation" (checked by default)
+
+Suggested Content: [TO BE FILLED BY CONTENT WRITERS]
+Notes: Added two checkboxes underneath the automatic registration radio button to give users granular control over advanced capabilities. 
+
+FUNCTIONALITY:
+- Checkboxes only appear when "Automatically register and enable advanced capabilities" is selected
+- Both checkboxes are checked by default to maintain current behavior expectations
+- Users can uncheck individual capabilities if desired
+- Checkboxes are indented (1.5rem left margin) to show hierarchical relationship
+- Proper state management implemented for both checkbox values
+
+PURPOSE: Provide users with more control over which advanced capabilities are enabled during automatic registration while maintaining clear visual hierarchy.
+
+=============================
+
+CHANGE #17: Activation Key Details Popover Content Updates
+Location: BuildImageModal.tsx - Base Image tab, Activation key "View details" popover
+Date: [Current Date]
+
+Original Content: 
+Labels and content:
+- Key: {selectedActivationKey}
+- Environment: Production  
+- Usage: 45/100 systems
+- Auto-attach: Enabled
+- Content view: RHEL-8-CV
+
+Current Content:
+Labels and content:
+- Name: {selectedActivationKey}
+- Role: Development Environment
+- SLA: Standard (Business Hours)
+- Usage: 45/100 systems
+- Additional repositories: EPEL, Red Hat Codeready Builder
+
+Suggested Content: [TO BE FILLED BY CONTENT WRITERS]
+Notes: Updated the activation key details popover to show more relevant information with corrected labels and realistic content.
+
+CHANGES MADE:
+- "Key" → "Name" (maintains dynamic selectedActivationKey display)
+- "Environment" → "Role" with updated content
+- Added "SLA" field with service level information  
+- Kept "Usage" field unchanged (45/100 systems)
+- "Content view" → "Additional repositories" with repository names
+- Removed "Auto-attach" field
+
+PURPOSE: Provide more relevant and accurate information about activation keys that aligns with actual Red Hat subscription management terminology and user expectations.
+
+=============================
+
+CHANGE #18: Register Later Info Alert
+Location: BuildImageModal.tsx - Base Image tab, Registration section under "Register later" option
+Date: [Current Date]
+
+Original Content: [No alert for register later option]
+Current Content: Info alert that appears when "Register later" is selected:
+
+Alert Title: "Register with Red Hat Insights within 30 days"
+Alert Content:
+"If you don't register your systems within 30 days, you will not be able to use Red Hat Insights capabilities.
+
+[Learn more about registration (external link)]"
+
+Suggested Content: [TO BE FILLED BY CONTENT WRITERS]
+Notes: Blue info alert that appears conditionally when user selects "Register later" registration option.
+
+FUNCTIONALITY:
+- Alert only displays when "Register later" radio button is selected
+- Alert variant: info (blue background)
+- Contains external link with ExternalLinkAltIcon
+- Provides 30-day timeline guidance
+- Warns about loss of Red Hat Insights capabilities
+
+VISUAL DESIGN:
+- Inline info alert with blue background
+- Proper spacing (1rem margin top)
+- External link styling with underline and icon
+- Two-paragraph content structure
+
+=============================
+
+CHANGE #19: Base Image Form Validation Alerts
+Location: BuildImageModal.tsx - Base Image tab inline validation alerts
+Date: [Current Date]
+
+Original Content: [No validation alerts on base image form]
+Current Content: Inline warning alerts that appear above section titles when validation fails
+
+VALIDATION CRITERIA:
+1. Image name field must be filled out (required)
+2. If "Enable repeatable build" is selected, snapshot date must be chosen (required)
+3. Release and architecture have defaults so are less critical
+
+VALIDATION TRIGGERS:
+- Validation runs when user clicks "Review image" button while on Base Image tab (activeTabKey === 0)
+- If validation fails, user stays on current tab and scrolls to top to see first error
+- If validation passes, navigation to Review tab proceeds normally
+
+ALERT BEHAVIOR:
+- Warning alerts appear above the section title containing the error
+- Alert title: "Please complete the required fields"
+- Alert content shows specific error message
+- Alerts automatically clear when user corrects the issue (starts typing or makes selection)
+
+IMPLEMENTATION DETAILS:
+- Uses existing validationErrors state system ({[key: string]: string})
+- validateBaseImageForm() function returns boolean for success/failure
+- Error clearing logic integrated with existing onChange handlers
+- Maintains existing user experience for other tabs
+
+=============================
+
+CHANGE #20: Cloud Provider Login Validation
+Location: BuildImageModal.tsx - Base Image tab, Image output section validation
+Date: [Current Date]
+
+Original Content: [No validation for cloud provider login status]
+Current Content: Inline warning alert that appears when cloud providers are selected but login is incomplete
+
+Alert Title: "Please sign in to your cloud accounts"
+Alert Content: Dynamic messages based on which cloud providers need login:
+- AWS: "Please sign in to your AWS account by selecting an integration"
+- GCP: "Please select a GCP account type to proceed"
+- Azure: "Please authorize your Microsoft Azure account"
+
+VALIDATION CRITERIA:
+1. AWS: Must select an integration (cannot remain on default empty selection)
+2. GCP: Must select a service account type (cannot remain on default "Google account")
+3. Azure: Must click "Authorize Azure" button to complete authorization
+4. Oracle Cloud Infrastructure (OCI): No validation required (as indicated by tooltip)
+
+VALIDATION TRIGGERS:
+- Validation runs when user clicks "Review image" button while on Base Image tab
+- Only validates cloud providers that are actually selected by the user
+- If any selected cloud provider lacks proper authentication, validation fails
+- User stays on current tab and sees warning alert above "Image output" section
+
+ALERT BEHAVIOR:
+- Warning alert appears above "Image output" section title
+- Shows specific error message for each cloud provider requiring attention
+- Multiple cloud provider errors can be displayed simultaneously
+- Alerts automatically clear when user completes required actions
+
+ERROR CLEARING LOGIC:
+- AWS: Clears when user selects any integration option
+- GCP: Clears when user selects any service account type (not "Google account")
+- Azure: Clears when user clicks "Authorize Azure" button
+- Real-time clearing provides immediate feedback to users
+
+IMPLEMENTATION DETAILS:
+- Integrates with existing validateBaseImageForm() function
+- Uses existing validationErrors state system
+- Maintains proper user experience flow
+- Only validates selected cloud providers (doesn't block unused providers)
+
+=============================
+
 [Future changes will be added below this line] 
