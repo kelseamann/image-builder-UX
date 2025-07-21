@@ -434,14 +434,19 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const [repositorySearchTerm, setRepositorySearchTerm] = React.useState<string>('');
   const [repositoryPackageSearchTerms, setRepositoryPackageSearchTerms] = React.useState<{[key: string]: string}>({});
   const [repositoryPagination, setRepositoryPagination] = React.useState<{[key: string]: number}>({});
+  const [repositoryTablePage, setRepositoryTablePage] = React.useState<number>(1);
+  const repositoriesPerPage = 5;
 
-  // Repository data structure for table view
+  // Repository data structure for table view (matches screenshot format)
   const repositoryData = [
     {
-      id: 'red-hat-baseos',
-      name: 'Red Hat Enterprise Linux BaseOS',
-      description: 'Core system packages and utilities',
-      packageCount: 2847,
+      id: 'epel_test',
+      name: 'epel_test',
+      url: 'https://dl.fedoraproject.org/pub/epel/9/Everything/x86_64/',
+      architecture: 'Any',
+      version: 'Any',
+      packageCount: 24209,
+      status: 'valid',
       packages: [
         { id: 'aide', name: 'aide', version: '0.16', description: 'Advanced Intrusion Detection Environment', applicationStream: 'RHEL 9', retirementDate: '2032-05-31' },
         { id: 'sudo', name: 'sudo', version: '1.9.5p2', description: 'Execute commands as another user', applicationStream: 'RHEL 9', retirementDate: '2032-05-31' },
@@ -454,52 +459,69 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       ]
     },
     {
-      id: 'red-hat-appstream',
-      name: 'Red Hat Enterprise Linux AppStream',
-      description: 'Application development and runtime packages',
-      packageCount: 4521,
+      id: 'fedora',
+      name: 'Fedora',
+      url: 'http://fedora.mirror.constant.com/fedora/linux/releases/36/Everything/x86_64/os/',
+      architecture: 'Any',
+      version: 'Any',
+      packageCount: 0,
+      status: 'invalid',
       packages: [
         { id: 'httpd', name: 'httpd', version: '2.4.53', description: 'Apache HTTP Server', applicationStream: '2.4', retirementDate: '2030-12-31' },
         { id: 'nginx', name: 'nginx', version: '1.20.1', description: 'High performance web server', applicationStream: '1.20', retirementDate: '2030-06-30' },
-        { id: 'postgresql', name: 'postgresql', version: '13.7', description: 'PostgreSQL database server', applicationStream: '13', retirementDate: '2030-11-13' },
-        { id: 'mariadb', name: 'mariadb', version: '10.5.16', description: 'MariaDB database server', applicationStream: '10.5', retirementDate: '2030-06-24' },
-        { id: 'nodejs', name: 'nodejs', version: '18.14.2', description: 'Node.js JavaScript runtime', applicationStream: '18', retirementDate: '2030-04-30' },
-        { id: 'gcc', name: 'gcc', version: '11.3.1', description: 'GNU Compiler Collection', applicationStream: '11', retirementDate: '2032-05-31' },
-        { id: 'container-tools', name: 'container-tools', version: '4.0', description: 'Container runtime and build tools', applicationStream: '4.0', retirementDate: '2030-05-31' }
+        { id: 'postgresql', name: 'postgresql', version: '13.7', description: 'PostgreSQL database server', applicationStream: '13', retirementDate: '2030-11-13' }
       ]
     },
     {
-      id: 'epel',
-      name: 'Extra Packages for Enterprise Linux',
-      description: 'Community-maintained packages for RHEL',
-      packageCount: 8934,
+      id: 'microshift-corp-testing',
+      name: 'microshift-corp-testing',
+      url: 'https://download.corp.fedorainfracloud.org/results/@redhat-et/microshift-testing/epel-8-x86_64/',
+      architecture: 'Any',
+      version: 'Any',
+      packageCount: 145,
+      status: 'valid',
       packages: [
         { id: 'htop', name: 'htop', version: '3.2.1', description: 'Interactive process viewer', applicationStream: '3.2', retirementDate: '2030-12-01' },
         { id: 'ncdu', name: 'ncdu', version: '1.16', description: 'NCurses disk usage analyzer', applicationStream: '1.16', retirementDate: '2031-06-30' },
-        { id: 'fish', name: 'fish', version: '3.4.1', description: 'Friendly Interactive Shell', applicationStream: '3.4', retirementDate: '2030-08-15' },
-        { id: 'tmux', name: 'tmux', version: '3.3a', description: 'Terminal multiplexer', applicationStream: '3.3', retirementDate: '2031-12-31' },
-        { id: 'tree', name: 'tree', version: '2.0.2', description: 'Display directories as trees', applicationStream: '2.0', retirementDate: '2030-09-30' }
+        { id: 'fish', name: 'fish', version: '3.4.1', description: 'Friendly Interactive Shell', applicationStream: '3.4', retirementDate: '2030-08-15' }
       ]
     },
     {
-      id: 'centos-stream',
-      name: 'CentOS Stream',
-      description: 'Rolling preview of upcoming RHEL releases',
-      packageCount: 3456,
+      id: 'microshift-manifests-example',
+      name: 'microshift-manifests-example',
+      url: 'https://copr.fedorainfracloud.org/coprs/mangelajo/microshift-hello-world/',
+      architecture: 'Any',
+      version: 'Any',
+      packageCount: 0,
+      status: 'invalid',
       packages: [
         { id: 'podman', name: 'podman', version: '4.4.1', description: 'Daemonless container engine', applicationStream: '4.4', retirementDate: '2030-12-31' },
-        { id: 'buildah', name: 'buildah', version: '1.29.0', description: 'Build container images', applicationStream: '1.29', retirementDate: '2030-12-31' },
-        { id: 'skopeo', name: 'skopeo', version: '1.11.1', description: 'Work with container images and registries', applicationStream: '1.11', retirementDate: '2030-12-31' }
+        { id: 'buildah', name: 'buildah', version: '1.29.0', description: 'Build container images', applicationStream: '1.29', retirementDate: '2030-12-31' }
       ]
     },
     {
-      id: 'custom-repo-1',
-      name: 'Custom Repository 1',
-      description: 'Internal enterprise packages',
-      packageCount: 156,
+      id: 'microshift-x86_64',
+      name: 'microshift-x86_64',
+      url: 'https://download.corp.fedorainfracloud.org/results/@redhat-et/microshift/epel-9-x86_64/',
+      architecture: 'Any',
+      version: 'Any',
+      packageCount: 6,
+      status: 'valid',
       packages: [
         { id: 'enterprise-tool', name: 'enterprise-tool', version: '2.1.0', description: 'Internal enterprise management tool', applicationStream: '2.1', retirementDate: '2025-12-31' },
         { id: 'monitoring-agent', name: 'monitoring-agent', version: '1.5.3', description: 'Custom monitoring solution', applicationStream: '1.5', retirementDate: '2025-06-30' }
+      ]
+    },
+    {
+      id: 'odoo-nights',
+      name: 'Odoo Nights',
+      url: 'https://nightly.odoo.com/16.0/nightly/rpm/',
+      architecture: 'Any',
+      version: 'Any',
+      packageCount: 1,
+      status: 'valid',
+      packages: [
+        { id: 'odoo', name: 'odoo', version: '16.0', description: 'Open Source ERP and CRM', applicationStream: 'Odoo', retirementDate: '2025-12-31' }
       ]
     }
   ];
@@ -1220,8 +1242,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     }
     
     return repositoryData.filter(repo => 
-      repo.name.toLowerCase().includes(repositorySearchTerm.toLowerCase()) ||
-      repo.description.toLowerCase().includes(repositorySearchTerm.toLowerCase())
+      repo.name.toLowerCase().includes(repositorySearchTerm.toLowerCase())
     );
   };
 
@@ -1273,6 +1294,21 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       [repositoryId]: page
     }));
   };
+
+  // Get count of selected packages for a specific repository
+  const getSelectedPackageCountForRepository = (repositoryId: string) => {
+    return selectedPackages.filter(pkg => pkg.repositoryId === repositoryId).length;
+  };
+
+  // Get paginated repository data for the fixed table
+  const getPaginatedRepositories = () => {
+    const filteredRepos = getFilteredRepositoryData();
+    const startIndex = (repositoryTablePage - 1) * repositoriesPerPage;
+    const endIndex = startIndex + repositoriesPerPage;
+    return filteredRepos.slice(startIndex, endIndex);
+  };
+
+  const totalRepositoryPages = Math.ceil(getFilteredRepositoryData().length / repositoriesPerPage);
 
   // Firewall helper functions
   const addFirewallRow = () => {
@@ -3329,7 +3365,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       fieldId="repository-search"
                     >
                       <SearchInput
-                        placeholder="Search by repository name or description..."
+                        placeholder="Search by repository name..."
                         value={repositorySearchTerm}
                         onChange={(_event, value) => setRepositorySearchTerm(value)}
                         onClear={() => setRepositorySearchTerm('')}
@@ -3338,29 +3374,51 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     </FormGroup>
                   </div>
 
-                  {/* Repository Table */}
+                  {/* Fixed-Size Repository Table */}
                   <div style={{ 
                     border: '1px solid #d2d2d2', 
                     borderRadius: '4px',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    minHeight: '400px'
                   }}>
-                    {getFilteredRepositoryData().map((repository) => (
+                    {/* Table Header */}
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
+                      gap: '1rem',
+                      padding: '0.75rem 1rem',
+                      backgroundColor: '#f8f8f8',
+                      borderBottom: '1px solid #d2d2d2',
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
+                      color: '#151515'
+                    }}>
+                      <div>Name</div>
+                      <div>Architecture</div>
+                      <div>Version</div>
+                      <div>Packages</div>
+                      <div>Status</div>
+                    </div>
+                    {/* Table Rows */}
+                    {getPaginatedRepositories().map((repository) => (
                       <div key={repository.id}>
                         {/* Repository Row */}
                         <div
                           style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            padding: '1rem',
+                            display: 'grid',
+                            gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
+                            gap: '1rem',
+                            padding: '0.75rem 1rem',
                             backgroundColor: expandedRepositories.has(repository.id) ? '#f0f0f0' : 'white',
-                            borderBottom: '1px solid #d2d2d2',
+                            borderBottom: '1px solid #e8e8e8',
                             cursor: 'pointer',
+                            fontSize: '0.875rem',
                             transition: 'background-color 0.15s ease'
                           }}
                           onClick={() => handleRepositoryToggle(repository.id)}
                           onMouseEnter={(e) => {
                             if (!expandedRepositories.has(repository.id)) {
-                              (e.target as HTMLElement).style.backgroundColor = '#f8f8f8';
+                              (e.target as HTMLElement).style.backgroundColor = '#f5f5f5';
                             }
                           }}
                           onMouseLeave={(e) => {
@@ -3369,35 +3427,60 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                             }
                           }}
                         >
-                          <div style={{ marginRight: '1rem' }}>
-                            {expandedRepositories.has(repository.id) ? (
-                              <ChevronDownIcon style={{ fontSize: '1rem', color: '#666' }} />
-                            ) : (
-                              <ChevronRightIcon style={{ fontSize: '1rem', color: '#666' }} />
-                            )}
+                          <div style={{ 
+                            display: 'flex',
+                            alignItems: 'center',
+                            color: '#0066cc'
+                          }}>
+                            <div style={{ marginRight: '0.5rem' }}>
+                              {expandedRepositories.has(repository.id) ? (
+                                <ChevronDownIcon style={{ fontSize: '1rem', color: '#666' }} />
+                              ) : (
+                                <ChevronRightIcon style={{ fontSize: '1rem', color: '#666' }} />
+                              )}
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 500 }}>{repository.name}</div>
+                              <div style={{ 
+                                fontSize: '0.75rem', 
+                                color: '#0066cc',
+                                textDecoration: 'underline'
+                              }}>
+                                {repository.url}
+                              </div>
+                            </div>
                           </div>
-                          <div style={{ flex: 1 }}>
+                          <div style={{ color: '#666' }}>{repository.architecture}</div>
+                          <div style={{ color: '#666' }}>{repository.version}</div>
+                          <div style={{ color: '#666' }}>
+                            {(() => {
+                              const selectedCount = getSelectedPackageCountForRepository(repository.id);
+                              const totalCount = repository.packageCount;
+                              return selectedCount > 0 ? 
+                                `${selectedCount}/${totalCount.toLocaleString()}` : 
+                                totalCount === 0 ? '-' : totalCount.toLocaleString();
+                            })()}
+                          </div>
+                          <div style={{ 
+                            display: 'flex',
+                            alignItems: 'center',
+                            color: repository.status === 'valid' ? '#3e8635' : '#c9190b'
+                          }}>
                             <div style={{ 
-                              fontSize: '1rem', 
-                              fontWeight: 500, 
-                              marginBottom: '0.25rem',
-                              color: '#151515'
+                              marginRight: '0.5rem',
+                              width: '16px',
+                              height: '16px',
+                              borderRadius: '50%',
+                              backgroundColor: repository.status === 'valid' ? '#3e8635' : '#c9190b',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.75rem',
+                              color: 'white'
                             }}>
-                              {repository.name}
+                              {repository.status === 'valid' ? '✓' : '!'}
                             </div>
-                            <div style={{ 
-                              fontSize: '0.875rem', 
-                              color: '#666',
-                              marginBottom: '0.25rem'
-                            }}>
-                              {repository.description}
-                            </div>
-                            <div style={{ 
-                              fontSize: '0.75rem', 
-                              color: '#888'
-                            }}>
-                              {repository.packageCount.toLocaleString()} packages available
-                            </div>
+                            {repository.status === 'valid' ? 'Valid' : 'Invalid'}
                           </div>
                         </div>
 
@@ -3405,7 +3488,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                         {expandedRepositories.has(repository.id) && (
                           <div style={{ 
                             backgroundColor: '#fafafa',
-                            borderTop: '1px solid #e0e0e0'
+                            borderBottom: '1px solid #e8e8e8'
                           }}>
                             {/* Package Search within Repository */}
                             <div style={{ 
@@ -3571,6 +3654,29 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       </div>
                     ))}
                     
+                    {/* Fill remaining table space if fewer than 5 rows */}
+                    {Array.from({ length: Math.max(0, repositoriesPerPage - getPaginatedRepositories().length) }).map((_, index) => (
+                      <div
+                        key={`empty-${index}`}
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
+                          gap: '1rem',
+                          padding: '0.75rem 1rem',
+                          backgroundColor: 'white',
+                          borderBottom: '1px solid #e8e8e8',
+                          fontSize: '0.875rem',
+                          minHeight: '49px'
+                        }}
+                      >
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                      </div>
+                    ))}
+                    
                     {getFilteredRepositoryData().length === 0 && (
                       <div style={{ 
                         padding: '3rem', 
@@ -3582,6 +3688,37 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       </div>
                     )}
                   </div>
+
+                  {/* Repository Table Pagination */}
+                  {totalRepositoryPages > 1 && (
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      marginTop: '1rem',
+                      gap: '1rem'
+                    }}>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        isDisabled={repositoryTablePage === 1}
+                        onClick={() => setRepositoryTablePage(repositoryTablePage - 1)}
+                      >
+                        Previous
+                      </Button>
+                      <span style={{ fontSize: '0.875rem', color: '#666' }}>
+                        Page {repositoryTablePage} of {totalRepositoryPages}
+                      </span>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        isDisabled={repositoryTablePage === totalRepositoryPages}
+                        onClick={() => setRepositoryTablePage(repositoryTablePage + 1)}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  )}
 
                   {/* Selected Packages Summary Table */}
                   {selectedPackages.length > 0 && (
