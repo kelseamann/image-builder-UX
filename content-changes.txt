@@ -450,4 +450,406 @@ IMPLEMENTATION DETAILS:
 
 =============================
 
+CHANGE #21: File System Configuration Section Addition
+Location: BuildImageModal.tsx - Advanced Settings tab
+Date: [Current Date]
+
+Original Content: [No file system configuration section existed]
+Current Content: New "File system configuration" section with:
+
+Section Title: "File system configuration"
+Description: "Configure how the file system should be partitioned for your image."
+
+RADIO BUTTON OPTIONS:
+1. "Use automatic partitioning" (default, marked as "Recommended")
+2. "Manually configure partitions"
+
+CONDITIONAL TABLE (appears only when "Manually configure partitions" is selected):
+Table Title: "Configure partitions" 
+Table Columns: Mount point | Suffix | Type | Minimum size | Unit | [Remove button]
+
+DEFAULT TABLE ROW:
+- Mount point: "/" (dropdown with options: /, /boot, /home, /var, /tmp)
+- Suffix: [empty text input]
+- Type: "xfs" (dropdown with options: xfs, ext4, ext3)
+- Minimum size: "10" (text input)
+- Unit: "GiB" (dropdown with options: GiB, MiB, TiB)
+- Remove button only appears when multiple rows exist
+
+TABLE FUNCTIONALITY:
+- "Add partition" button (link style with plus icon) to add new rows
+- Remove button (minus circle icon) to delete rows
+- Users can customize all fields in each row
+- Minimum one row requirement (remove button disabled on single row)
+
+Suggested Content: [TO BE FILLED BY CONTENT WRITERS]
+Notes: User requested file system configuration functionality similar to the packages and repositories step behaviorally, but only shows when "Manually configure partitions" is selected. 
+
+BEHAVIORAL PATTERN:
+- Follows same conditional visibility pattern as packages/repositories section
+- Radio buttons control section visibility
+- Table provides row-based management with add/remove functionality
+- Integrates into Advanced Settings tab navigation flow
+- Positioned after Firewall section, before Users section
+
+TECHNICAL IMPLEMENTATION:
+- Uses HTML table with PatternFly styling (since @patternfly/react-table not available)
+- Proper state management for partitioning method and partition rows
+- Section ref added for tab navigation functionality
+- Consistent styling with other Advanced Settings sections
+- Root mount point "/" is read-only and unchangeable in the first row
+- Additional mount points can be selected from dropdown (/boot, /home, /var, /tmp)
+
+=============================
+
+CHANGE #22: Standardized Add Button Styling
+Location: BuildImageModal.tsx - All Add buttons throughout modal
+Date: [Current Date]
+
+Original Content: Various Add buttons with inconsistent styling:
+- "Add Repository" (secondary button variant)
+- "Add more" (secondary button variant) - firewall section
+- "Add another user" (secondary button variant)
+- "Add partition" (already implemented with link + icon styling)
+
+Current Content: All Add buttons now use consistent inline link styling:
+- "Add Repository" (link variant with plus icon)
+- "Add more" (link variant with plus icon) - firewall section
+- "Add another user" (link variant with plus icon)
+- "Add partition" (link variant with plus icon)
+
+STANDARDIZED STYLING:
+- Button variant: "link"
+- Icon: PlusIcon from PatternFly react-icons
+- Font size: 0.875rem for consistency
+- Maintains existing margin/spacing per section needs
+
+AFFECTED BUTTONS:
+1. Repositories section: "Add Repository"
+2. Firewall section: "Add more" 
+3. Users section: "Add another user"
+4. File system section: "Add partition"
+
+Suggested Content: [TO BE FILLED BY CONTENT WRITERS]
+Notes: User requested consistent styling for all Add buttons, specifically preferring the inline link styling with plus icon. This creates a cohesive experience across all add functionality throughout the modal while maintaining appropriate semantic meaning with the plus icon indicating addition of new items.
+
+PURPOSE: Provide consistent visual design language for all add functionality throughout the application while maintaining usability and accessibility standards.
+
+BUTTON STYLING FIX: Fixed locale section "Add more" button to use consistent styling (removed custom border/padding/color in favor of standard link + plus icon format).
+
+=============================
+
+CHANGE #23: Kernel Section "Add more" Button Fix and Enhancement
+Location: BuildImageModal.tsx - Advanced Settings tab, Kernel section
+Date: [Current Date]
+
+Original Content: 
+- Non-functional "Add more" button (missing onClick handler)
+- Single kernel append text input using kernelAppend state
+- Inconsistent button styling (secondary variant)
+- No way to add multiple kernel arguments
+
+Current Content:
+- Fully functional "Add more" button with proper onClick handler
+- Multiple kernel argument support using kernelArguments array state
+- Standardized button styling (link variant with plus icon)
+- Dynamic rows with individual remove functionality
+
+FUNCTIONALITY IMPROVEMENTS:
+1. **Working Add More Button**: Now properly connected to addKernelArgument() function
+2. **Multiple Arguments Support**: Users can add unlimited kernel argument fields
+3. **Remove Functionality**: Minus circle icons to remove individual arguments
+4. **State Management**: Proper use of kernelArguments array instead of single kernelAppend string
+5. **Standardized Styling**: Button now matches other Add buttons throughout modal
+
+TECHNICAL CHANGES:
+- Added addKernelArgument(), removeKernelArgument(), updateKernelArgument() helper functions
+- Updated UI to use kernelArguments array with dynamic row generation
+- Implemented remove icons with proper disabled state for single argument
+- Migrated from kernelAppend (string) to kernelArguments (array) usage
+- Applied consistent styling with other Add more buttons
+
+VISUAL CONSISTENCY:
+- Button variant: "link" with PlusIcon
+- Font size: 0.875rem
+- Matches firewall, users, and partition Add buttons
+- Proper spacing and layout alignment
+
+Suggested Content: [TO BE FILLED BY CONTENT WRITERS]
+Notes: User reported that the kernel section "Add more" button was not working. Root cause was missing onClick handler and improper state management. Fixed by implementing proper multi-row functionality similar to firewall section pattern.
+
+PURPOSE: Enable users to add multiple kernel boot parameters while maintaining consistent UX patterns across all sections of the modal.
+
+=============================
+
+CHANGE #24: Placeholder Text Documentation for Content Review
+Location: BuildImageModal.tsx - Advanced Settings tab, multiple sections
+Date: [Current Date]
+
+PLACEHOLDER TEXT INSTANCES TO BE REPLACED:
+
+1. COMPLIANCE SECTION
+   - Location: Line ~2340
+   - Section Header: "Compliance"
+   - Current Content: "This is filler text for now."
+   - Notes: Appears after main compliance description about Insights compliance policy and OpenSCAP profiles
+
+2. LOCALE SECTION
+   - Location: Line ~3260
+   - Section Header: "Locale"
+   - Current Content: "This is filler text for now."
+   - Notes: Main description text for locale configuration section
+
+3. HOSTNAME SECTION
+   - Location: Line ~3421
+   - Section Header: "Hostname"
+   - Current Content: "This is filler text for now."
+   - Notes: Main description text for hostname configuration section
+
+4. KERNEL SECTION
+   - Location: Line ~3486
+   - Section Header: "Kernel"
+   - Current Content: "This is filler text for now."
+   - Notes: Main description text for kernel configuration section
+
+5. SYSTEMD SERVICES SECTION
+   - Location: Line ~3602
+   - Section Header: "Systemd services"
+   - Current Content: "This is filler text for now."
+   - Notes: Main description text for systemd services management section
+
+6. FIREWALL SECTION
+   - Location: Line ~3671
+   - Section Header: "Firewall"
+   - Current Content: "This is filler text for now."
+   - Notes: Main description text for firewall configuration section
+
+PURPOSE: All instances marked for content writing team to replace with proper descriptive text explaining each section's functionality and purpose.
+
+IMPLEMENTATION PRIORITY: Medium - these are section descriptions that help users understand what each configuration area does.
+
+=============================
+
+CHANGE #25: NTP Servers Validation Criteria Update
+Location: BuildImageModal.tsx - Advanced Settings tab, Timezone section
+Date: [Current Date]
+
+Original Content: Three instances of "Additional kernel boot parameters to append"
+
+Current Content:
+1. "Must begin with a lowercase letter or digit"
+2. "The address can only contain lowercase letters, digits or hyphens"
+3. "Sections must be separated by a colon (:), period (.), or a forward slash (/)"
+
+CONTEXT: These are validation criteria displayed below the NTP servers text input field in the Timezone section.
+
+PURPOSE: Provide users with clear, specific validation rules for NTP server address formatting to prevent configuration errors and improve form usability.
+
+IMPLEMENTATION: Updated three consecutive div elements with MinusIcon bullet points beneath the NTP servers FormGroup.
+
+=============================
+
+CHANGE #26: Hostname Validation Criteria Update
+Location: BuildImageModal.tsx - Advanced Settings tab, Hostname section
+Date: [Current Date]
+
+Original Content: Three instances of "Additional kernel boot parameters to append"
+
+Current Content:
+1. "Each label must start and end with an alphanumeric character (a-z, 0-9)"
+2. "Separate labels with dots"
+3. "Hyphens are allowed within labels, but not at the beginning or end"
+
+CONTEXT: These are validation criteria displayed below the hostname text input field in the Hostname section.
+
+PURPOSE: Provide users with clear, specific validation rules for hostname formatting according to RFC standards, helping prevent configuration errors and improve form usability.
+
+IMPLEMENTATION: Updated three consecutive div elements with MinusIcon bullet points beneath the hostname FormGroup.
+
+=============================
+
+CHANGE #27: Validation Criteria Width Expansion Fix
+Location: BuildImageModal.tsx - Advanced Settings tab, NTP servers & Hostname sections
+Date: [Current Date]
+
+Original Issue: Validation criteria text was being truncated due to text input field width constraints (200px for NTP servers field)
+
+Current Fix: Added explicit width styling to validation criteria containers:
+- width: '100%' - Allow full available width
+- maxWidth: '600px' - Set reasonable maximum to maintain readability
+
+AFFECTED SECTIONS:
+1. NTP Servers validation criteria (3 items)
+2. Hostname validation criteria (3 items)
+
+TECHNICAL IMPLEMENTATION: Updated all validation criteria div containers to include width and maxWidth properties, ensuring full sentence display without truncation.
+
+RESULT: Users can now read complete validation criteria sentences without text being cut off by narrow text input field constraints.
+
+=============================
+
+CHANGE #28: Kernel Arguments Validation Criteria Update
+Location: BuildImageModal.tsx - Advanced Settings tab, Kernel section
+Date: [Current Date]
+
+Original Content: Single instance of "Additional kernel boot parameters to append"
+
+Current Content:
+1. "Only alphanumeric characters, equals signs, hyphens, underscores, commas, periods, double quotes, and single quotes"
+2. "Separate arguments with a comma"
+
+CONTEXT: These are validation criteria displayed below the kernel arguments text input fields in the Kernel section's "Append" FormGroup.
+
+PURPOSE: Provide users with clear, specific validation rules for kernel argument formatting, ensuring proper syntax and character usage for kernel boot parameters.
+
+IMPLEMENTATION: Replaced single placeholder with two comprehensive validation criteria div elements, including width and maxWidth properties for full sentence display.
+
+=============================
+
+CHANGE #29: Firewall Port Validation Criteria Update
+Location: BuildImageModal.tsx - Advanced Settings tab, Firewall section
+Date: [Current Date]
+
+Original Content: Two instances of "Additional kernel boot parameters to append"
+
+Current Content:
+1. "Must begin with a port number (up to 5 digits) or a lowercase name (up to 6 letters); a dash may be used to specify a range"
+2. "Must include : or / followed by a lowercase protocol like tcp or udp"
+
+CONTEXT: These are validation criteria displayed below the "Enabled ports" text input fields in the Firewall section.
+
+PURPOSE: Provide users with clear, specific validation rules for firewall port configuration, ensuring proper port number/name format and protocol specification.
+
+IMPLEMENTATION: Updated two placeholder validation criteria div elements with proper firewall port formatting rules, including width and maxWidth properties for full sentence display.
+
+=============================
+
+CHANGE #30: Systemd Services Placeholder and Helper Text Update
+Location: BuildImageModal.tsx - Advanced Settings tab, Systemd services section
+Date: [Current Date]
+
+PLACEHOLDER TEXT CHANGES:
+- Disabled services: "Enter services to disable" → "Comma-separated list of services to disable"
+- Masked services: "Enter services to mask" → "Comma-separated list of services to mask"  
+- Enabled services: "Enter services to enable" → "Comma-separated list of services to enable"
+
+HELPER TEXT CHANGES:
+- Disabled services: "Comma-separated list of services to disable" → "These services are installed but will not start automatically at boot."
+- Masked services: "Comma-separated list of services to disable" → "These services are completely blocked from being started manually or automatically."
+- Enabled services: "Comma-separated list of services to disable" → "These services are currently active and set to start automatically at boot."
+
+CONTEXT: Updated all three systemd service fields to move format information to placeholder text and provide specific functional descriptions in helper text.
+
+PURPOSE: Improve user understanding of different systemd service states and provide clearer input guidance by showing format requirements directly in the input fields.
+
+IMPLEMENTATION: Updated TextInput placeholder attributes and helper text div content for all three service types (disabled, masked, enabled).
+
+=============================
+
+CHANGE #31: RHEL Version Support Lifecycle Details in Dropdown Menus
+Location: BuildImageModal.tsx (Base Image tab), Dashboard.tsx (Migration overlay), ImageMigrationModal.tsx
+Date: [Current Date]
+
+ENHANCEMENT: Added detailed support lifecycle information to all RHEL version dropdown menus
+
+CONTENT DETAILS:
+- Red Hat Enterprise Linux 10: "Full support ends: May 2030 | Maintenance support ends: May 2035"
+- Red Hat Enterprise Linux 9: "Full support ends: May 2027 | Maintenance support ends: May 2032"
+- Red Hat Enterprise Linux 8: "Full support ends: May 2024 | Maintenance support ends: May 2029"
+
+LOCATIONS UPDATED:
+1. BuildImageModal.tsx - Base Image Release dropdown
+2. Dashboard.tsx - Migration overlay "To" release dropdown
+3. ImageMigrationModal.tsx - Migration target release dropdown
+
+CONTEXT: Enhanced all RHEL version selection dropdowns to display support lifecycle information, matching the design shown in user mockups and providing critical support expiration dates.
+
+PURPOSE: Help users make informed decisions about RHEL version selection by showing full support and maintenance support end dates directly in the dropdown options.
+
+IMPLEMENTATION: Structured SelectOption content with main release name (fontWeight: 500) and support detail information below in smaller, lighter text (fontSize: '0.875rem', color: '#666').
+
+VISUAL IMPACT: Each dropdown option now displays both the RHEL version name and its support lifecycle dates in a clear two-line format, improving user awareness of support timelines.
+
+=============================
+
+CHANGE #32: User Validation - Duplicate Username Prevention
+Location: BuildImageModal.tsx - Advanced Settings tab, Users section
+Date: [Current Date]
+
+VALIDATION ENHANCEMENT: Implemented username duplicate validation with real-time feedback
+
+VALIDATION RULES:
+- Only requirement: Duplicate usernames are not allowed
+- Real-time validation as users type
+- Error clearing when duplicates are resolved
+
+HELPER TEXT UPDATE:
+- Original: "Create user accounts for systems that will use this image."
+- Updated: "Create user accounts for systems that will use this image. Duplicate usernames are not allowed."
+
+UI IMPLEMENTATION:
+- Added `checkDuplicateUsername()` function to detect duplicate usernames across all users
+- Added `usernameErrors` state to track validation errors per user
+- Enhanced username TextInput with:
+  - Real-time duplicate checking on onChange
+  - Visual error state (`validated="error"`)
+  - Error message display below input field
+  - Smart error clearing when duplicates are resolved
+- Added cleanup of username validation errors when users are removed
+
+CONTEXT: Simplified user validation to focus solely on preventing duplicate usernames, removing any other validation complexity while providing immediate feedback to users.
+
+PURPOSE: Ensure unique usernames across all user accounts while maintaining a streamlined user experience with clear validation feedback.
+
+ERROR HANDLING: 
+- Real-time validation prevents submission with duplicates
+- Error messages appear immediately when duplicates are detected
+- Errors automatically clear when duplicates are resolved
+- Validation state cleanup when users are removed
+
 [Future changes will be added below this line] 
+
+=============================
+
+CHANGE #33: Validation Error Navigation Enhancement
+Location: BuildImageModal.tsx - "Review image" button validation behavior
+Date: [Current Date]
+
+UX Enhancement: Smart Error Navigation with Automatic Scrolling
+Current Behavior: When validation fails on "Review image", shows error message and scrolls to top of modal
+New Behavior: When validation fails, automatically scrolls to the first error field location
+
+Implementation Details:
+- Enhanced validateBaseImageForm() function to return first error field reference
+- Added imageDetailsRef for Image Details section navigation
+- Updated "Review image" button onClick handler to scroll to specific error locations
+- Uses smooth scrolling animation to guide user attention
+
+Error Navigation Priority:
+1. Image name errors → scrolls to Image Details section
+2. Snapshot date errors → scrolls to Enable Repeatable Build section  
+3. Cloud provider login errors → scrolls to Image Output section
+
+Benefits:
+- Eliminates user frustration from hunting for validation errors
+- Provides immediate visual feedback on what needs to be completed
+- Improves form completion workflow efficiency
+- Maintains consistent validation message display
+
+Technical Implementation:
+- Uses React refs for precise section targeting
+- Calculates scroll position relative to modal container
+- Preserves existing validation error display logic
+- Maintains backward compatibility with existing behavior
+
+CONTEXT: Addresses user request to automatically navigate to the first validation error field instead of requiring manual searching through the wizard steps.
+
+PURPOSE: Improve form validation UX by providing immediate, targeted navigation to incomplete or invalid fields.
+
+ERROR HANDLING: 
+- Smooth scroll animation guides user attention to problem areas
+- Fallback behavior if refs are not available
+- Maintains existing validation message display
+- Works consistently across all validation error types
+
+=============================

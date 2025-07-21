@@ -58,6 +58,7 @@ import {
   ToolbarItem,
   Tooltip
 } from '@patternfly/react-core';
+
 import { 
   ArrowRightIcon, 
   EditIcon, 
@@ -98,6 +99,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const contentAreaRef = React.useRef<HTMLDivElement>(null);
   
   // Section refs for navigation
+  const imageDetailsRef = React.useRef<HTMLDivElement>(null);
   const imageOutputRef = React.useRef<HTMLDivElement>(null);
   const enableRepeatableRef = React.useRef<HTMLDivElement>(null);
   const kickstartRef = React.useRef<HTMLDivElement>(null);
@@ -110,6 +112,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const kernelRef = React.useRef<HTMLDivElement>(null);
   const systemdRef = React.useRef<HTMLDivElement>(null);
   const firewallRef = React.useRef<HTMLDivElement>(null);
+
   const usersRef = React.useRef<HTMLDivElement>(null);
   
   // Track current section index for each tab
@@ -162,7 +165,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const [hostname, setHostname] = React.useState<string>('');
   const [kernelPackage, setKernelPackage] = React.useState<string>('kernel');
   const [isKernelPackageOpen, setIsKernelPackageOpen] = React.useState<boolean>(false);
-  const [kernelArguments, setKernelArguments] = React.useState<string[]>([]);
+  const [kernelAppend, setKernelAppend] = React.useState<string>('');
 
   // Public cloud state
   const [selectedCloudProvider, setSelectedCloudProvider] = React.useState<string[]>([]);
@@ -207,6 +210,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   
   // Validation state
   const [validationErrors, setValidationErrors] = React.useState<{[key: string]: string}>({});
+  const [usernameErrors, setUsernameErrors] = React.useState<{[key: string]: string}>({});
   
   // Kickstart file state
   const [kickstartFile, setKickstartFile] = React.useState<File | string>('');
@@ -238,8 +242,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const [firewallDisabledServices, setFirewallDisabledServices] = React.useState<string[]>(['']);
   const [firewallEnabledServices, setFirewallEnabledServices] = React.useState<string[]>(['']);
 
-  // Kernel append state
-  const [kernelAppend, setKernelAppend] = React.useState<string>('');
+
+
+
 
   // Specialty keyboards state
   const [specialtyKeyboard, setSpecialtyKeyboard] = React.useState<string>('');
@@ -261,12 +266,23 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
   const removeUser = (userId: string) => {
     setUsers(prev => prev.filter(user => user.id !== userId));
+    // Clean up username validation errors for the removed user
+    setUsernameErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[userId];
+      return newErrors;
+    });
   };
 
   const updateUser = (userId: string, field: keyof UserRow, value: any) => {
     setUsers(prev => prev.map(user => 
       user.id === userId ? { ...user, [field]: value } : user
     ));
+  };
+
+  const checkDuplicateUsername = (currentUserId: string, username: string) => {
+    if (!username.trim()) return false;
+    return users.some(user => user.id !== currentUserId && user.username.trim() === username.trim());
   };
 
   const addGroupToUser = (userId: string, group: string) => {
@@ -1118,6 +1134,10 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     setFirewallEnabledServices(newServices);
   };
 
+
+
+
+
   const handleTabClick = (event: React.MouseEvent | React.KeyboardEvent, tabIndex: string | number) => {
     setActiveTabKey(tabIndex);
     
@@ -1131,36 +1151,54 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     }
   };
 
-  const validateBaseImageForm = (): boolean => {
+  const validateBaseImageForm = (): { isValid: boolean; firstErrorRef?: React.RefObject<HTMLDivElement | null> } => {
     const errors: {[key: string]: string} = {};
+    let firstErrorRef: React.RefObject<HTMLDivElement | null> | undefined;
     
-    // Check if image name is filled out
+    // Check if image name is filled out (first section)
     if (!imageName.trim()) {
       errors.imageName = 'Image name is required';
+      if (!firstErrorRef) {
+        firstErrorRef = imageDetailsRef;
+      }
     }
     
-    // Check repeatable build snapshot date if enabled
+    // Check repeatable build snapshot date if enabled (second section)
     if (repeatableBuildOption === 'enable' && !snapshotDate.trim()) {
       errors.snapshotDate = 'Snapshot date is required when repeatable build is enabled';
+      if (!firstErrorRef) {
+        firstErrorRef = enableRepeatableRef;
+      }
     }
     
-    // Check cloud provider login status
+    // Check cloud provider login status (in image output section)
     if (selectedCloudProvider.includes('aws') && !selectedIntegration.trim()) {
       errors.awsLogin = 'Please sign in to your AWS account by selecting an integration';
+      if (!firstErrorRef) {
+        firstErrorRef = imageOutputRef;
+      }
     }
     
     if (selectedCloudProvider.includes('gcp') && gcpAccountType === 'Google account') {
       errors.gcpLogin = 'Please select a GCP account type to proceed';
+      if (!firstErrorRef) {
+        firstErrorRef = imageOutputRef;
+      }
     }
     
     if (selectedCloudProvider.includes('azure') && !isAzureAuthorized) {
       errors.azureLogin = 'Please authorize your Microsoft Azure account';
+      if (!firstErrorRef) {
+        firstErrorRef = imageOutputRef;
+      }
     }
     
     // Release and architecture have defaults so we don't need to validate them as strictly
     
     setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
+    const isValid = Object.keys(errors).length === 0;
+    
+    return { isValid, firstErrorRef };
   };
 
   const handleNext = () => {
@@ -1211,6 +1249,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
           
           // Base image tab: cycle through sections (starting from Image Details)
           const baseImageSections = [
+            imageDetailsRef,
             imageOutputRef,
             enableRepeatableRef, 
             kickstartRef,
@@ -1434,7 +1473,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             
             <Form>
               {/* Image Details Section */}
-              <div>
+              <div ref={imageDetailsRef}>
                 {validationErrors.imageName && (
                   <Alert
                     variant="warning"
@@ -1547,11 +1586,29 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     )}
                   >
                     <SelectList>
-                      {releaseOptions.map((release) => (
-                        <SelectOption key={release} value={release}>
-                          {release}
-                        </SelectOption>
-                      ))}
+                      {releaseOptions.map((release) => {
+                        let supportDetail = '';
+                        if (release === 'Red Hat Enterprise Linux 10') {
+                          supportDetail = 'Full support ends: May 2030 | Maintenance support ends: May 2035';
+                        } else if (release === 'Red Hat Enterprise Linux 9') {
+                          supportDetail = 'Full support ends: May 2027 | Maintenance support ends: May 2032';
+                        } else if (release === 'Red Hat Enterprise Linux 8') {
+                          supportDetail = 'Full support ends: May 2024 | Maintenance support ends: May 2029';
+                        }
+                        
+                        return (
+                          <SelectOption key={release} value={release}>
+                            <div>
+                              <div style={{ fontWeight: 500 }}>{release}</div>
+                              {supportDetail && (
+                                <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                  {supportDetail}
+                                </div>
+                              )}
+                            </div>
+                          </SelectOption>
+                        );
+                      })}
                     </SelectList>
                   </Select>
                   <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
@@ -3044,12 +3101,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
               {/* Add Repository Button */}
               <div style={{ marginTop: '1rem' }}>
-                      <Button
-                  variant="secondary"
+                <Button
+                  variant="link"
+                  icon={<PlusIcon />}
                   onClick={addRepositoryRow}
+                  style={{ fontSize: '0.875rem' }}
                 >
                   Add Repository
-                      </Button>
+                </Button>
               </div>
             </Form>
           </div>
@@ -3143,10 +3202,12 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     gap: '0.5rem', 
                     marginTop: '0.5rem',
                     fontSize: '0.875rem',
-                    color: '#666'
+                    color: '#666',
+                    width: '100%',
+                    maxWidth: '600px'
                   }}>
                     <MinusIcon style={{ fontSize: '0.875rem' }} />
-                    <span>Additional kernel boot parameters to append</span>
+                    <span>Must begin with a lowercase letter or digit</span>
                   </div>
                   <div style={{ 
                     display: 'flex', 
@@ -3154,10 +3215,12 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     gap: '0.5rem', 
                     marginTop: '0.5rem',
                     fontSize: '0.875rem',
-                    color: '#666'
+                    color: '#666',
+                    width: '100%',
+                    maxWidth: '600px'
                   }}>
                     <MinusIcon style={{ fontSize: '0.875rem' }} />
-                    <span>Additional kernel boot parameters to append</span>
+                    <span>The address can only contain lowercase letters, digits or hyphens</span>
                   </div>
                       <div style={{ 
                     display: 'flex', 
@@ -3165,10 +3228,12 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     gap: '0.5rem', 
                     marginTop: '0.5rem',
                     fontSize: '0.875rem',
-                    color: '#666'
+                    color: '#666',
+                    width: '100%',
+                    maxWidth: '600px'
                   }}>
                     <MinusIcon style={{ fontSize: '0.875rem' }} />
-                    <span>Additional kernel boot parameters to append</span>
+                    <span>Sections must be separated by a colon (:), period (.), or a forward slash (/)</span>
                   </div>
                 </FormGroup>
               </div>
@@ -3255,15 +3320,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     </div>
                     <Button
                       variant="link"
+                      icon={<PlusIcon />}
                       onClick={addLanguage}
-                      style={{ 
-                        padding: '0.5rem 1rem', 
-                        border: '1px solid #C7C7C7', 
-                        borderRadius: '24px', 
-                        color: '#0066CC', 
-                        backgroundColor: 'transparent',
-                        textDecoration: 'none'
-                      }}
+                      style={{ fontSize: '0.875rem' }}
                     >
                       Add more
                     </Button>
@@ -3375,10 +3434,12 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     gap: '0.5rem', 
                     marginTop: '0.5rem',
                     fontSize: '0.875rem',
-                    color: '#666'
+                    color: '#666',
+                    width: '100%',
+                    maxWidth: '600px'
                   }}>
                     <MinusIcon style={{ fontSize: '0.875rem' }} />
-                    <span>Additional kernel boot parameters to append</span>
+                    <span>Each label must start and end with an alphanumeric character (a-z, 0-9)</span>
                   </div>
                   <div style={{ 
                     display: 'flex', 
@@ -3386,10 +3447,12 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     gap: '0.5rem', 
                     marginTop: '0.5rem',
                     fontSize: '0.875rem',
-                    color: '#666'
+                    color: '#666',
+                    width: '100%',
+                    maxWidth: '600px'
                   }}>
                     <MinusIcon style={{ fontSize: '0.875rem' }} />
-                    <span>Additional kernel boot parameters to append</span>
+                    <span>Separate labels with dots</span>
                   </div>
                   <div style={{ 
                     display: 'flex', 
@@ -3397,10 +3460,12 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     gap: '0.5rem', 
                     marginTop: '0.5rem',
                     fontSize: '0.875rem',
-                    color: '#666'
+                    color: '#666',
+                    width: '100%',
+                    maxWidth: '600px'
                   }}>
                     <MinusIcon style={{ fontSize: '0.875rem' }} />
-                    <span>Additional kernel boot parameters to append</span>
+                    <span>Hyphens are allowed within labels, but not at the beginning or end</span>
                   </div>
                 </FormGroup>
               </div>
@@ -3458,22 +3523,26 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 <FormGroup
                   label="Append"
                   fieldId="kernel-append"
-                  style={{ marginBottom: '0rem' }}
+                  style={{ marginBottom: '1rem' }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <TextInput
-                      id="kernel-append"
-                      value={kernelAppend}
-                      onChange={(_event, value) => setKernelAppend(value)}
-                      placeholder="Enter kernel append options"
-                      style={{ width: '100%' }}
-                    />
-                    <Button
-                      variant="secondary"
-                      style={{ marginLeft: '0.5rem' }}
-                    >
-                      Add more
-                    </Button>
+                  <TextInput
+                    id="kernel-append"
+                    value={kernelAppend}
+                    onChange={(_event, value) => setKernelAppend(value)}
+                    placeholder="Enter kernel append options"
+                  />
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    color: '#666',
+                    width: '100%',
+                    maxWidth: '600px'
+                  }}>
+                    <MinusIcon style={{ fontSize: '0.875rem' }} />
+                    <span>Only alphanumeric characters, equals signs, hyphens, underscores, commas, periods, double quotes, and single quotes</span>
                   </div>
                   <div style={{ 
                     display: 'flex', 
@@ -3481,21 +3550,12 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     gap: '0.5rem', 
                     marginTop: '0.5rem',
                     fontSize: '0.875rem',
-                    color: '#666'
+                    color: '#666',
+                    width: '100%',
+                    maxWidth: '600px'
                   }}>
                     <MinusIcon style={{ fontSize: '0.875rem' }} />
-                    <span>Additional kernel boot parameters to append</span>
-                  </div>
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '0.5rem', 
-                    marginTop: '0.5rem',
-                    fontSize: '0.875rem',
-                    color: '#666'
-                  }}>
-                    <MinusIcon style={{ fontSize: '0.875rem' }} />
-                    <span>Additional kernel boot parameters to append</span>
+                    <span>Separate arguments with a comma</span>
                   </div>
                 </FormGroup>
               </div>
@@ -3526,11 +3586,11 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     id="systemd-disabled-services"
                     value={systemdDisabledServices}
                     onChange={(_event, value) => setSystemdDisabledServices(value)}
-                    placeholder="Enter services to disable"
+                    placeholder="Comma-separated list of services to disable"
                     style={{ width: '40%' }}
                   />
                   <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
-                    Comma-separated list of services to disable
+                    These services are installed but will not start automatically at boot.
                   </div>
                 </FormGroup>
 
@@ -3543,11 +3603,11 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     id="systemd-masked-services"
                     value={systemdMaskedServices}
                     onChange={(_event, value) => setSystemdMaskedServices(value)}
-                    placeholder="Enter services to mask"
+                    placeholder="Comma-separated list of services to mask"
                     style={{ width: '40%' }}
                   />
                   <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
-                    Comma-separated list of services to disable
+                    These services are completely blocked from being started manually or automatically.
                   </div>
                 </FormGroup>
 
@@ -3560,11 +3620,11 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     id="systemd-enabled-services"
                     value={systemdEnabledServices}
                     onChange={(_event, value) => setSystemdEnabledServices(value)}
-                    placeholder="Enter services to enable"
+                    placeholder="Comma-separated list of services to enable"
                     style={{ width: '40%' }}
                   />
                   <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
-                    Comma-separated list of services to disable
+                    These services are currently active and set to start automatically at boot.
                   </div>
                 </FormGroup>
               </div>
@@ -3611,10 +3671,12 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     gap: '0.5rem', 
                     marginTop: '0.5rem',
                     fontSize: '0.875rem',
-                    color: '#666'
+                    color: '#666',
+                    width: '100%',
+                    maxWidth: '600px'
                   }}>
                     <MinusIcon style={{ fontSize: '0.875rem' }} />
-                    <span>Additional kernel boot parameters to append</span>
+                    <span>Must begin with a port number (up to 5 digits) or a lowercase name (up to 6 letters); a dash may be used to specify a range</span>
                   </div>
                   <div style={{ 
                     display: 'flex', 
@@ -3622,10 +3684,12 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     gap: '0.5rem', 
                     marginTop: '0.5rem',
                     fontSize: '0.875rem',
-                    color: '#666'
+                    color: '#666',
+                    width: '100%',
+                    maxWidth: '600px'
                   }}>
                     <MinusIcon style={{ fontSize: '0.875rem' }} />
-                    <span>Additional kernel boot parameters to append</span>
+                    <span>Must include : or / followed by a lowercase protocol like tcp or udp</span>
                   </div>
                   </FormGroup>
 
@@ -3684,20 +3748,16 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 </div>
 
                 <Button
-                  variant="secondary"
+                  variant="link"
+                  icon={<PlusIcon />}
                   onClick={addFirewallRow}
-                  style={{ marginBottom: '0rem' }}
+                  style={{ marginBottom: '0rem', fontSize: '0.875rem' }}
                 >
                   Add more
                 </Button>
               </div>
 
-              {/* Divider */}
-              <div style={{ 
-                height: '1px', 
-                backgroundColor: '#d2d2d2', 
-                margin: '1rem 0' 
-              }} />
+
 
               {/* Users Section */}
 
@@ -3706,7 +3766,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     Users
                   </Title>
                   <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
-                  Create user accounts for systems that will use this image.                  
+                  Create user accounts for systems that will use this image. Duplicate usernames are not allowed.                  
                   </Content>
 
 
@@ -3749,13 +3809,53 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       />
                       
                       {/* Username */}
-                      <TextInput
-                        type="text"
-                        value={user.username}
-                        onChange={(event, value) => updateUser(user.id, 'username', value)}
-                        placeholder="Username"
-                        style={{ fontSize: '14px' }}
-                      />
+                      <div>
+                        <TextInput
+                          type="text"
+                          value={user.username}
+                          onChange={(event, value) => {
+                            updateUser(user.id, 'username', value);
+                            // Check for duplicate usernames
+                            const isDuplicate = checkDuplicateUsername(user.id, value);
+                            setUsernameErrors(prev => {
+                              const newErrors = { ...prev };
+                              if (isDuplicate) {
+                                newErrors[user.id] = 'Duplicate usernames are not allowed';
+                              } else {
+                                delete newErrors[user.id];
+                              }
+                              return newErrors;
+                            });
+                            // Also clear validation errors for other users with same username when this one changes
+                            if (!isDuplicate) {
+                              setUsernameErrors(prev => {
+                                const newErrors = { ...prev };
+                                Object.keys(newErrors).forEach(userId => {
+                                  if (userId !== user.id) {
+                                    const otherUser = users.find(u => u.id === userId);
+                                    if (otherUser && otherUser.username.trim() === value.trim()) {
+                                      delete newErrors[userId];
+                                    }
+                                  }
+                                });
+                                return newErrors;
+                              });
+                            }
+                          }}
+                          placeholder="Username"
+                          style={{ fontSize: '14px' }}
+                          validated={usernameErrors[user.id] ? 'error' : 'default'}
+                        />
+                        {usernameErrors[user.id] && (
+                          <div style={{ 
+                            fontSize: '0.875rem', 
+                            color: '#c9190b', 
+                            marginTop: '0.25rem' 
+                          }}>
+                            {usernameErrors[user.id]}
+                          </div>
+                        )}
+                      </div>
                       
                       {/* Password */}
                       <TextInput
@@ -3809,9 +3909,10 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 
                 {/* Add user button */}
                 <Button
-                  variant="secondary"
+                  variant="link"
+                  icon={<PlusIcon />}
                   onClick={addUser}
-                  style={{ marginTop: '1rem' }}
+                  style={{ marginTop: '1rem', fontSize: '0.875rem' }}
                 >
                   Add another user
                 </Button>
@@ -4130,13 +4231,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                             <DescriptionListTerm>Kernel</DescriptionListTerm>
                             <DescriptionListDescription>
                               {kernelPackage}
-                              {kernelArguments.length > 0 && (
+                              {kernelAppend && (
                                 <div style={{ marginTop: '4px' }}>
-                                  <LabelGroup>
-                                    {kernelArguments.map((arg, index) => (
-                                      <Label key={index}>{arg}</Label>
-                                    ))}
-                                  </LabelGroup>
+                                  <span style={{ fontSize: '0.875rem', color: '#666' }}>{kernelAppend}</span>
                                 </div>
                               )}
                             </DescriptionListDescription>
@@ -4318,10 +4415,21 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 onClick={() => {
                   // Only navigate to review if on base image tab and validation passes
                   if (activeTabKey === 0) {
-                    if (!validateBaseImageForm()) {
+                    const validationResult = validateBaseImageForm();
+                    if (!validationResult.isValid) {
                       // Validation failed, stay on current tab and scroll to first error
-                      if (contentAreaRef.current) {
-                        contentAreaRef.current.scrollTop = 0;
+                      if (contentAreaRef.current && validationResult.firstErrorRef && validationResult.firstErrorRef.current) {
+                        // Scroll to the specific error section
+                        const element = validationResult.firstErrorRef.current;
+                        const container = contentAreaRef.current;
+                        const containerRect = container.getBoundingClientRect();
+                        const elementRect = element.getBoundingClientRect();
+                        const scrollTop = container.scrollTop + elementRect.top - containerRect.top - 20;
+                        
+                        container.scrollTo({
+                          top: scrollTop,
+                          behavior: 'smooth'
+                        });
                       }
                       return;
                     }
