@@ -853,3 +853,92 @@ ERROR HANDLING:
 - Works consistently across all validation error types
 
 =============================
+
+**CHANGE #34: Repository and Package Table Browser Interface**
+
+**Location**: `BuildImageModal.tsx` - Base Image tab, Repositories and Packages section
+
+**Summary**: Comprehensive package discovery interface with hierarchical repository browsing, per-repository search, pagination, and selected packages summary table for large datasets.
+
+**Implementation Details**:
+- **Interface Toggle**: "Search & Add" vs "Browse Table" modes
+- **Repository Search**: Global search to filter repositories by name and description
+- **Per-Repository Package Search**: Individual search fields within each expanded repository
+- **Pagination**: 50 packages per page with Previous/Next controls
+- **Selected Packages Summary Table**: Displays all selected packages with repository information
+- **Performance Optimization**: Designed to handle up to 25,000 packages per repository
+
+**Technical Features**:
+- **State Management**: 
+  - `packageInterfaceMode`: Toggle between 'search' and 'browse' modes
+  - `expandedRepositories`: Set of expanded repository IDs
+  - `repositorySearchTerm`: Global repository filter
+  - `repositoryPackageSearchTerms`: Object mapping repository IDs to search terms
+  - `repositoryPagination`: Object mapping repository IDs to current page numbers
+
+- **Helper Functions**:
+  - `getFilteredPackagesForRepository()`: Returns `{packages, totalCount, hasMore}` with pagination
+  - `updateRepositoryPackageSearch()`: Updates search term and resets pagination
+  - `updateRepositoryPagination()`: Updates page number for specific repository
+  - `getRepositoryNameById()`: Retrieves repository name from ID for package summary table
+
+**UX Enhancements**:
+- **Repository Level**: Click to expand/collapse, shows package count
+- **Package Level**: Search within expanded repositories, checkbox selection, detailed package info
+- **Navigation**: Page indicators, Previous/Next buttons, result counts
+- **Selected Packages Table**: Clear overview of all selected packages with repository source
+- **Visual Design**: Hierarchical indentation, hover states, clear section separation
+
+**Selected Packages Summary Table**:
+- **Columns**: Package Name, Repository, Version, Support End, Remove Action
+- **Features**: 
+  - Shows package name with version
+  - Repository source for each package
+  - Support end date information
+  - Individual remove buttons with MinusCircleIcon
+  - Hover effects and professional table styling
+  - Conditional display (only shows when packages are selected)
+  - Package count in header
+- **Functionality**:
+  - Remove packages individually from summary table
+  - Works across both search and browse interface modes
+  - Real-time updates when packages are added/removed
+  - Maintains package-to-repository mapping
+
+**Data Structure**:
+```typescript
+repositoryData = [
+  {
+    id: 'repository-id',
+    name: 'Repository Name', 
+    description: 'Repository description',
+    packageCount: 2847,
+    packages: [
+      {
+        id: 'package-id',
+        name: 'package-name',
+        version: '1.0.0',
+        description: 'Package description',
+        applicationStream: 'RHEL 9',
+        retirementDate: '2032-05-31'
+      }
+    ]
+  }
+]
+```
+
+**Search Functionality**:
+- **Repository Search**: Filters repositories by name/description only
+- **Package Search**: Per-repository search by package name/description
+- **Pagination**: 50 packages per page with intelligent result management
+- **Result Indicators**: Clear feedback on search results and pagination status
+
+**Performance Considerations**:
+- Search result limiting (50 packages default, 100 max search results previously)
+- Per-repository pagination to handle large datasets
+- Efficient state management with targeted updates
+- Lazy loading approach with expandable repository structure
+
+This interface provides a scalable solution for package discovery in enterprise environments with thousands of repositories and tens of thousands of packages, while maintaining clear visibility of selected packages and their sources.
+
+=============================

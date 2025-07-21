@@ -61,6 +61,8 @@ import {
 
 import { 
   ArrowRightIcon, 
+  ChevronDownIcon,
+  ChevronRightIcon,
   EditIcon, 
   ExternalLinkAltIcon, 
   InfoCircleIcon,
@@ -423,6 +425,84 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       isRepositorySearching: true
     }
   ]);
+  
+  // Package interface mode - toggle between search and table browse
+  const [packageInterfaceMode, setPackageInterfaceMode] = React.useState<string>('search'); // 'search' or 'browse'
+  
+  // Table browse state
+  const [expandedRepositories, setExpandedRepositories] = React.useState<Set<string>>(new Set());
+  const [repositorySearchTerm, setRepositorySearchTerm] = React.useState<string>('');
+  const [repositoryPackageSearchTerms, setRepositoryPackageSearchTerms] = React.useState<{[key: string]: string}>({});
+  const [repositoryPagination, setRepositoryPagination] = React.useState<{[key: string]: number}>({});
+
+  // Repository data structure for table view
+  const repositoryData = [
+    {
+      id: 'red-hat-baseos',
+      name: 'Red Hat Enterprise Linux BaseOS',
+      description: 'Core system packages and utilities',
+      packageCount: 2847,
+      packages: [
+        { id: 'aide', name: 'aide', version: '0.16', description: 'Advanced Intrusion Detection Environment', applicationStream: 'RHEL 9', retirementDate: '2032-05-31' },
+        { id: 'sudo', name: 'sudo', version: '1.9.5p2', description: 'Execute commands as another user', applicationStream: 'RHEL 9', retirementDate: '2032-05-31' },
+        { id: 'vim', name: 'vim', version: '9.0', description: 'Vi IMproved text editor', applicationStream: 'RHEL 9', retirementDate: '2032-05-31' },
+        { id: 'curl', name: 'curl', version: '7.76.1', description: 'Command line tool for transferring data', applicationStream: 'RHEL 9', retirementDate: '2032-05-31' },
+        { id: 'wget', name: 'wget', version: '1.21.1', description: 'Network utility to retrieve files from servers', applicationStream: 'RHEL 9', retirementDate: '2032-05-31' },
+        { id: 'git', name: 'git', version: '2.39.1', description: 'Distributed version control system', applicationStream: 'RHEL 9', retirementDate: '2032-05-31' },
+        { id: 'python3', name: 'python3', version: '3.9.16', description: 'Python 3 programming language', applicationStream: '3.9', retirementDate: '2032-05-31' },
+        { id: 'systemd', name: 'systemd', version: '250', description: 'System and service manager', applicationStream: 'RHEL 9', retirementDate: '2032-05-31' }
+      ]
+    },
+    {
+      id: 'red-hat-appstream',
+      name: 'Red Hat Enterprise Linux AppStream',
+      description: 'Application development and runtime packages',
+      packageCount: 4521,
+      packages: [
+        { id: 'httpd', name: 'httpd', version: '2.4.53', description: 'Apache HTTP Server', applicationStream: '2.4', retirementDate: '2030-12-31' },
+        { id: 'nginx', name: 'nginx', version: '1.20.1', description: 'High performance web server', applicationStream: '1.20', retirementDate: '2030-06-30' },
+        { id: 'postgresql', name: 'postgresql', version: '13.7', description: 'PostgreSQL database server', applicationStream: '13', retirementDate: '2030-11-13' },
+        { id: 'mariadb', name: 'mariadb', version: '10.5.16', description: 'MariaDB database server', applicationStream: '10.5', retirementDate: '2030-06-24' },
+        { id: 'nodejs', name: 'nodejs', version: '18.14.2', description: 'Node.js JavaScript runtime', applicationStream: '18', retirementDate: '2030-04-30' },
+        { id: 'gcc', name: 'gcc', version: '11.3.1', description: 'GNU Compiler Collection', applicationStream: '11', retirementDate: '2032-05-31' },
+        { id: 'container-tools', name: 'container-tools', version: '4.0', description: 'Container runtime and build tools', applicationStream: '4.0', retirementDate: '2030-05-31' }
+      ]
+    },
+    {
+      id: 'epel',
+      name: 'Extra Packages for Enterprise Linux',
+      description: 'Community-maintained packages for RHEL',
+      packageCount: 8934,
+      packages: [
+        { id: 'htop', name: 'htop', version: '3.2.1', description: 'Interactive process viewer', applicationStream: '3.2', retirementDate: '2030-12-01' },
+        { id: 'ncdu', name: 'ncdu', version: '1.16', description: 'NCurses disk usage analyzer', applicationStream: '1.16', retirementDate: '2031-06-30' },
+        { id: 'fish', name: 'fish', version: '3.4.1', description: 'Friendly Interactive Shell', applicationStream: '3.4', retirementDate: '2030-08-15' },
+        { id: 'tmux', name: 'tmux', version: '3.3a', description: 'Terminal multiplexer', applicationStream: '3.3', retirementDate: '2031-12-31' },
+        { id: 'tree', name: 'tree', version: '2.0.2', description: 'Display directories as trees', applicationStream: '2.0', retirementDate: '2030-09-30' }
+      ]
+    },
+    {
+      id: 'centos-stream',
+      name: 'CentOS Stream',
+      description: 'Rolling preview of upcoming RHEL releases',
+      packageCount: 3456,
+      packages: [
+        { id: 'podman', name: 'podman', version: '4.4.1', description: 'Daemonless container engine', applicationStream: '4.4', retirementDate: '2030-12-31' },
+        { id: 'buildah', name: 'buildah', version: '1.29.0', description: 'Build container images', applicationStream: '1.29', retirementDate: '2030-12-31' },
+        { id: 'skopeo', name: 'skopeo', version: '1.11.1', description: 'Work with container images and registries', applicationStream: '1.11', retirementDate: '2030-12-31' }
+      ]
+    },
+    {
+      id: 'custom-repo-1',
+      name: 'Custom Repository 1',
+      description: 'Internal enterprise packages',
+      packageCount: 156,
+      packages: [
+        { id: 'enterprise-tool', name: 'enterprise-tool', version: '2.1.0', description: 'Internal enterprise management tool', applicationStream: '2.1', retirementDate: '2025-12-31' },
+        { id: 'monitoring-agent', name: 'monitoring-agent', version: '1.5.3', description: 'Custom monitoring solution', applicationStream: '1.5', retirementDate: '2025-06-30' }
+      ]
+    }
+  ];
   
   const [searchPackageType, setSearchPackageType] = React.useState<string>('individual');
   const [isSearchPackageTypeOpen, setIsSearchPackageTypeOpen] = React.useState<boolean>(false);
@@ -1096,6 +1176,102 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     return availableRepositories.filter(repo => 
       repo.toLowerCase().includes(searchTerm.toLowerCase())
     );
+  };
+
+  // Table browse helper functions
+  const handleRepositoryToggle = (repositoryId: string) => {
+    const newExpanded = new Set(expandedRepositories);
+    if (newExpanded.has(repositoryId)) {
+      newExpanded.delete(repositoryId);
+    } else {
+      newExpanded.add(repositoryId);
+    }
+    setExpandedRepositories(newExpanded);
+  };
+
+  const handleTablePackageSelection = (pkg: any) => {
+    setSelectedPackages(prev => {
+      const existingIds = prev.map(p => p.id || p);
+      if (!existingIds.includes(pkg.id)) {
+        return [...prev, { ...pkg, repository: getRepositoryNameById(pkg.repositoryId) }];
+      }
+      return prev;
+    });
+  };
+
+  const handleTablePackageDeselection = (packageId: string) => {
+    setSelectedPackages(prev => 
+      prev.filter(pkg => (pkg.id || pkg) !== packageId)
+    );
+  };
+
+  const isPackageSelected = (packageId: string) => {
+    return selectedPackages.some(pkg => (pkg.id || pkg) === packageId);
+  };
+
+  const getRepositoryNameById = (repositoryId: string) => {
+    const repo = repositoryData.find(r => r.id === repositoryId);
+    return repo ? repo.name : 'Unknown Repository';
+  };
+
+  const getFilteredRepositoryData = () => {
+    if (!repositorySearchTerm.trim()) {
+      return repositoryData;
+    }
+    
+    return repositoryData.filter(repo => 
+      repo.name.toLowerCase().includes(repositorySearchTerm.toLowerCase()) ||
+      repo.description.toLowerCase().includes(repositorySearchTerm.toLowerCase())
+    );
+  };
+
+  const getFilteredPackagesForRepository = (repositoryId: string) => {
+    const repository = repositoryData.find(r => r.id === repositoryId);
+    if (!repository) return { packages: [], totalCount: 0, hasMore: false };
+    
+    // Only show packages if this repository is expanded
+    if (!expandedRepositories.has(repositoryId)) return { packages: [], totalCount: 0, hasMore: false };
+    
+    const searchTerm = repositoryPackageSearchTerms[repositoryId] || '';
+    const currentPage = repositoryPagination[repositoryId] || 1;
+    const packagesPerPage = 50;
+    
+    let filteredPackages = repository.packages;
+    
+    // Apply search filter if search term exists
+    if (searchTerm.trim()) {
+      filteredPackages = repository.packages.filter(pkg =>
+        pkg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pkg.description.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    const totalCount = filteredPackages.length;
+    const startIndex = (currentPage - 1) * packagesPerPage;
+    const endIndex = startIndex + packagesPerPage;
+    const packages = filteredPackages.slice(startIndex, endIndex);
+    const hasMore = endIndex < totalCount;
+    
+    return { packages, totalCount, hasMore };
+  };
+
+  const updateRepositoryPackageSearch = (repositoryId: string, searchTerm: string) => {
+    setRepositoryPackageSearchTerms(prev => ({
+      ...prev,
+      [repositoryId]: searchTerm
+    }));
+    // Reset to first page when search changes
+    setRepositoryPagination(prev => ({
+      ...prev,
+      [repositoryId]: 1
+    }));
+  };
+
+  const updateRepositoryPagination = (repositoryId: string, page: number) => {
+    setRepositoryPagination(prev => ({
+      ...prev,
+      [repositoryId]: page
+    }));
   };
 
   // Firewall helper functions
@@ -2752,43 +2928,75 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             <Title headingLevel="h2" size="xl" style={{ marginBottom: '0rem' }}>
               Repositories and Packages
             </Title>
-            <p style={{ fontSize: '16px', color: '#666', marginBottom: '2rem' }}>
+            <p style={{ fontSize: '16px', color: '#666', marginBottom: '1rem' }}>
               Configure package repositories and select additional software packages to include in your image.
             </p>
             
-            <Form>
-              {/* Extended Support Subscription */}
-                <FormGroup
-                  label="Extended support subscription"
-                  fieldId="extended-support"
-                style={{ marginBottom: '2rem' }}
-                >
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <Radio
-                      isChecked={extendedSupport === 'none'}
-                      name="extended-support"
-                      onChange={() => setExtendedSupport('none')}
-                      label="None"
-                      id="extended-support-none"
-                    />
-                    <Radio
-                      isChecked={extendedSupport === 'eus'}
-                      name="extended-support"
-                      onChange={() => setExtendedSupport('eus')}
-                      label="Extended update support (EUS)"
-                      id="extended-support-eus"
-                    />
-                    <Radio
-                      isChecked={extendedSupport === 'eeus'}
-                      name="extended-support"
-                      onChange={() => setExtendedSupport('eeus')}
-                      label="Enhanced extended update support (EEUS)"
-                      id="extended-support-eeus"
-                    />
-                  </div>
-                </FormGroup>
+            {/* Interface Mode Toggle */}
+            <div style={{ marginBottom: '2rem', padding: '1rem', backgroundColor: '#f8f8f8', borderRadius: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <span style={{ fontWeight: 500, fontSize: '0.875rem' }}>View mode:</span>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <Button
+                    variant={packageInterfaceMode === 'search' ? 'primary' : 'secondary'}
+                    onClick={() => setPackageInterfaceMode('search')}
+                    size="sm"
+                  >
+                    Search & Add
+                  </Button>
+                  <Button
+                    variant={packageInterfaceMode === 'browse' ? 'primary' : 'secondary'}
+                    onClick={() => setPackageInterfaceMode('browse')}
+                    size="sm"
+                  >
+                    Browse Table
+                  </Button>
+                </div>
+              </div>
+              <p style={{ fontSize: '0.75rem', color: '#666', margin: '0.5rem 0 0 0' }}>
+                {packageInterfaceMode === 'search' 
+                  ? 'Search and add packages from specific repositories one at a time'
+                  : 'Browse all repositories in a table and drill down to explore packages'
+                }
+              </p>
+            </div>
+            
+                          <Form>
+                {/* Extended Support Subscription */}
+                  <FormGroup
+                    label="Extended support subscription"
+                    fieldId="extended-support"
+                  style={{ marginBottom: '2rem' }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <Radio
+                        isChecked={extendedSupport === 'none'}
+                        name="extended-support"
+                        onChange={() => setExtendedSupport('none')}
+                        label="None"
+                        id="extended-support-none"
+                      />
+                      <Radio
+                        isChecked={extendedSupport === 'eus'}
+                        name="extended-support"
+                        onChange={() => setExtendedSupport('eus')}
+                        label="Extended update support (EUS)"
+                        id="extended-support-eus"
+                      />
+                      <Radio
+                        isChecked={extendedSupport === 'eeus'}
+                        name="extended-support"
+                        onChange={() => setExtendedSupport('eeus')}
+                        label="Enhanced extended update support (EEUS)"
+                        id="extended-support-eeus"
+                      />
+                    </div>
+                  </FormGroup>
 
-              {/* Repository Rows - Grouped Layout */}
+              {packageInterfaceMode === 'search' ? (
+                // Current Search Interface
+                <>
+                  {/* Repository Rows - Grouped Layout */}
 
               <Stack hasGutter>
                 {repositoryRows.map((row, index) => (
@@ -3110,6 +3318,367 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   Add Repository
                 </Button>
               </div>
+                </>
+              ) : (
+                // New Table Browse Interface
+                <>
+                  {/* Repository Search */}
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <FormGroup
+                      label="Search repositories"
+                      fieldId="repository-search"
+                    >
+                      <SearchInput
+                        placeholder="Search by repository name or description..."
+                        value={repositorySearchTerm}
+                        onChange={(_event, value) => setRepositorySearchTerm(value)}
+                        onClear={() => setRepositorySearchTerm('')}
+                        style={{ width: '100%' }}
+                      />
+                    </FormGroup>
+                  </div>
+
+                  {/* Repository Table */}
+                  <div style={{ 
+                    border: '1px solid #d2d2d2', 
+                    borderRadius: '4px',
+                    overflow: 'hidden'
+                  }}>
+                    {getFilteredRepositoryData().map((repository) => (
+                      <div key={repository.id}>
+                        {/* Repository Row */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '1rem',
+                            backgroundColor: expandedRepositories.has(repository.id) ? '#f0f0f0' : 'white',
+                            borderBottom: '1px solid #d2d2d2',
+                            cursor: 'pointer',
+                            transition: 'background-color 0.15s ease'
+                          }}
+                          onClick={() => handleRepositoryToggle(repository.id)}
+                          onMouseEnter={(e) => {
+                            if (!expandedRepositories.has(repository.id)) {
+                              (e.target as HTMLElement).style.backgroundColor = '#f8f8f8';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!expandedRepositories.has(repository.id)) {
+                              (e.target as HTMLElement).style.backgroundColor = 'white';
+                            }
+                          }}
+                        >
+                          <div style={{ marginRight: '1rem' }}>
+                            {expandedRepositories.has(repository.id) ? (
+                              <ChevronDownIcon style={{ fontSize: '1rem', color: '#666' }} />
+                            ) : (
+                              <ChevronRightIcon style={{ fontSize: '1rem', color: '#666' }} />
+                            )}
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ 
+                              fontSize: '1rem', 
+                              fontWeight: 500, 
+                              marginBottom: '0.25rem',
+                              color: '#151515'
+                            }}>
+                              {repository.name}
+                            </div>
+                            <div style={{ 
+                              fontSize: '0.875rem', 
+                              color: '#666',
+                              marginBottom: '0.25rem'
+                            }}>
+                              {repository.description}
+                            </div>
+                            <div style={{ 
+                              fontSize: '0.75rem', 
+                              color: '#888'
+                            }}>
+                              {repository.packageCount.toLocaleString()} packages available
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Expanded Package List */}
+                        {expandedRepositories.has(repository.id) && (
+                          <div style={{ 
+                            backgroundColor: '#fafafa',
+                            borderTop: '1px solid #e0e0e0'
+                          }}>
+                            {/* Package Search within Repository */}
+                            <div style={{ 
+                              padding: '1rem', 
+                              backgroundColor: '#f0f0f0',
+                              borderBottom: '1px solid #e0e0e0'
+                            }}>
+                              <FormGroup
+                                label={`Search packages in ${repository.name}`}
+                                fieldId={`package-search-${repository.id}`}
+                              >
+                                <SearchInput
+                                  placeholder="Search packages by name or description..."
+                                  value={repositoryPackageSearchTerms[repository.id] || ''}
+                                  onChange={(_event, value) => updateRepositoryPackageSearch(repository.id, value)}
+                                  onClear={() => updateRepositoryPackageSearch(repository.id, '')}
+                                  style={{ width: '100%' }}
+                                />
+                              </FormGroup>
+                            </div>
+
+{(() => {
+                              const result = getFilteredPackagesForRepository(repository.id);
+                              const { packages, totalCount, hasMore } = result;
+                              const currentPage = repositoryPagination[repository.id] || 1;
+                              const searchTerm = repositoryPackageSearchTerms[repository.id] || '';
+                              
+                              if (packages.length === 0) {
+                                return (
+                                  <div style={{ 
+                                    padding: '2rem', 
+                                    textAlign: 'center', 
+                                    color: '#666',
+                                    fontSize: '0.875rem'
+                                  }}>
+                                    {searchTerm.trim() 
+                                      ? 'No packages found matching your search criteria.'
+                                      : 'No packages available in this repository.'
+                                    }
+                                  </div>
+                                );
+                              }
+
+                              return (
+                                <>
+                                  {/* Package Results Info */}
+                                  <div style={{ 
+                                    padding: '0.75rem 1rem', 
+                                    backgroundColor: '#ffffff',
+                                    fontSize: '0.75rem',
+                                    color: '#666',
+                                    borderBottom: '1px solid #e0e0e0',
+                                    display: 'flex',
+                                    justifyContent: 'space-between'
+                                  }}>
+                                    <span>
+                                      {searchTerm.trim() 
+                                        ? `Found ${totalCount} packages matching "${searchTerm}"`
+                                        : `Showing ${packages.length} of ${totalCount} packages`
+                                      }
+                                    </span>
+                                    <span>Page {currentPage}</span>
+                                  </div>
+
+                                  {/* Package List */}
+                                  {packages.map((pkg) => (
+                                <div
+                                  key={pkg.id}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    padding: '0.75rem 1rem 0.75rem 3rem',
+                                    borderBottom: '1px solid #e8e8e8',
+                                    backgroundColor: 'white',
+                                    transition: 'background-color 0.15s ease'
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    (e.target as HTMLElement).style.backgroundColor = '#f5f5f5';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    (e.target as HTMLElement).style.backgroundColor = 'white';
+                                  }}
+                                >
+                                  <Checkbox
+                                    id={`package-${pkg.id}`}
+                                    isChecked={isPackageSelected(pkg.id)}
+                                    onChange={(checked) => {
+                                      if (checked) {
+                                        handleTablePackageSelection({ ...pkg, repositoryId: repository.id });
+                                      } else {
+                                        handleTablePackageDeselection(pkg.id);
+                                      }
+                                    }}
+                                    style={{ marginRight: '1rem' }}
+                                  />
+                                  <div style={{ flex: 1 }}>
+                                    <div style={{ 
+                                      fontSize: '0.875rem', 
+                                      fontWeight: 500, 
+                                      marginBottom: '0.25rem',
+                                      color: '#151515'
+                                    }}>
+                                      {pkg.name} v{pkg.version}
+                                    </div>
+                                    <div style={{ 
+                                      fontSize: '0.75rem', 
+                                      color: '#666',
+                                      marginBottom: '0.25rem'
+                                    }}>
+                                      {pkg.description}
+                                    </div>
+                                    <div style={{ 
+                                      fontSize: '0.75rem', 
+                                      color: '#888',
+                                      display: 'flex',
+                                      gap: '1rem'
+                                    }}>
+                                      <span>Stream: {pkg.applicationStream}</span>
+                                      <span>Support ends: {pkg.retirementDate}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                ))}
+
+                                  {/* Pagination Controls */}
+                                  {(hasMore || currentPage > 1) && (
+                                    <div style={{ 
+                                      padding: '1rem',
+                                      backgroundColor: '#ffffff',
+                                      borderTop: '1px solid #e0e0e0',
+                                      display: 'flex',
+                                      justifyContent: 'space-between',
+                                      alignItems: 'center'
+                                    }}>
+                                      <Button
+                                        variant="secondary"
+                                        isDisabled={currentPage === 1}
+                                        onClick={() => updateRepositoryPagination(repository.id, currentPage - 1)}
+                                        size="sm"
+                                      >
+                                        Previous
+                                      </Button>
+                                      
+                                      <span style={{ fontSize: '0.875rem', color: '#666' }}>
+                                        Page {currentPage} {hasMore ? `of ${Math.ceil(totalCount / 50)}` : ''}
+                                      </span>
+                                      
+                                      <Button
+                                        variant="secondary"
+                                        isDisabled={!hasMore}
+                                        onClick={() => updateRepositoryPagination(repository.id, currentPage + 1)}
+                                        size="sm"
+                                      >
+                                        Next
+                                      </Button>
+                                    </div>
+                                  )}
+                                </>
+                              );
+                            })()}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    
+                    {getFilteredRepositoryData().length === 0 && (
+                      <div style={{ 
+                        padding: '3rem', 
+                        textAlign: 'center', 
+                        color: '#666',
+                        fontSize: '0.875rem'
+                      }}>
+                        No repositories found matching your search criteria.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Selected Packages Summary Table */}
+                  {selectedPackages.length > 0 && (
+                    <div style={{ marginTop: '2rem' }}>
+                      <Title headingLevel="h3" size="lg" style={{ marginBottom: '1rem' }}>
+                        Selected Packages ({selectedPackages.length})
+                      </Title>
+                      
+                      <div style={{
+                        border: '1px solid #d2d2d2',
+                        borderRadius: '4px',
+                        overflow: 'hidden'
+                      }}>
+                        {/* Table Header */}
+                        <div style={{
+                          display: 'grid',
+                          gridTemplateColumns: '2fr 2fr 1fr 1fr auto',
+                          gap: '1rem',
+                          padding: '0.75rem 1rem',
+                          backgroundColor: '#f8f8f8',
+                          borderBottom: '1px solid #d2d2d2',
+                          fontSize: '0.875rem',
+                          fontWeight: 600,
+                          color: '#151515'
+                        }}>
+                          <div>Package</div>
+                          <div>Repository</div>
+                          <div>Version</div>
+                          <div>Support End</div>
+                          <div></div>
+                        </div>
+
+                        {/* Table Rows */}
+                        {selectedPackages.map((pkg) => (
+                          <div
+                            key={pkg.id || pkg}
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: '2fr 2fr 1fr 1fr auto',
+                              gap: '1rem',
+                              padding: '0.75rem 1rem',
+                              borderBottom: '1px solid #e8e8e8',
+                              backgroundColor: 'white',
+                              fontSize: '0.875rem',
+                              transition: 'background-color 0.15s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              (e.target as HTMLElement).style.backgroundColor = '#f5f5f5';
+                            }}
+                            onMouseLeave={(e) => {
+                              (e.target as HTMLElement).style.backgroundColor = 'white';
+                            }}
+                          >
+                            <div style={{ 
+                              fontWeight: 500,
+                              color: '#151515'
+                            }}>
+                              {pkg.name || pkg}
+                              {pkg.version && ` v${pkg.version}`}
+                            </div>
+                            <div style={{ color: '#666' }}>
+                              {pkg.repositoryId ? getRepositoryNameById(pkg.repositoryId) : 'Unknown Repository'}
+                            </div>
+                            <div style={{ color: '#666' }}>
+                              {pkg.version || '-'}
+                            </div>
+                            <div style={{ color: '#666' }}>
+                              {pkg.retirementDate || '-'}
+                            </div>
+                            <div>
+                              <Button
+                                variant="plain"
+                                aria-label={`Remove ${pkg.name || pkg}`}
+                                onClick={() => {
+                                  if (packageInterfaceMode === 'browse') {
+                                    handleTablePackageDeselection(pkg.id || pkg);
+                                  } else {
+                                    // Handle removal for search mode
+                                    setSelectedPackages(prev => prev.filter(p => (p.id || p) !== (pkg.id || pkg)));
+                                  }
+                                }}
+                                style={{ 
+                                  padding: '0.25rem',
+                                  minHeight: 'auto'
+                                }}
+                              >
+                                <MinusCircleIcon style={{ fontSize: '1rem', color: '#c9190b' }} />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                </>
+              )}
             </Form>
           </div>
         );
