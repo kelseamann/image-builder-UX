@@ -243,15 +243,33 @@ const ImageMigrationModal: React.FunctionComponent<ImageMigrationModalProps> = (
                 onOpenChange={setIsReleaseSelectOpen}
               >
                 <SelectList>
-                  {availableReleases.map((release) => (
-                    <SelectOption 
-                      key={release} 
-                      value={release}
-                      isDisabled={release === imageInfo.currentRelease}
-                    >
-                      {release}
-                    </SelectOption>
-                  ))}
+                  {availableReleases.map((release) => {
+                    let supportDetail = '';
+                    if (release === 'Red Hat Enterprise Linux 10') {
+                      supportDetail = 'Full support ends: May 2030 | Maintenance support ends: May 2035';
+                    } else if (release === 'Red Hat Enterprise Linux 9') {
+                      supportDetail = 'Full support ends: May 2027 | Maintenance support ends: May 2032';
+                    } else if (release === 'Red Hat Enterprise Linux 8') {
+                      supportDetail = 'Full support ends: May 2024 | Maintenance support ends: May 2029';
+                    }
+                    
+                    return (
+                      <SelectOption 
+                        key={release} 
+                        value={release}
+                        isDisabled={release === imageInfo.currentRelease}
+                      >
+                        <div>
+                          <div style={{ fontWeight: 500 }}>{release}</div>
+                          {supportDetail && (
+                            <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                              {supportDetail}
+                            </div>
+                          )}
+                        </div>
+                      </SelectOption>
+                    );
+                  })}
                 </SelectList>
               </Select>
               {errors.targetRelease && (
