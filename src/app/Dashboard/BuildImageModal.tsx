@@ -390,26 +390,17 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   }
 
   const [repositoryRows, setRepositoryRows] = React.useState<RepositoryRow[]>([
-    // Mock OpenSCAP required packages
+    // Mock OpenSCAP required packages - combined into one row with multiple packages
     {
       id: 'openscap-1',
       repository: 'Red Hat',
       repositorySearchTerm: 'Red Hat',
       packageSearchTerm: '',
-      selectedPackage: { id: 'aide', name: 'aide', version: '0.16', repository: 'BaseOS' },
-      isLocked: true,
-      isRepositoryDropdownOpen: false,
-      searchResults: [],
-      isOpenSCAPRequired: true,
-      isLoading: false,
-      isRepositorySearching: false
-    },
-    {
-      id: 'openscap-2', 
-      repository: 'Red Hat',
-      repositorySearchTerm: 'Red Hat',
-      packageSearchTerm: '',
-      selectedPackage: { id: 'sudo', name: 'sudo', version: '1.9.5p2', repository: 'BaseOS' },
+      selectedPackage: null, // Legacy - using selectedPackages instead
+      selectedPackages: [
+        { id: 'aide', name: 'aide', version: '0.16', repository: 'BaseOS' },
+        { id: 'sudo', name: 'sudo', version: '1.9.5p2', repository: 'BaseOS' }
+      ],
       isLocked: true,
       isRepositoryDropdownOpen: false,
       searchResults: [],
@@ -3499,15 +3490,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                                       {row.repositoryPackageCount ? `${row.repositoryPackageCount.toLocaleString()} packages available` : 'Multiple packages available'}
                                     </div>
                                   </div>
-                                  <div style={{ 
-                                    padding: '8px 16px',
-                                    fontSize: '0.75rem',
-                                    color: '#666',
-                                    borderBottom: '1px solid #f0f0f0',
-                                    fontStyle: 'italic'
-                                  }}>
-                                    Or search for specific packages below:
-                                  </div>
+
                                 </div>
                               )}
 
@@ -3556,7 +3539,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                                     </div>
                                   </div>
                                 ))
-                              ) : row.packageSearchTerm.trim() ? (
+                              ) : null}
+
+                              {row.packageSearchTerm.trim() && (
                                 <div style={{ 
                                   padding: '16px',
                                   textAlign: 'center',
@@ -3570,18 +3555,9 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                                     Tip: Type the full package name for better results
                                   </div>
                                 </div>
-                              ) : (
-                                <div style={{ 
-                                  padding: '16px',
-                                  textAlign: 'center',
-                                  color: '#666',
-                                  fontSize: '0.875rem'
-                                }}>
-                                  No packages found. Try typing the full package name.
-                                </div>
                               )}
 
-                              {/* Lightspeed Package Recommendations - Top 2 only */}
+                              {/* RHEL Lightspeed Package Recommendations - Top 2 only */}
                               {row.lightspeedRecommendations && row.lightspeedRecommendations.length > 0 && (
                                 <>
                                   {/* Add separator line */}
@@ -3596,14 +3572,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                                         cursor: 'pointer',
                                         fontSize: '0.875rem',
                                         transition: 'background-color 0.15s ease',
-                                        backgroundColor: '#fff7e6'
+                                        backgroundColor: '#f8f9fa'
                                       }}
                                       onClick={() => handlePackageSelection(row.id, rec)}
                                       onMouseEnter={(e) => {
-                                        (e.target as HTMLElement).style.backgroundColor = '#fef3c7';
+                                        (e.target as HTMLElement).style.backgroundColor = '#e9ecef';
                                       }}
                                       onMouseLeave={(e) => {
-                                        (e.target as HTMLElement).style.backgroundColor = '#fff7e6';
+                                        (e.target as HTMLElement).style.backgroundColor = '#f8f9fa';
                                       }}
                                     >
                                       <div style={{ 
@@ -3613,8 +3589,17 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                                         fontWeight: 500,
                                         marginBottom: '2px'
                                       }}>
-                                        <MagicIcon style={{ fontSize: '14px', color: '#d97706' }} />
+                                        <MagicIcon style={{ fontSize: '14px', color: '#0066cc' }} />
                                         {rec.name}
+                                        <span style={{ 
+                                          fontSize: '0.7rem', 
+                                          color: '#666', 
+                                          fontWeight: 400,
+                                          fontStyle: 'italic',
+                                          marginLeft: '0.5rem'
+                                        }}>
+                                          RHEL Lightspeed
+                                        </span>
                                       </div>
                                       <div style={{ color: '#666', fontSize: '0.75rem', marginBottom: '2px' }}>
                                         v{rec.version}

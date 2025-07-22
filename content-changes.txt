@@ -1779,6 +1779,220 @@ STATUS: ✅ COMPLETED - Repository row locking enhanced to hide search while pre
 
 =============================
 
+CHANGE #45: OpenSCAP Package Display Consistency and RHEL Lightspeed Branding
+Location: BuildImageModal.tsx - OpenSCAP packages initial state and Lightspeed recommendations styling
+Date: [Current Date]
+
+CONSISTENCY IMPROVEMENTS: Enhanced OpenSCAP package display to match multi-selection pattern and updated Lightspeed recommendations with proper RHEL branding.
+
+**User Requests**: 
+1. "OpenSCAP packages (aide and sudo) should now be in the same row as labels that cannot be removed, to keep the pattern consistent with how the UI handles user selecting multiple packages"
+2. "Lightspeed selectors don't need to be orange but they do need to say RHEL Lightspeed somewhere on them"
+
+CHANGES IMPLEMENTED:
+
+1. **OpenSCAP Package Consistency** 🔧:
+   - **Combined separate rows**: Merged aide and sudo into single row with `selectedPackages` array
+   - **Consistent pattern**: Now matches user multi-selection display exactly
+   - **Label behavior**: Both packages display as non-removable chips in same row
+   - **Preserved functionality**: "Added by OpenSCAP" helper text still appears
+
+   **Before (Separate Rows):**
+   ```jsx
+   // Two separate rows for aide and sudo
+   {
+     id: 'openscap-1',
+     selectedPackage: { id: 'aide', name: 'aide', version: '0.16' },
+     isOpenSCAPRequired: true
+   },
+   {
+     id: 'openscap-2', 
+     selectedPackage: { id: 'sudo', name: 'sudo', version: '1.9.5p2' },
+     isOpenSCAPRequired: true
+   }
+   ```
+
+   **After (Single Row with Multiple Packages):**
+   ```jsx
+   // One row with both packages as labels
+   {
+     id: 'openscap-1',
+     selectedPackages: [
+       { id: 'aide', name: 'aide', version: '0.16', repository: 'BaseOS' },
+       { id: 'sudo', name: 'sudo', version: '1.9.5p2', repository: 'BaseOS' }
+     ],
+     isOpenSCAPRequired: true
+   }
+   ```
+
+2. **RHEL Lightspeed Branding & Styling** 🪄:
+   - **Removed orange styling**: Changed from orange (`#fff7e6`, `#d97706`) to neutral gray (`#f8f9fa`, `#0066cc`)
+   - **Added RHEL branding**: "RHEL Lightspeed" text appears next to each recommendation
+   - **Professional appearance**: Blue magic wand icon with proper branding
+   - **Maintained functionality**: Click-to-add and hover effects preserved
+
+   **Updated Styling:**
+   ```jsx
+   // Background: Neutral gray instead of orange
+   backgroundColor: '#f8f9fa' // was '#fff7e6'
+   onMouseEnter: '#e9ecef'   // was '#fef3c7'
+   
+   // Icon: Blue instead of orange  
+   <MagicIcon style={{ fontSize: '14px', color: '#0066cc' }} /> // was '#d97706'
+   
+   // Branding: Added RHEL Lightspeed text
+   <span style={{ fontSize: '0.7rem', color: '#666', fontStyle: 'italic' }}>
+     RHEL Lightspeed
+   </span>
+   ```
+
+USER EXPERIENCE IMPROVEMENTS:
+
+1. **OpenSCAP Consistency** ✅:
+   - OpenSCAP packages now display exactly like user multi-selections
+   - Single row with aide and sudo as label chips
+   - Visual consistency across all package selection patterns
+   - Clear "Added by OpenSCAP" identification maintained
+
+2. **Professional Lightspeed Branding** ✅:
+   - "RHEL Lightspeed" clearly identifies AI-powered recommendations
+   - Neutral styling fits better with overall interface design
+   - Blue magic wand icon aligns with PatternFly color scheme
+   - Professional appearance without distracting orange colors
+
+3. **Pattern Consistency** ✅:
+   - All multi-package selections use same visual pattern
+   - OpenSCAP and user selections indistinguishable by layout
+   - Only difference is non-removable nature of OpenSCAP packages
+   - Unified user experience across all package types
+
+TECHNICAL IMPLEMENTATION:
+
+**OpenSCAP Data Structure:**
+- Moved from `selectedPackage` (singular) to `selectedPackages` (array)
+- Maintained backward compatibility with existing rendering logic
+- Preserved `isOpenSCAPRequired` flag for special handling
+- Single row displays both packages as chips with "Added by OpenSCAP" text
+
+**Lightspeed Styling:**
+- Neutral gray background (`#f8f9fa`) instead of orange theme
+- Blue magic wand icon (`#0066cc`) matching PatternFly standards  
+- "RHEL Lightspeed" text positioned after package name
+- Italic, smaller font styling for branding text
+
+**Visual Design:**
+- OpenSCAP: Two non-removable blue chips in single row
+- Lightspeed: Gray background, blue icon, clear RHEL branding
+- Consistent with overall interface color scheme
+- Professional appearance suitable for enterprise users
+
+TESTING SCENARIOS:
+- ✅ OpenSCAP packages display as two chips in single row (aide, sudo)
+- ✅ "Added by OpenSCAP" text appears below OpenSCAP packages
+- ✅ OpenSCAP chips are non-removable (no X icons)
+- ✅ Lightspeed recommendations show "RHEL Lightspeed" branding
+- ✅ Lightspeed styling uses neutral gray/blue instead of orange
+- ✅ All package selection patterns visually consistent
+- ✅ Magic wand icons appear correctly with blue color
+
+STATUS: ✅ COMPLETED - OpenSCAP packages now display consistently with multi-selection pattern, Lightspeed recommendations properly branded with RHEL
+
+=============================
+
+CHANGE #46: Removed Unnecessary Dropdown Text Sections for Cleaner Interface
+Location: BuildImageModal.tsx - Package search dropdown content
+Date: [Current Date]
+
+CLEANUP: Removed instructional and error text sections from package dropdown to create a cleaner, more focused user interface.
+
+**User Request**: "let's remove the section in the dropdown that says 'Or search for specific packages...' and 'No packages found'"
+
+REMOVED TEXT SECTIONS:
+
+1. **"Or search for specific packages below:"**:
+   - **Location**: Appeared after "Add all packages from [Repository]" option
+   - **Style**: Small italic gray text with bottom border
+   - **Reason for removal**: Redundant instruction that cluttered the interface
+   - **Result**: Cleaner visual hierarchy with immediate focus on actionable options
+
+2. **"No packages found. Try typing the full package name."**:
+   - **Location**: Displayed when search returned zero results
+   - **Style**: Centered gray text in dropdown
+   - **Reason for removal**: Unnecessary error messaging that interrupted user flow
+   - **Result**: Streamlined experience without negative feedback
+
+TECHNICAL IMPLEMENTATION:
+
+**Removed Code Blocks:**
+```jsx
+// Removed instructional text after "Add all packages"
+<div style={{ 
+  padding: '8px 16px',
+  fontSize: '0.75rem',
+  color: '#666',
+  borderBottom: '1px solid #f0f0f0',
+  fontStyle: 'italic'
+}}>
+  Or search for specific packages below:
+</div>
+
+// Removed "no results" message
+) : (
+  <div style={{ 
+    padding: '16px',
+    textAlign: 'center',
+    color: '#666',
+    fontSize: '0.875rem'
+  }}>
+    No packages found. Try typing the full package name.
+  </div>
+)}
+```
+
+**Fixed Conditional Structure:**
+- Simplified complex ternary conditional that was causing syntax errors
+- Replaced `condition ? content : null` pattern for cleaner logic
+- Maintained all existing functionality while removing unnecessary text
+
+USER EXPERIENCE IMPROVEMENTS:
+
+1. **Cleaner Visual Hierarchy** ✅:
+   - Removed instructional clutter from dropdown
+   - Users immediately see actionable options
+   - Focus directed to "Add all packages" and search results
+
+2. **Streamlined Interface** ✅:
+   - No redundant "or search below" instructions
+   - No negative "no results" messaging
+   - Professional, minimal appearance
+
+3. **Improved Flow** ✅:
+   - Users understand interface without extra text
+   - Dropdown shows only relevant, clickable options
+   - Reduced cognitive load with fewer text elements
+
+4. **Maintained Functionality** ✅:
+   - Search prompt still appears when user types
+   - Loading states still show appropriately  
+   - All interactive elements preserved
+
+CURRENT DROPDOWN CONTENT:
+1. **"Add all packages from [Repository]"** with package count
+2. **Loading spinner** when searching
+3. **Search results** (up to 5 packages) 
+4. **Search prompt** ("Click the arrow or press Enter to search")
+5. **RHEL Lightspeed recommendations** with magic wand icons
+
+VISUAL DESIGN:
+- Clean, focused interface without instructional text
+- Professional appearance suitable for enterprise users
+- Clear actionable options without interface clutter
+- Consistent with overall PatternFly design standards
+
+STATUS: ✅ COMPLETED - Dropdown interface cleaned up with unnecessary text sections removed for improved user experience
+
+=============================
+
 [Future changes will be added below this line] 
 
 =============================
