@@ -71,7 +71,8 @@ import {
   OutlinedQuestionCircleIcon,
   PlusIcon,
   TimesCircleIcon,
-  TimesIcon
+  TimesIcon,
+  MagicIcon
 } from '@patternfly/react-icons';
 
 interface UserRow {
@@ -230,6 +231,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
   // Extended support state
   const [extendedSupport, setExtendedSupport] = React.useState<string>('none');
+  const [isExtendedSupportCollapsed, setIsExtendedSupportCollapsed] = React.useState<boolean>(true);
 
   // Organization ID state
   const [organizationId, setOrganizationId] = React.useState<string>('11009103');
@@ -374,13 +376,17 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     repository: string;
     repositorySearchTerm: string;
     packageSearchTerm: string;
-    selectedPackage: any | null;
+    selectedPackage: any | null; // Legacy for existing OpenSCAP packages
+    selectedPackages?: any[]; // New multi-selection support
+    repositoryPackageCount?: number; // Total packages available in repository
+    lastSelectedPackage?: any; // For Lightspeed recommendations
     isLocked: boolean;
     isRepositoryDropdownOpen: boolean;
     searchResults: any[];
     isOpenSCAPRequired: boolean;
     isLoading: boolean;
     isRepositorySearching: boolean;
+    lightspeedRecommendations?: any[]; // Lightspeed package suggestions
   }
 
   const [repositoryRows, setRepositoryRows] = React.useState<RepositoryRow[]>([
@@ -389,7 +395,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       id: 'openscap-1',
       repository: 'Red Hat',
       repositorySearchTerm: 'Red Hat',
-      packageSearchTerm: 'aide',
+      packageSearchTerm: '',
       selectedPackage: { id: 'aide', name: 'aide', version: '0.16', repository: 'BaseOS' },
       isLocked: true,
       isRepositoryDropdownOpen: false,
@@ -402,7 +408,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       id: 'openscap-2', 
       repository: 'Red Hat',
       repositorySearchTerm: 'Red Hat',
-      packageSearchTerm: 'sudo',
+      packageSearchTerm: '',
       selectedPackage: { id: 'sudo', name: 'sudo', version: '1.9.5p2', repository: 'BaseOS' },
       isLocked: true,
       isRepositoryDropdownOpen: false,
@@ -426,14 +432,18 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     }
   ]);
   
-  // Package interface mode - toggle between search and table browse
-  const [packageInterfaceMode, setPackageInterfaceMode] = React.useState<string>('search'); // 'search' or 'browse'
+  // Package interface now uses search mode only  
+  const packageInterfaceMode = 'search';
   
-  // Table browse state
-  const [expandedRepositories, setExpandedRepositories] = React.useState<Set<string>>(new Set());
-  const [repositorySearchTerm, setRepositorySearchTerm] = React.useState<string>('');
-  const [repositoryPackageSearchTerms, setRepositoryPackageSearchTerms] = React.useState<{[key: string]: string}>({});
-  const [repositoryPagination, setRepositoryPagination] = React.useState<{[key: string]: number}>({});
+  // Browse table state - kept as stubs to prevent errors (unreachable since packageInterfaceMode='search')
+  const expandedRepositories = new Set<string>();
+  const setExpandedRepositories = (_value: any) => {}; // Stub function
+  const repositorySearchTerm = '';
+  const setRepositorySearchTerm = (_value: any) => {}; // Stub function  
+  const repositoryPackageSearchTerms: {[key: string]: string} = {};
+  const setRepositoryPackageSearchTerms = (_value: any) => {}; // Stub function
+  const repositoryPagination: {[key: string]: number} = {};
+  const setRepositoryPagination = (_value: any) => {}; // Stub function
   const [repositoryTablePage, setRepositoryTablePage] = React.useState<number>(1);
   const repositoriesPerPage = 5;
 
@@ -1071,16 +1081,49 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   };
 
   const handleRepositorySelect = (rowId: string, repository: string) => {
+    // Mock package counts for different repositories
+    const getRepositoryPackageCount = (repoName: string): number => {
+      const packageCounts: {[key: string]: number} = {
+        'Red Hat Enterprise Linux BaseOS': 2847,
+        'Red Hat Enterprise Linux AppStream': 4521,
+        'Red Hat Enterprise Linux CodeReady Builder': 1863,
+        'Red Hat': 2847,
+        'EPEL': 15420,
+        'Custom Repository': 342,
+        'Docker CE': 156,
+        'PostgreSQL': 89,
+        'MongoDB': 124,
+        'Grafana': 67
+      };
+      
+      // Default package count for unknown repositories
+      return packageCounts[repoName] || Math.floor(Math.random() * 2000) + 500;
+    };
+
     updateRepositoryRow(rowId, { 
       repository, 
       repositorySearchTerm: repository,
+      repositoryPackageCount: getRepositoryPackageCount(repository),
       isRepositoryDropdownOpen: false,
       packageSearchTerm: '', // Reset search when repository changes
       searchResults: [],
       selectedPackage: null,
+      selectedPackages: [],
       isLocked: false,
       isRepositorySearching: false
     });
+
+    // Auto-scroll to show the dropdown that will appear when repository is selected
+    setTimeout(() => {
+      const element = document.getElementById(`package-${rowId}`);
+      if (element) {
+        element.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center',
+          inline: 'nearest'
+        });
+      }
+    }, 300);
   };
 
   const handleRepositorySearchInput = (rowId: string, searchTerm: string) => {
@@ -1119,12 +1162,42 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       // Set loading state
       updateRepositoryRow(rowId, { isLoading: true, searchResults: [] });
       
+      // Auto-scroll to ensure dropdown visibility
+      setTimeout(() => {
+        const element = document.getElementById(`package-${rowId}`);
+        if (element) {
+          element.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center',
+            inline: 'nearest'
+          });
+        }
+      }, 100);
+      
       // Simulate async search with timeout (replace with real API call)
       setTimeout(() => {
         const filtered = allSearchResults.filter(pkg => 
           pkg.name.toLowerCase().includes(row.packageSearchTerm.toLowerCase())
         );
         updateRepositoryRow(rowId, { searchResults: filtered, isLoading: false });
+        
+        // Scroll again after results load to ensure full dropdown is visible
+        setTimeout(() => {
+          const element = document.getElementById(`package-${rowId}`);
+          if (element) {
+            const rect = element.getBoundingClientRect();
+            const windowHeight = window.innerHeight;
+            
+            // If the element is in the bottom third of viewport, scroll down more
+            if (rect.top > windowHeight * 0.66) {
+              element.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start',
+                inline: 'nearest'
+              });
+            }
+          }
+        }, 150);
       }, 800);
     } else {
       updateRepositoryRow(rowId, { searchResults: [], isLoading: false });
@@ -1140,13 +1213,30 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   };
 
   const handlePackageSelection = (rowId: string, pkg: any) => {
-    // Lock this row with the selected package
-    updateRepositoryRow(rowId, {
-      selectedPackage: pkg,
-      isLocked: true,
-      searchResults: [],
-      packageSearchTerm: pkg.name
-    });
+    const row = repositoryRows.find(r => r.id === rowId);
+    if (!row) return;
+
+    if (row.selectedPackages && row.selectedPackages.length > 0) {
+      // Multi-selection mode: Add to selected packages (don't lock - allow continued search)
+      updateRepositoryRow(rowId, {
+        selectedPackages: [...(row.selectedPackages || []), pkg],
+        lastSelectedPackage: pkg,
+        searchResults: [],
+        packageSearchTerm: '',
+        lightspeedRecommendations: generateLightspeedRecommendations(pkg)
+      });
+    } else {
+      // First selection: Start multi-selection mode (don't lock unless OpenSCAP)
+      updateRepositoryRow(rowId, {
+        selectedPackage: row.isOpenSCAPRequired ? pkg : null, // Keep selectedPackage for OpenSCAP compatibility
+        selectedPackages: [pkg],
+        lastSelectedPackage: pkg,
+        isLocked: row.isOpenSCAPRequired, // Only lock OpenSCAP packages
+        searchResults: [],
+        packageSearchTerm: '',
+        lightspeedRecommendations: generateLightspeedRecommendations(pkg)
+      });
+    }
     
     // Add to overall selected packages
     setSelectedPackages(prev => {
@@ -1156,6 +1246,85 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       }
       return prev;
     });
+  };
+
+  const handleAddAllPackages = (rowId: string) => {
+    const row = repositoryRows.find(r => r.id === rowId);
+    if (!row || !row.repository) return;
+
+    // Mock "add all packages" - in real implementation this would fetch all packages from repository
+    const allPackagesPlaceholder = {
+      id: `all-packages-${row.repository.toLowerCase().replace(/\s+/g, '-')}`,
+      name: `All packages from ${row.repository}`,
+      version: 'Multiple versions',
+      repository: row.repository,
+      isAllPackages: true,
+      packageCount: row.repositoryPackageCount || 1247
+    };
+
+    updateRepositoryRow(rowId, {
+      selectedPackages: [allPackagesPlaceholder],
+      lastSelectedPackage: allPackagesPlaceholder,
+      isLocked: true,
+      searchResults: [],
+      packageSearchTerm: `All packages (${row.repositoryPackageCount || 1247})`
+    });
+
+    // Add to overall selected packages
+    setSelectedPackages(prev => {
+      const existingIds = prev.map(p => p.id || p);
+      if (!existingIds.includes(allPackagesPlaceholder.id)) {
+        return [...prev, allPackagesPlaceholder];
+      }
+      return prev;
+    });
+  };
+
+  // Generate mock Lightspeed recommendations based on selected package
+  const generateLightspeedRecommendations = (selectedPackage: any) => {
+    const recommendations: {[key: string]: any[]} = {
+      'httpd': [
+        { id: 'mod_ssl', name: 'mod_ssl', version: '2.4.6', description: 'SSL/TLS module for Apache HTTP Server' },
+        { id: 'php', name: 'php', version: '8.0.20', description: 'PHP scripting language for web development' },
+        { id: 'mariadb-server', name: 'mariadb-server', version: '10.5.16', description: 'MariaDB database server' }
+      ],
+      'mysql': [
+        { id: 'mysql-connector', name: 'mysql-connector', version: '8.0.33', description: 'MySQL database connector' },
+        { id: 'php-mysql', name: 'php-mysql', version: '8.0.20', description: 'MySQL module for PHP' },
+        { id: 'phpmyadmin', name: 'phpmyadmin', version: '5.2.1', description: 'Web interface for MySQL administration' }
+      ],
+      'nginx': [
+        { id: 'nginx-mod-http-ssl', name: 'nginx-mod-http-ssl', version: '1.20.1', description: 'SSL module for Nginx' },
+        { id: 'certbot', name: 'certbot', version: '1.32.0', description: 'HTTPS certificate management tool' },
+        { id: 'nginx-mod-http-geoip', name: 'nginx-mod-http-geoip', version: '1.20.1', description: 'GeoIP module for Nginx' }
+      ]
+    };
+
+    return recommendations[selectedPackage.name] || [
+      { id: 'generic-1', name: 'related-package-1', version: '1.0.0', description: 'Commonly used with this package' },
+      { id: 'generic-2', name: 'related-package-2', version: '2.1.0', description: 'Popular companion package' }
+    ];
+  };
+
+  const handleRemovePackageFromSelection = (rowId: string, packageToRemove: any) => {
+    const row = repositoryRows.find(r => r.id === rowId);
+    if (!row || !row.selectedPackages) return;
+
+    // Remove from row's selected packages
+    const updatedPackages = row.selectedPackages.filter(pkg => pkg.id !== packageToRemove.id);
+    
+    updateRepositoryRow(rowId, {
+      selectedPackages: updatedPackages,
+      // If no packages left, unlock the row
+      isLocked: updatedPackages.length > 0,
+      // Clear Lightspeed recommendations if this was the last selected package
+      lightspeedRecommendations: updatedPackages.length > 0 ? row.lightspeedRecommendations : []
+    });
+
+    // Remove from overall selected packages
+    setSelectedPackages(prev => 
+      prev.filter(pkg => (pkg.id || pkg) !== (packageToRemove.id || packageToRemove))
+    );
   };
 
   const unlockRepositoryRow = (rowId: string) => {
@@ -2965,68 +3134,88 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               Repositories and Packages
             </Title>
             <p style={{ fontSize: '16px', color: '#666', marginBottom: '1rem' }}>
-              Configure package repositories and select additional software packages to include in your image.
+              The repositories listed below are sourced from your Red Hat Insights account. 
+              Need to add more repositories? Visit{' '}
+              <a 
+                href="https://console.redhat.com/insights/content/repositories" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{ 
+                  color: '#0066cc',
+                  textDecoration: 'underline'
+                }}
+              >
+                Insights Repositories
+                <ExternalLinkAltIcon style={{ fontSize: '0.75rem', marginLeft: '0.25rem' }} />
+              </a>
             </p>
             
-            {/* Interface Mode Toggle */}
-            <div style={{ marginBottom: '2rem', padding: '1rem', backgroundColor: '#f8f8f8', borderRadius: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <span style={{ fontWeight: 500, fontSize: '0.875rem' }}>View mode:</span>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <Button
-                    variant={packageInterfaceMode === 'search' ? 'primary' : 'secondary'}
-                    onClick={() => setPackageInterfaceMode('search')}
-                    size="sm"
-                  >
-                    Search & Add
-                  </Button>
-                  <Button
-                    variant={packageInterfaceMode === 'browse' ? 'primary' : 'secondary'}
-                    onClick={() => setPackageInterfaceMode('browse')}
-                    size="sm"
-                  >
-                    Browse Table
-                  </Button>
-                </div>
-              </div>
-              <p style={{ fontSize: '0.75rem', color: '#666', margin: '0.5rem 0 0 0' }}>
-                {packageInterfaceMode === 'search' 
-                  ? 'Search and add packages from specific repositories one at a time'
-                  : 'Browse all repositories in a table and drill down to explore packages'
-                }
-              </p>
-            </div>
+            {/* Package Interface - Search Mode Only */}
             
                           <Form>
-                {/* Extended Support Subscription */}
+                {/* Extended Support Subscription - Collapsible */}
                   <FormGroup
-                    label="Extended support subscription"
                     fieldId="extended-support"
-                  style={{ marginBottom: '2rem' }}
+                    style={{ marginBottom: '2rem' }}
                   >
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      <Radio
-                        isChecked={extendedSupport === 'none'}
-                        name="extended-support"
-                        onChange={() => setExtendedSupport('none')}
-                        label="None"
-                        id="extended-support-none"
-                      />
-                      <Radio
-                        isChecked={extendedSupport === 'eus'}
-                        name="extended-support"
-                        onChange={() => setExtendedSupport('eus')}
-                        label="Extended update support (EUS)"
-                        id="extended-support-eus"
-                      />
-                      <Radio
-                        isChecked={extendedSupport === 'eeus'}
-                        name="extended-support"
-                        onChange={() => setExtendedSupport('eeus')}
-                        label="Enhanced extended update support (EEUS)"
-                        id="extended-support-eeus"
-                      />
+                    {/* Collapsible Header */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        cursor: 'pointer',
+                        padding: '0.5rem 0',
+                        marginBottom: isExtendedSupportCollapsed ? '0' : '1rem'
+                      }}
+                      onClick={() => setIsExtendedSupportCollapsed(!isExtendedSupportCollapsed)}
+                    >
+                      {isExtendedSupportCollapsed ? (
+                        <ChevronRightIcon style={{ fontSize: '1rem', color: '#666' }} />
+                      ) : (
+                        <ChevronDownIcon style={{ fontSize: '1rem', color: '#666' }} />
+                      )}
+                      <span style={{ fontWeight: 500, color: '#151515', fontSize: '0.875rem' }}>
+                        Extended support subscription
+                      </span>
+                      {isExtendedSupportCollapsed && extendedSupport !== 'none' && (
+                        <span style={{ 
+                          fontSize: '0.75rem', 
+                          color: '#666', 
+                          fontWeight: 400,
+                          marginLeft: '0.5rem'
+                        }}>
+                          ({extendedSupport === 'eus' ? 'EUS enabled' : 'EEUS enabled'})
+                        </span>
+                      )}
                     </div>
+
+                    {/* Collapsible Content */}
+                    {!isExtendedSupportCollapsed && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginLeft: '1.5rem' }}>
+                        <Radio
+                          isChecked={extendedSupport === 'none'}
+                          name="extended-support"
+                          onChange={() => setExtendedSupport('none')}
+                          label="None"
+                          id="extended-support-none"
+                        />
+                        <Radio
+                          isChecked={extendedSupport === 'eus'}
+                          name="extended-support"
+                          onChange={() => setExtendedSupport('eus')}
+                          label="Extended update support (EUS)"
+                          id="extended-support-eus"
+                        />
+                        <Radio
+                          isChecked={extendedSupport === 'eeus'}
+                          name="extended-support"
+                          onChange={() => setExtendedSupport('eeus')}
+                          label="Enhanced extended update support (EEUS)"
+                          id="extended-support-eeus"
+                        />
+                      </div>
+                    )}
                   </FormGroup>
 
               {packageInterfaceMode === 'search' ? (
@@ -3143,31 +3332,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                                   {repo}
                                 </div>
                               ))}
-                              {!row.isOpenSCAPRequired && row.isRepositorySearching && row.repositorySearchTerm && 
-                               !getFilteredRepositories(row.repositorySearchTerm).some(repo => 
-                                 repo.toLowerCase() === row.repositorySearchTerm.toLowerCase()
-                               ) && (
-                                <div
-                                  style={{ 
-                                    padding: '12px 16px',
-                                    borderBottom: '1px solid #f0f0f0',
-                                    cursor: 'pointer',
-                                    fontSize: '0.875rem',
-                                    transition: 'background-color 0.15s ease',
-                                    fontStyle: 'italic',
-                                    color: '#0066cc'
-                                  }}
-                                  onClick={() => handleRepositorySearchSelect(row.id, row.repositorySearchTerm)}
-                                  onMouseEnter={(e) => {
-                                    (e.target as HTMLElement).style.backgroundColor = '#f5f5f5';
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    (e.target as HTMLElement).style.backgroundColor = 'white';
-                                  }}
-                                >
-                                  Add new repository: "{row.repositorySearchTerm}"
-                                </div>
-                              )}
+
                             </div>
                           )}
                         </FormGroup>
@@ -3179,54 +3344,103 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                           fieldId={`package-${row.id}`}
                           style={{ position: 'relative', overflow: 'visible' }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            {row.isLocked && row.selectedPackage ? (
-                              <>
-                                <TextInput
-                                  value={`${row.selectedPackage.name} v${row.selectedPackage.version}`}
-                                  readOnly
-                                  style={{ flex: 1 }}
-                                />
-                                {!row.isOpenSCAPRequired && (
-                                  <MinusCircleIcon
-                                    style={{ 
-                                      fontSize: '1.25rem', 
-                                      color: '#151515',
-                                      cursor: 'pointer'
+                          <div>
+                            {/* Package Labels/Chips for multi-selection */}
+                            {row.selectedPackages && row.selectedPackages.length > 0 && (
+                              <div style={{ 
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                gap: '6px',
+                                marginBottom: '8px'
+                              }}>
+                                {row.selectedPackages.map((pkg, index) => (
+                                  <div
+                                    key={pkg.id || `${pkg.name}-${index}`}
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      backgroundColor: '#e6f1ff',
+                                      border: '1px solid #b3d9ff',
+                                      borderRadius: '16px',
+                                      padding: '4px 8px',
+                                      fontSize: '0.75rem',
+                                      fontWeight: 500,
+                                      color: '#0066cc',
+                                      maxWidth: '200px'
                                     }}
-                                    onClick={() => removeRepositoryRow(row.id)}
-                                  />
-                                )}
-                              </>
-                            ) : (
-                              <>
-                                <SearchInput
-                                  placeholder={row.repository ? "Search for packages..." : "Select repository first"}
-                                  value={row.packageSearchTerm}
-                                  onChange={(_event, value) => handleRowPackageSearchInput(row.id, value)}
-                                  onSearch={() => performRowPackageSearch(row.id)}
-                                  onClear={() => handleRowPackageSearchClear(row.id)}
-                                  onKeyDown={(event) => {
-                                    if (event.key === 'Enter') {
-                                      performRowPackageSearch(row.id);
-                                    }
-                                  }}
-                                  isDisabled={!row.repository || row.isLocked}
-                                  style={{ flex: 1 }}
-                                />
-                                {!row.isOpenSCAPRequired && (
-                                  <MinusCircleIcon
-                                    style={{ 
-                                      fontSize: '1.25rem', 
-                                      color: '#151515',
-                                      cursor: 'pointer'
-                                    }}
-                                    onClick={() => removeRepositoryRow(row.id)}
-                                  />
-                                      
-                                )}
-                              </>
+                                  >
+                                    <span style={{ 
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap'
+                                    }}>
+                                      {pkg.isAllPackages ? `All packages (${pkg.packageCount})` : pkg.name}
+                                    </span>
+                                    {!row.isOpenSCAPRequired && (
+                                      <TimesIcon
+                                        style={{ 
+                                          fontSize: '0.75rem',
+                                          marginLeft: '6px',
+                                          cursor: 'pointer',
+                                          color: '#0066cc'
+                                        }}
+                                        onClick={() => handleRemovePackageFromSelection(row.id, pkg)}
+                                      />
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
                             )}
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+                              {/* Input container - takes up available space */}
+                              <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                                {row.isLocked && row.selectedPackage && !row.selectedPackages ? (
+                                  <TextInput
+                                    value={`${row.selectedPackage.name} v${row.selectedPackage.version}`}
+                                    readOnly
+                                    style={{ width: '100%' }}
+                                  />
+                                ) : (
+                                  <>
+                                    {/* Show search input unless OpenSCAP, "all packages" selected, or row is locked with selections */}
+                                    {!row.isOpenSCAPRequired && !row.selectedPackages?.some(pkg => pkg.isAllPackages) && !(row.isLocked && (row.selectedPackages?.length ?? 0) > 0) && (
+                                      <SearchInput
+                                        placeholder={
+                                          row.selectedPackages && row.selectedPackages.length > 0 
+                                            ? `Last selected: ${row.lastSelectedPackage?.name || 'package'} | Search for more...` 
+                                            : (row.repository ? "Search for packages..." : "Select repository first")
+                                        }
+                                        value={row.packageSearchTerm}
+                                        onChange={(_event, value) => handleRowPackageSearchInput(row.id, value)}
+                                        onSearch={() => performRowPackageSearch(row.id)}
+                                        onClear={() => handleRowPackageSearchClear(row.id)}
+                                        onKeyDown={(event) => {
+                                          if (event.key === 'Enter') {
+                                            performRowPackageSearch(row.id);
+                                          }
+                                        }}
+                                        isDisabled={!row.repository}
+                                        style={{ width: '100%' }}
+                                      />
+                                    )}
+                                  </>
+                                )}
+                              </div>
+
+                              {/* Minus icon - always positioned at far right */}
+                              {!row.isOpenSCAPRequired && (
+                                <MinusCircleIcon
+                                  style={{ 
+                                    fontSize: '1.25rem', 
+                                    color: '#151515',
+                                    cursor: 'pointer',
+                                    flexShrink: 0
+                                  }}
+                                  onClick={() => removeRepositoryRow(row.id)}
+                                />
+                              )}
+                            </div>
                           </div>
                           {row.isOpenSCAPRequired && row.isLocked && (
                             <div style={{ 
@@ -3238,19 +3452,10 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                               Added by OpenSCAP
                             </div>
                           )}
-                          {!row.isOpenSCAPRequired && row.isLocked && (
-                            <div style={{ 
-                              fontSize: '0.75rem', 
-                              color: '#666', 
-                              marginTop: '4px',
-                              fontStyle: 'italic'
-                            }}>
-                              Repository selected
-                            </div>
-                          )}
+
                           
                           {/* Search Results Dropdown for this row */}
-                          {!row.isLocked && (row.isLoading || row.searchResults.length > 0 || (row.packageSearchTerm.trim() && !row.isLoading)) && (
+                          {!row.isOpenSCAPRequired && !row.selectedPackages?.some(pkg => pkg.isAllPackages) && !(row.isLocked && (row.selectedPackages?.length ?? 0) > 0) && (row.isLoading || row.searchResults.length > 0 || (row.packageSearchTerm.trim() && !row.isLoading) || (row.repository && !row.packageSearchTerm.trim())) && (
                             <div style={{ 
                               position: 'absolute',
                               top: '100%',
@@ -3261,10 +3466,51 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                               borderRadius: '4px',
                               boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
                               zIndex: 9999,
-                              maxHeight: '200px',
+                              maxHeight: '300px',
                               overflowY: 'auto',
                               marginTop: '4px'
                             }}>
+                              {/* Default state: Add all packages from repository */}
+                              {row.repository && !row.packageSearchTerm.trim() && !row.isLoading && (
+                                <div>
+                                  <div
+                                    style={{ 
+                                      padding: '12px 16px',
+                                      borderBottom: '1px solid #f0f0f0',
+                                      cursor: 'pointer',
+                                      fontSize: '0.875rem',
+                                      transition: 'background-color 0.15s ease',
+                                      backgroundColor: '#f8f9ff',
+                                      border: '1px solid #d1e7ff'
+                                    }}
+                                    onClick={() => handleAddAllPackages(row.id)}
+                                    onMouseEnter={(e) => {
+                                      (e.target as HTMLElement).style.backgroundColor = '#e6f1ff';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      (e.target as HTMLElement).style.backgroundColor = '#f8f9ff';
+                                    }}
+                                  >
+                                    <div style={{ fontWeight: 500, color: '#0066cc', marginBottom: '4px' }}>
+                                      <PlusIcon style={{ marginRight: '6px', fontSize: '0.875rem' }} />
+                                      Add all packages from {row.repository}
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', color: '#666' }}>
+                                      {row.repositoryPackageCount ? `${row.repositoryPackageCount.toLocaleString()} packages available` : 'Multiple packages available'}
+                                    </div>
+                                  </div>
+                                  <div style={{ 
+                                    padding: '8px 16px',
+                                    fontSize: '0.75rem',
+                                    color: '#666',
+                                    borderBottom: '1px solid #f0f0f0',
+                                    fontStyle: 'italic'
+                                  }}>
+                                    Or search for specific packages below:
+                                  </div>
+                                </div>
+                              )}
+
                               {row.isLoading ? (
                                 <div style={{ 
                                   padding: '16px',
@@ -3333,6 +3579,52 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                                 }}>
                                   No packages found. Try typing the full package name.
                                 </div>
+                              )}
+
+                              {/* Lightspeed Package Recommendations - Top 2 only */}
+                              {row.lightspeedRecommendations && row.lightspeedRecommendations.length > 0 && (
+                                <>
+                                  {/* Add separator line */}
+                                  <div style={{ borderTop: '1px solid #e8e8e8', margin: '8px 0' }} />
+                                  
+                                  {row.lightspeedRecommendations.slice(0, 2).map((rec) => (
+                                    <div
+                                      key={rec.id}
+                                      style={{ 
+                                        padding: '10px 16px',
+                                        borderBottom: '1px solid #f0f0f0',
+                                        cursor: 'pointer',
+                                        fontSize: '0.875rem',
+                                        transition: 'background-color 0.15s ease',
+                                        backgroundColor: '#fff7e6'
+                                      }}
+                                      onClick={() => handlePackageSelection(row.id, rec)}
+                                      onMouseEnter={(e) => {
+                                        (e.target as HTMLElement).style.backgroundColor = '#fef3c7';
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        (e.target as HTMLElement).style.backgroundColor = '#fff7e6';
+                                      }}
+                                    >
+                                      <div style={{ 
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        fontWeight: 500,
+                                        marginBottom: '2px'
+                                      }}>
+                                        <MagicIcon style={{ fontSize: '14px', color: '#d97706' }} />
+                                        {rec.name}
+                                      </div>
+                                      <div style={{ color: '#666', fontSize: '0.75rem', marginBottom: '2px' }}>
+                                        v{rec.version}
+                                      </div>
+                                      <div style={{ color: '#666', fontSize: '0.75rem' }}>
+                                        {rec.description}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </>
                               )}
                             </div>
                           )}
@@ -5038,7 +5330,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       width="min(1400px, 95vw)"
-      height="80vh"
+      style={{ minHeight: '80vh' }}
     >
       <div style={{ 
         height: '100%',
