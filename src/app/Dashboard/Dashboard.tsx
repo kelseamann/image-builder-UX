@@ -63,7 +63,7 @@ const Dashboard: React.FunctionComponent = () => {
   const [isBuildImageModalOpen, setIsBuildImageModalOpen] = React.useState(false);
   const [isOverlayOpen, setIsOverlayOpen] = React.useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
-  const [selectedImage, setSelectedImage] = React.useState<ImageInfo | null>(null);
+  const [selectedImage, setSelectedImage] = React.useState<ImageTableRow | null>(null);
   const [imageToDelete, setImageToDelete] = React.useState<ImageTableRow | null>(null);
   const [alertInfo, setAlertInfo] = React.useState<{
     variant: AlertVariant;
@@ -204,6 +204,22 @@ const Dashboard: React.FunctionComponent = () => {
       uuid: 'c5f8a1d3-6b2e-4c9f-8a5d-3f7b2e9c5a8d',
       architecture: 'aarch64',
       fileExtension: '.tar.gz'
+    },
+    {
+      id: '7',
+      name: 'demo-edit-showcase',
+      tag: 'v1.0.0-demo',
+      currentRelease: 'RHEL 9',
+      currentEnvironment: 'AWS',
+      status: 'ready',
+      lastUpdate: '2024-01-16 10:15:00',
+      dateUpdated: new Date('2024-01-16'),
+      targetEnvironment: 'AWS',
+      owner: 'Demo Team',
+      isFavorited: true,
+      uuid: 'd4e8f2a6-3c7b-4d9f-8e1c-5f3a7b9d2e4c',
+      architecture: 'x86_64',
+      fileExtension: '.qcow2'
     }
   ]);
 
@@ -231,14 +247,14 @@ const Dashboard: React.FunctionComponent = () => {
     });
   };
 
-  const openMigrationModal = (image: ImageInfo) => {
+  const openMigrationModal = (image: ImageTableRow) => {
     setSelectedImage(image);
     setIsModalOpen(true);
     // Clear any previous alerts
     setAlertInfo(null);
   };
 
-  const openMigrationOverlay = (image: ImageInfo) => {
+  const openMigrationOverlay = (image: ImageTableRow) => {
     setSelectedImage(image);
     setIsOverlayOpen(true);
     // Clear any previous alerts

@@ -89,7 +89,7 @@ interface BuildImageModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm?: () => void;
-  editingImage?: ImageInfo;
+  editingImage?: ImageInfo & { lastUpdate?: string; dateUpdated?: Date };
 }
 
 const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
@@ -304,6 +304,111 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   
   // Track what the user has modified to detect migration-only changes
   const [modifiedFields, setModifiedFields] = React.useState<Set<string>>(new Set());
+
+  // Initialize form with data when editing an existing image
+  React.useEffect(() => {
+    if (editingImage) {
+      // Set basic image information
+      setImageName(editingImage.name);
+      setBaseImageRelease(editingImage.currentRelease);
+      
+      // For demo-edit-showcase, pre-populate with interesting configuration
+      if (editingImage.name === 'demo-edit-showcase') {
+        setImageDetails('Demo image showcasing comprehensive configuration options for editing workflow demonstration');
+        setSelectedCloudProvider(['aws', 'gcp', 'azure']);
+        setSelectedIntegration('integration-1');
+        setAwsAccountId('123456789012');
+        setGcpAccountType('Service Account');
+        setGcpEmailOrDomain('demo-service@example.com');
+        setIsAzureAuthorized(true);
+        setPrivateCloudFormat(['ova', 'vmdk']);
+        setOtherFormat(['wsl']);
+        setRepeatableBuildOption('enable');
+        setComplianceType('openscap');
+        setOpenscapProfile('cis-rhel9-level2-server');
+        setTimezone('America/New_York');
+        setNtpServers('pool.ntp.org');
+        setHostname('demo-showcase-host');
+        setUsers([
+          {
+            id: '1',
+            isAdministrator: true,
+            username: 'admin',
+            password: 'demo-password',
+            sshKey: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC... demo@example.com',
+            groups: ['wheel', 'docker'],
+            isEditing: false
+          },
+          {
+            id: '2',
+            isAdministrator: false,
+            username: 'deploy',
+            password: 'deploy-password',
+            sshKey: '',
+            groups: ['deploy'],
+            isEditing: false
+          }
+        ]);
+        setFirewallPorts(['80:tcp', '443:tcp', '22:ssh']);
+        setFirewallEnabledServices(['ssh', 'http', 'https']);
+        setSystemdEnabledServices('nginx, postgresql, redis');
+        setKernelAppend('console=ttyS0');
+        
+        // Add some demo packages and repositories
+        setSelectedPackages([
+          { id: 'httpd', name: 'httpd', version: '2.4.53', repository: 'AppStream' },
+          { id: 'nginx', name: 'nginx', version: '1.20.1', repository: 'EPEL' },
+          { id: 'postgresql', name: 'postgresql', version: '13.7', repository: 'AppStream' }
+        ]);
+        
+        setRepositoryRows([
+          // Keep existing OpenSCAP packages
+          {
+            id: 'openscap-1',
+            repository: 'Red Hat',
+            selectedPackage: null,
+            selectedPackages: [
+              { id: 'aide', name: 'aide', version: '0.16', repository: 'BaseOS' },
+              { id: 'sudo', name: 'sudo', version: '1.9.5p2', repository: 'BaseOS' }
+            ],
+            isLocked: true,
+            isOpenSCAPRequired: true,
+            repositorySearchTerm: 'Red Hat',
+            packageSearchTerm: '',
+            searchResults: [],
+            isRepositoryDropdownOpen: false,
+            isLoading: false,
+            isRepositorySearching: false,
+            lightspeedRecommendations: []
+          },
+          // Add demo repository with packages
+          {
+            id: 'demo-repo-1',
+            repository: 'Red Hat Enterprise Linux AppStream',
+            repositorySearchTerm: 'Red Hat Enterprise Linux AppStream',
+            packageSearchTerm: '',
+            selectedPackage: null,
+            selectedPackages: [
+              { id: 'httpd', name: 'httpd', version: '2.4.53', repository: 'AppStream' },
+              { id: 'postgresql', name: 'postgresql', version: '13.7', repository: 'AppStream' }
+            ],
+            repositoryPackageCount: 4521,
+            lastSelectedPackage: { id: 'postgresql', name: 'postgresql', version: '13.7', repository: 'AppStream' },
+            isLocked: true,
+            isRepositoryDropdownOpen: false,
+            searchResults: [],
+            isOpenSCAPRequired: false,
+            isLoading: false,
+            isRepositorySearching: false,
+            lightspeedRecommendations: []
+          }
+        ]);
+        
+        // Automatically navigate to Review tab to show all configurations
+        setActiveTabKey(3);
+      }
+    }
+  }, [editingImage]);
   
   // Check if user should see migration suggestion (only in editing mode)
   const shouldShowMigrationSuggestion = React.useMemo(() => {
@@ -1033,7 +1138,11 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
         return {
           ...row,
           isLocked: true,
-          isRepositorySearching: false
+          isRepositorySearching: false,
+          // Clear search state to properly close dropdowns
+          packageSearchTerm: '',
+          searchResults: [],
+          isLoading: false
         };
       }
       return row;
@@ -1063,8 +1172,8 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     });
   };
 
-  const updateRepositoryRow = (rowId: string, updates: Partial<RepositoryRow>) => {
-    setRepositoryRows(prev => 
+    const updateRepositoryRow = (rowId: string, updates: Partial<RepositoryRow>) => {
+    setRepositoryRows(prev =>
       prev.map(row => 
         row.id === rowId ? { ...row, ...updates } : row
       )
@@ -1535,13 +1644,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       }
     }
     
-    // Check repeatable build snapshot date if enabled (second section)
-    if (repeatableBuildOption === 'enable' && !snapshotDate.trim()) {
-      errors.snapshotDate = 'Snapshot date is required when repeatable build is enabled';
-      if (!firstErrorRef) {
-        firstErrorRef = enableRepeatableRef;
-      }
-    }
+    // Note: Snapshot date validation removed - Enable repeatable build now auto-populates with today's date
     
     // Check cloud provider login status (in image output section)
     if (selectedCloudProvider.includes('aws') && !selectedIntegration.trim()) {
@@ -1604,14 +1707,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
           let hasValidationError = false;
           const newValidationErrors: {[key: string]: string} = {};
           
-          // Check if we're on the Enable repeatable build section (index 1)
-          if (currentBaseImageSection === 1) {
-            // Validate snapshot date is required when "Enable repeatable build" is selected
-            if (repeatableBuildOption === 'enable' && !snapshotDate.trim()) {
-              newValidationErrors.snapshotDate = 'Snapshot date is required when Enable repeatable build is selected';
-              hasValidationError = true;
-            }
-          }
+          // Note: Snapshot date section validation removed - Enable repeatable build now auto-populates with today's date
           
           setValidationErrors(newValidationErrors);
           
@@ -2486,16 +2582,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 
                 {/* Enable repeatable build Section */}
                 <div style={{ marginBottom: '2rem' }}>
-                    {validationErrors.snapshotDate && (
-                      <Alert
-                        variant="warning"
-                        isInline
-                        title="Please complete the required fields"
-                        style={{ marginBottom: '1rem' }}
-                      >
-                        <p>{validationErrors.snapshotDate}</p>
-                      </Alert>
-                    )}
+
                     <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
                       Enable repeatable build
                     </Title>
@@ -2528,7 +2615,15 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                         label="Enable repeatable build"
                         description="Build this image with the repository content of a selected date"
                         isChecked={repeatableBuildOption === 'enable'}
-                        onChange={() => setRepeatableBuildOption('enable')}
+                        onChange={() => {
+                          setRepeatableBuildOption('enable');
+                          // Auto-populate with today's date by default
+                          const today = new Date();
+                          const month = (today.getMonth() + 1).toString().padStart(2, '0');
+                          const day = today.getDate().toString().padStart(2, '0');
+                          const year = today.getFullYear();
+                          setSnapshotDate(`${month}-${day}-${year}`);
+                        }}
                       />
                       <Radio
                         id="use-content-template"
@@ -2554,17 +2649,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                           <DatePicker
                             id="snapshot-date"
                             value={snapshotDate}
-                            onChange={(_event, value) => {
-                              setSnapshotDate(value);
-                              // Clear validation error when user starts typing
-                              if (validationErrors.snapshotDate) {
-                                setValidationErrors(prev => {
-                                  const newErrors = { ...prev };
-                                  delete newErrors.snapshotDate;
-                                  return newErrors;
-                                });
-                              }
-                            }}
+                            onChange={(_event, value) => setSnapshotDate(value)}
                             placeholder="MM-DD-YYYY"
                             popoverProps={{ position: "bottom" }}
                             dateFormat={(date: Date) => {
@@ -2595,15 +2680,16 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                               const day = today.getDate().toString().padStart(2, '0');
                               const year = today.getFullYear();
                               setSnapshotDate(`${month}-${day}-${year}`);
-                              // Clear validation error when user sets date
-                              if (validationErrors.snapshotDate) {
-                                setValidationErrors(prev => {
-                                  const newErrors = { ...prev };
-                                  delete newErrors.snapshotDate;
-                                  return newErrors;
-                                });
-                              }
                             }}
+                            isDisabled={(() => {
+                              // Check if current snapshot date is today's date
+                              const today = new Date();
+                              const month = (today.getMonth() + 1).toString().padStart(2, '0');
+                              const day = today.getDate().toString().padStart(2, '0');
+                              const year = today.getFullYear();
+                              const todayFormatted = `${month}-${day}-${year}`;
+                              return snapshotDate === todayFormatted;
+                            })()}
                             className="pf-v6-u-font-size-sm"
                           >
                             Today's date
@@ -2619,13 +2705,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                           </Button>
                         </SplitItem>
                       </Split>
-                      {validationErrors.snapshotDate && (
-                        <FormHelperText>
-                          <HelperText>
-                            <HelperTextItem variant="error">{validationErrors.snapshotDate}</HelperTextItem>
-                          </HelperText>
-                        </FormHelperText>
-                      )}
+
                       <div style={{ marginTop: '0.5rem', marginBottom: '1rem' ,fontSize: '0.875rem', color: '#666' }}>
                       Use packages from this date to ensure reproducible builds.
                       </div>
@@ -3335,103 +3415,148 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                           fieldId={`package-${row.id}`}
                           style={{ position: 'relative', overflow: 'visible' }}
                         >
-                          <div>
-                            {/* Package Labels/Chips for multi-selection */}
-                            {row.selectedPackages && row.selectedPackages.length > 0 && (
-                              <div style={{ 
-                                display: 'flex',
-                                flexWrap: 'wrap',
-                                gap: '6px',
-                                marginBottom: '8px'
-                              }}>
-                                {row.selectedPackages.map((pkg, index) => (
-                                  <div
-                                    key={pkg.id || `${pkg.name}-${index}`}
-                                    style={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      backgroundColor: '#e6f1ff',
-                                      border: '1px solid #b3d9ff',
-                                      borderRadius: '16px',
-                                      padding: '4px 8px',
-                                      fontSize: '0.75rem',
-                                      fontWeight: 500,
-                                      color: '#0066cc',
-                                      maxWidth: '200px'
-                                    }}
-                                  >
-                                    <span style={{ 
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                      whiteSpace: 'nowrap'
-                                    }}>
-                                      {pkg.isAllPackages ? `All packages (${pkg.packageCount})` : pkg.name}
-                                    </span>
-                                    {!row.isOpenSCAPRequired && (
-                                      <TimesIcon
-                                        style={{ 
-                                          fontSize: '0.75rem',
-                                          marginLeft: '6px',
-                                          cursor: 'pointer',
-                                          color: '#0066cc'
-                                        }}
-                                        onClick={() => handleRemovePackageFromSelection(row.id, pkg)}
-                                      />
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
-                              {/* Input container - takes up available space */}
-                              <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-                                {row.isLocked && row.selectedPackage && !row.selectedPackages ? (
-                                  <TextInput
-                                    value={`${row.selectedPackage.name} v${row.selectedPackage.version}`}
-                                    readOnly
-                                    style={{ width: '100%' }}
-                                  />
-                                ) : (
-                                  <>
-                                    {/* Show search input unless OpenSCAP, "all packages" selected, or row is locked with selections */}
-                                    {!row.isOpenSCAPRequired && !row.selectedPackages?.some(pkg => pkg.isAllPackages) && !(row.isLocked && (row.selectedPackages?.length ?? 0) > 0) && (
-                                      <SearchInput
-                                        placeholder={
-                                          row.selectedPackages && row.selectedPackages.length > 0 
-                                            ? `Last selected: ${row.lastSelectedPackage?.name || 'package'} | Search for more...` 
-                                            : (row.repository ? "Search for packages..." : "Select repository first")
-                                        }
-                                        value={row.packageSearchTerm}
-                                        onChange={(_event, value) => handleRowPackageSearchInput(row.id, value)}
-                                        onSearch={() => performRowPackageSearch(row.id)}
-                                        onClear={() => handleRowPackageSearchClear(row.id)}
-                                        onKeyDown={(event) => {
-                                          if (event.key === 'Enter') {
-                                            performRowPackageSearch(row.id);
-                                          }
-                                        }}
-                                        isDisabled={!row.repository}
-                                        style={{ width: '100%' }}
-                                      />
-                                    )}
-                                  </>
-                                )}
-                              </div>
-
-                              {/* Minus icon - always positioned at far right */}
-                              {!row.isOpenSCAPRequired && (
-                                <MinusCircleIcon
-                                  style={{ 
-                                    fontSize: '1.25rem', 
-                                    color: '#151515',
-                                    cursor: 'pointer',
-                                    flexShrink: 0
-                                  }}
-                                  onClick={() => removeRepositoryRow(row.id)}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+                            {/* Package Multi-Select with Chips */}
+                            <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                              {row.isLocked && row.selectedPackage && !row.selectedPackages ? (
+                                <TextInput
+                                  value={`${row.selectedPackage.name} v${row.selectedPackage.version}`}
+                                  readOnly
+                                  style={{ width: '100%' }}
                                 />
+                              ) : !row.isOpenSCAPRequired && !row.selectedPackages?.some(pkg => pkg.isAllPackages) && !(row.isLocked && (row.selectedPackages?.length ?? 0) > 0) ? (
+                                <div style={{ position: 'relative', width: '100%' }}>
+                                  {/* Package Labels/Chips for multi-selection */}
+                                  {row.selectedPackages && row.selectedPackages.length > 0 && (
+                                    <div style={{ 
+                                      display: 'flex',
+                                      flexWrap: 'wrap',
+                                      gap: '6px',
+                                      marginBottom: '8px'
+                                    }}>
+                                      {row.selectedPackages.map((pkg, index) => (
+                                        <div
+                                          key={pkg.id || `${pkg.name}-${index}`}
+                                          style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            backgroundColor: '#e6f1ff',
+                                            color: '#0066cc',
+                                            padding: '4px 8px',
+                                            borderRadius: '12px',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 500,
+                                            border: '1px solid #b3d9ff',
+                                            maxWidth: '200px'
+                                          }}
+                                        >
+                                          <span style={{ 
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap'
+                                          }}>
+                                            {pkg.isAllPackages ? `All packages (${pkg.packageCount})` : pkg.name}
+                                          </span>
+                                          {!row.isOpenSCAPRequired && (
+                                            <TimesIcon
+                                              style={{ 
+                                                marginLeft: '6px',
+                                                fontSize: '0.75rem',
+                                                cursor: 'pointer',
+                                                flexShrink: 0
+                                              }}
+                                              onClick={() => handleRemovePackageFromSelection(row.id, pkg)}
+                                            />
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+
+                                  {/* 
+                                    DEVELOPMENT NOTE: PatternFly Multiple Typeahead with Chips
+                                    ================================================================
+                                    
+                                    User requested: "Can we try using the PatternFly multiple typeahead with chips pattern 
+                                    where the packages would show up in the field as chips on the left"
+                                    
+                                    ATTEMPTED IMPLEMENTATION:
+                                    - Tried using MenuToggle + Popper + Menu components
+                                    - Wanted chips inside the input field using Label components
+                                    - Inline search input to the right of chips
+                                    
+                                    ISSUE ENCOUNTERED:
+                                    - Implementation broke compilation with syntax errors
+                                    - PatternFly v6 components may not fully support this pattern yet
+                                    - Complex state management conflicts with existing functionality
+                                    
+                                    CURRENT APPROACH:
+                                    - Using separate chip area above SearchInput (working solution)
+                                    - Maintains all functionality while providing visual feedback
+                                    - Can revisit PatternFly typeahead pattern in future iterations
+                                  */}
+
+                                  <SearchInput
+                                    ref={(el) => { (window as any)[`packageInput-${row.id}`] = el; }}
+                                    placeholder={
+                                      row.selectedPackages && row.selectedPackages.length > 0 
+                                        ? `Last selected: ${row.lastSelectedPackage?.name || 'package'} | Search for more...` 
+                                        : (row.repository ? "Search for packages..." : "Select repository first")
+                                    }
+                                    value={row.packageSearchTerm}
+                                    onChange={(_event, value) => handleRowPackageSearchInput(row.id, value)}
+                                    onSearch={() => performRowPackageSearch(row.id)}
+                                    onClear={() => handleRowPackageSearchClear(row.id)}
+                                    onKeyDown={(event) => {
+                                      if (event.key === 'Enter') {
+                                        performRowPackageSearch(row.id);
+                                      }
+                                    }}
+                                    onFocus={() => {
+                                      if (row.repository) {
+                                        updateRepositoryRow(row.id, { isRepositoryDropdownOpen: true });
+                                      }
+                                    }}
+                                    onBlur={() => {
+                                      setTimeout(() => updateRepositoryRow(row.id, { isRepositoryDropdownOpen: false }), 200);
+                                    }}
+                                    style={{ width: '100%' }}
+                                    isDisabled={!row.repository}
+                                  />
+                                </div>
+                              ) : (
+                                // Display for OpenSCAP or locked states
+                                <div style={{ width: '100%' }}>
+                                  {row.selectedPackages && row.selectedPackages.length > 0 && (
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                      {row.selectedPackages.map((pkg, index) => (
+                                        <Label
+                                          key={pkg.id || `${pkg.name}-${index}`}
+                                          color="blue"
+                                          onClose={!row.isOpenSCAPRequired ? () => handleRemovePackageFromSelection(row.id, pkg) : undefined}
+                                          style={{ fontSize: '0.75rem' }}
+                                        >
+                                          {pkg.isAllPackages ? `All packages (${pkg.packageCount})` : pkg.name}
+                                        </Label>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
                               )}
                             </div>
+
+                            {/* Minus icon - always positioned at far right */}
+                            {!row.isOpenSCAPRequired && (
+                              <MinusCircleIcon
+                                style={{ 
+                                  fontSize: '1.25rem', 
+                                  color: '#151515',
+                                  cursor: 'pointer',
+                                  flexShrink: 0
+                                }}
+                                onClick={() => removeRepositoryRow(row.id)}
+                              />
+                            )}
                           </div>
                           {row.isOpenSCAPRequired && row.isLocked && (
                             <div style={{ 
@@ -4682,17 +4807,17 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     style={{ flex: 1 }}
                   >
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      {firewallDisabledServices.map((service, index) => (
-                        <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <TextInput
-                            id={`firewall-disabled-services-${index}`}
-                            value={service}
-                            onChange={(_event, value) => updateFirewallDisabledService(index, value)}
-                            placeholder="Enter service name"
-                            style={{ flex: 1 }}
-                          />
-                        </div>
-                      ))}
+                                              {firewallDisabledServices.map((service, index) => (
+                          <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <TextInput
+                              id={`firewall-disabled-services-${index}`}
+                              value={service}
+                              onChange={(_event, value) => updateFirewallDisabledService(index, value)}
+                              placeholder="Enter service name"
+                              style={{ flex: 1 }}
+                            />
+                          </div>
+                        ))}
                     </div>
                   </FormGroup>
 
@@ -4935,7 +5060,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   </strong> as your target environment{selectedCloudProvider.length > 1 ? 's' : ''}.
                 </p>
                 <p style={{ marginTop: '0.5rem', marginBottom: 0 }}>
-                  <strong>The image will expire in 2 weeks</strong> after it's built. You must copy it to your own 
+                  <strong>The image will expire in 2 weeks</strong> after it's built{editingImage && editingImage.lastUpdate ? ` (last updated on ${editingImage.lastUpdate})` : ''}. You must copy it to your own 
                   cloud account{selectedCloudProvider.length > 1 ? 's' : ''} to ensure continued access.
                 </p>
               </Alert>
@@ -5055,11 +5180,27 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       <DescriptionListGroup>
                         <DescriptionListTerm>Registration Method</DescriptionListTerm>
                         <DescriptionListDescription>
-                          <Badge isRead>
-                            {registrationMethod === 'auto' && 'Auto registration'}
-                            {registrationMethod === 'later' && 'Register later'}
-                            {registrationMethod === 'satellite' && 'Register with Satellite'}
-                          </Badge>
+                          {registrationMethod === 'auto' ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                              <Checkbox
+                                isChecked={enablePredictiveAnalytics}
+                                isDisabled={true}
+                                label="Enable predictive analytics and management capabilities"
+                                id="review-enable-predictive-analytics"
+                              />
+                              <Checkbox
+                                isChecked={enableRemoteRemediations}
+                                isDisabled={true}
+                                label="Enable remote remediations and system management with automation"
+                                id="review-enable-remote-remediations"
+                              />
+                            </div>
+                          ) : (
+                            <Badge isRead>
+                              {registrationMethod === 'later' && 'Register later'}
+                              {registrationMethod === 'satellite' && 'Register with Satellite'}
+                            </Badge>
+                          )}
                         </DescriptionListDescription>
                       </DescriptionListGroup>
                       <DescriptionListGroup>
