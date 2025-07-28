@@ -39,7 +39,7 @@ import {
   ToolbarItem,
   Tooltip
 } from '@patternfly/react-core';
-import { AngleDownIcon, AngleRightIcon, BuildIcon, BuilderImageIcon, CheckCircleIcon, CopyIcon, DownloadIcon, EditIcon, EllipsisVIcon, ExclamationCircleIcon, ExclamationTriangleIcon, FilterIcon, InfoCircleIcon, MigrationIcon, OutlinedStarIcon, PlayIcon, StarIcon, TimesIcon, TrashIcon } from '@patternfly/react-icons';
+import { AngleDownIcon, AngleRightIcon, BuildIcon, CheckCircleIcon, CopyIcon, DownloadIcon, EditIcon, EllipsisVIcon, ExclamationCircleIcon, ExclamationTriangleIcon, ExternalLinkAltIcon, FilterIcon, InfoCircleIcon, MigrationIcon, OutlinedStarIcon, PlayIcon, StarIcon, TimesIcon, TrashIcon } from '@patternfly/react-icons';
 import { ImageInfo, ImageMigrationModal, MigrationData } from './ImageMigrationModal';
 import { type ImageItem, UseBaseImageModal } from './UseBaseImageModal';
 import BuildImageModal from './BuildImageModal';
@@ -935,7 +935,6 @@ const Dashboard: React.FunctionComponent = () => {
           <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
             <FlexItem>
               <Title headingLevel="h1" size="lg">
-                <BuilderImageIcon style={{ marginRight: '0.5rem' }} />
                 Image Builder
               </Title>
               <p style={{ marginTop: '0.5rem', color: '#666' }}>
@@ -945,7 +944,7 @@ const Dashboard: React.FunctionComponent = () => {
             <FlexItem>
               <Flex spaceItems={{ default: 'spaceItemsSm' }}>
                 <FlexItem>
-                  <Button variant="secondary" onClick={() => {
+                  <Button variant="primary" onClick={() => {
                     setSelectedImage(null); // Clear selected image for creation flow
                     setIsBuildImageModalOpen(true);
                   }}>
@@ -1427,6 +1426,46 @@ const Dashboard: React.FunctionComponent = () => {
                                 {image.uuid}
                               </ClipboardCopy>
                             </div>
+                            {(image.targetEnvironment === 'AWS' || image.currentEnvironment === 'AWS') && (
+                              <>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                  <strong>Shared with:</strong>
+                                  <a 
+                                    href="#" 
+                                    style={{ 
+                                      color: '#0066cc', 
+                                      textDecoration: 'underline',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '0.25rem'
+                                    }}
+                                  >
+                                    12345678
+                                    <ExternalLinkAltIcon style={{ fontSize: '0.75rem' }} />
+                                  </a>
+                                  {/* Unsure if Launch deprecation will affect this */}
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                  <strong>AMI:</strong>
+                                  <ClipboardCopy 
+                                    isReadOnly 
+                                    hoverTip="Copy AMI ID" 
+                                    clickTip="AMI ID copied!"
+                                    variant="inline-compact"
+                                  >
+                                    ami-0d52c8df27df8a728
+                                  </ClipboardCopy>
+                                </div>
+                                <div><strong>Region:</strong> us-east-1</div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                  <strong>Status:</strong>
+                                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                    <CheckCircleIcon style={{ color: '#3e8635', fontSize: '0.875rem' }} />
+                                    Ready
+                                  </span>
+                                </div>
+                              </>
+                            )}
                           </div>
                         </div>
                       </td>

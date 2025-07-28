@@ -130,7 +130,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   
   // Base image form state
-  const [imageName, setImageName] = React.useState<string>('');
+  const [imageName, setImageName] = React.useState<string>('my-custom-image');
   const [imageDetails, setImageDetails] = React.useState<string>('');
   const [baseImageRelease, setBaseImageRelease] = React.useState<string>('Red Hat Enterprise Linux 9');
   const [isBaseImageReleaseOpen, setIsBaseImageReleaseOpen] = React.useState<boolean>(false);
@@ -231,7 +231,6 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
 
   // Extended support state
   const [extendedSupport, setExtendedSupport] = React.useState<string>('none');
-  const [isExtendedSupportCollapsed, setIsExtendedSupportCollapsed] = React.useState<boolean>(true);
 
   // Organization ID state
   const [organizationId, setOrganizationId] = React.useState<string>('11009103');
@@ -240,6 +239,10 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const [systemdDisabledServices, setSystemdDisabledServices] = React.useState<string>('');
   const [systemdMaskedServices, setSystemdMaskedServices] = React.useState<string>('');
   const [systemdEnabledServices, setSystemdEnabledServices] = React.useState<string>('');
+
+  // OpenSCAP inheritance tracking
+  const [openscapAddedPackagesCount, setOpenscapAddedPackagesCount] = React.useState<number>(0);
+  const [openscapAddedServicesCount, setOpenscapAddedServicesCount] = React.useState<number>(0);
 
   // Firewall state
   const [firewallPorts, setFirewallPorts] = React.useState<string[]>(['']);
@@ -305,6 +308,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   // Track what the user has modified to detect migration-only changes
   const [modifiedFields, setModifiedFields] = React.useState<Set<string>>(new Set());
 
+  // Reset form to defaults when modal opens for new image creation
+  React.useEffect(() => {
+    if (!editingImage) {
+      setImageName('my-custom-image');
+      setImageDetails('');
+    }
+  }, [editingImage]);
+
   // Initialize form with data when editing an existing image
   React.useEffect(() => {
     if (editingImage) {
@@ -315,19 +326,19 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       // For demo-edit-showcase, pre-populate with interesting configuration
       if (editingImage.name === 'demo-edit-showcase') {
         setImageDetails('Demo image showcasing comprehensive configuration options for editing workflow demonstration');
-        setSelectedCloudProvider(['aws', 'gcp', 'azure']);
+        setSelectedCloudProvider(['aws', 'gcp']);
         setSelectedIntegration('integration-1');
         setAwsAccountId('123456789012');
         setGcpAccountType('Service Account');
         setGcpEmailOrDomain('demo-service@example.com');
-        setIsAzureAuthorized(true);
         setPrivateCloudFormat(['ova', 'vmdk']);
         setOtherFormat(['wsl']);
         setRepeatableBuildOption('enable');
+        // Pre-populate with OpenSCAP inheritance and profile selection for demo
         setComplianceType('openscap');
         setOpenscapProfile('cis-rhel9-level2-server');
+        addOpenscapInheritance('CIS Red Hat Enterprise Linux 9 Benchmark for Level 2 - Server');
         setTimezone('America/New_York');
-        setNtpServers('pool.ntp.org');
         setHostname('demo-showcase-host');
         setUsers([
           {
@@ -362,26 +373,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
         ]);
         
         setRepositoryRows([
-          // Keep existing OpenSCAP packages
-          {
-            id: 'openscap-1',
-            repository: 'Red Hat',
-            selectedPackage: null,
-            selectedPackages: [
-              { id: 'aide', name: 'aide', version: '0.16', repository: 'BaseOS' },
-              { id: 'sudo', name: 'sudo', version: '1.9.5p2', repository: 'BaseOS' }
-            ],
-            isLocked: true,
-            isOpenSCAPRequired: true,
-            repositorySearchTerm: 'Red Hat',
-            packageSearchTerm: '',
-            searchResults: [],
-            isRepositoryDropdownOpen: false,
-            isLoading: false,
-            isRepositorySearching: false,
-            lightspeedRecommendations: []
-          },
-          // Add demo repository with packages
+          // Add demo repository with packages  
           {
             id: 'demo-repo-1',
             repository: 'Red Hat Enterprise Linux AppStream',
@@ -401,6 +393,20 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             isLoading: false,
             isRepositorySearching: false,
             lightspeedRecommendations: []
+          },
+          // Empty row for user interaction (will be moved to bottom by addOpenscapInheritance)
+          {
+            id: 'user-row-1',
+            repository: '',
+            repositorySearchTerm: '',
+            packageSearchTerm: '',
+            selectedPackage: null,
+            isLocked: false,
+            isRepositoryDropdownOpen: false,
+            searchResults: [],
+            isOpenSCAPRequired: false,
+            isLoading: false,
+            isRepositorySearching: false
           }
         ]);
         
@@ -495,28 +501,10 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   }
 
   const [repositoryRows, setRepositoryRows] = React.useState<RepositoryRow[]>([
-    // Mock OpenSCAP required packages - combined into one row with multiple packages
-    {
-      id: 'openscap-1',
-      repository: 'Red Hat',
-      repositorySearchTerm: 'Red Hat',
-      packageSearchTerm: '',
-      selectedPackage: null, // Legacy - using selectedPackages instead
-      selectedPackages: [
-        { id: 'aide', name: 'aide', version: '0.16', repository: 'BaseOS' },
-        { id: 'sudo', name: 'sudo', version: '1.9.5p2', repository: 'BaseOS' }
-      ],
-      isLocked: true,
-      isRepositoryDropdownOpen: false,
-      searchResults: [],
-      isOpenSCAPRequired: true,
-      isLoading: false,
-      isRepositorySearching: false
-    },
     {
       id: 'row-1',
       repository: '',
-      repositorySearchTerm: 'Custom Repository',
+      repositorySearchTerm: '',
       packageSearchTerm: '',
       selectedPackage: null,
       isLocked: false,
@@ -524,7 +512,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       searchResults: [],
       isOpenSCAPRequired: false,
       isLoading: false,
-      isRepositorySearching: true
+      isRepositorySearching: false
     }
   ]);
   
@@ -956,12 +944,129 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
         // Toggle off - clear selection and reset compliance type
         setOpenscapProfile('');
         setComplianceType('');
+        // Clear OpenSCAP inheritance when deselecting
+        clearOpenscapInheritance();
       } else {
         setOpenscapProfile(selection);
         setComplianceType('openscap'); // Auto-select the OpenSCAP radio button
+        // Add OpenSCAP inheritance when selecting a profile
+        addOpenscapInheritance(selection);
       }
       setIsOpenscapProfileOpen(false);
     }
+  };
+
+  // Function to clear OpenSCAP-added items
+  const clearOpenscapInheritance = () => {
+    console.log('Clearing OpenSCAP inheritance');
+    
+    // Reset disabled services (remove OpenSCAP additions)
+    setSystemdDisabledServices('');
+    setOpenscapAddedServicesCount(0);
+    setOpenscapAddedPackagesCount(0);
+    
+    // Keep existing OpenSCAP packages but reset any additional ones
+    setRepositoryRows(prev => prev.filter(row => row.isOpenSCAPRequired || !row.id.startsWith('openscap-')));
+  };
+
+  // Function to add OpenSCAP inheritance based on selected profile
+  const addOpenscapInheritance = (profile: string) => {
+    console.log('OpenSCAP inheritance triggered for profile:', profile);
+    
+    // Define OpenSCAP inheritance rules based on profile
+    const inheritanceRules: { [key: string]: { services: string[], additionalPackages?: any[], repositories?: any[] } } = {
+      'CIS Red Hat Enterprise Linux 9 Benchmark for Level 1 - Server': {
+        services: ['telnet', 'rsh'],
+        additionalPackages: [
+          { id: 'rsyslog', name: 'rsyslog', version: '8.2102.0', repository: 'BaseOS' }
+        ]
+      },
+      'CIS Red Hat Enterprise Linux 9 Benchmark for Level 2 - Server': {
+        services: ['telnet', 'rsh', 'rlogin'],
+        additionalPackages: [
+          { id: 'rsyslog', name: 'rsyslog', version: '8.2102.0', repository: 'BaseOS' },
+          { id: 'chrony', name: 'chrony', version: '4.2', repository: 'BaseOS' }
+        ]
+      },
+      'DISA STIG for Red Hat Enterprise Linux 9': {
+        services: ['telnet', 'rsh', 'rlogin', 'tftp', 'xinetd'],
+        additionalPackages: [
+          { id: 'firewalld', name: 'firewalld', version: '1.2.3', repository: 'BaseOS' },
+          { id: 'audit', name: 'audit', version: '3.0.7', repository: 'BaseOS' },
+          { id: 'rsyslog', name: 'rsyslog', version: '8.2102.0', repository: 'BaseOS' }
+        ]
+      },
+      'Australian Cyber Security Centre (ACSC) Essential Eight': {
+        services: ['telnet', 'ftp'],
+        additionalPackages: [
+          { id: 'chrony', name: 'chrony', version: '4.2', repository: 'BaseOS' }
+        ]
+      }
+    };
+
+    const rules = inheritanceRules[profile];
+    
+    // If no specific rules found, use a default CIS Level 2 pattern
+    const effectiveRules = rules || {
+      services: ['telnet', 'rsh', 'rlogin'],
+      additionalPackages: [
+        { id: 'rsyslog', name: 'rsyslog', version: '8.2102.0', repository: 'BaseOS' },
+        { id: 'chrony', name: 'chrony', version: '4.2', repository: 'BaseOS' }
+      ]
+    };
+    
+    // Add disabled services
+    if (effectiveRules.services.length > 0) {
+      setSystemdDisabledServices(effectiveRules.services.join(', '));
+      setOpenscapAddedServicesCount(effectiveRules.services.length);
+    }
+
+    // Add OpenSCAP packages (always include base aide/sudo, plus any additional packages)
+    const newRows: RepositoryRow[] = [];
+    
+    // Always add the base OpenSCAP row with aide and sudo
+    newRows.push({
+      id: 'openscap-1',
+      repository: 'Red Hat',
+      repositorySearchTerm: '',
+      packageSearchTerm: '',
+      selectedPackage: null,
+      selectedPackages: [
+        { id: 'aide', name: 'aide', version: '0.16', repository: 'BaseOS' },
+        { id: 'sudo', name: 'sudo', version: '1.9.5p2', repository: 'BaseOS' }
+      ],
+      isLocked: true,
+      isRepositoryDropdownOpen: false,
+      searchResults: [],
+      isOpenSCAPRequired: true,
+      isLoading: false,
+      isRepositorySearching: false
+    });
+    
+    // Add additional packages if any
+    if (effectiveRules.additionalPackages) {
+      const additionalRows = effectiveRules.additionalPackages.map((pkg, index) => ({
+        id: `openscap-additional-${index + 1}`,
+        repository: 'Red Hat',
+        repositorySearchTerm: '',
+        isRepositoryDropdownOpen: false,
+        isRepositorySearching: false,
+        packageSearchTerm: '',
+        searchResults: [],
+        selectedPackages: [pkg],
+        isLocked: true,
+        isLoading: false,
+        selectedPackage: pkg,
+        lastSelectedPackage: null,
+        lightspeedRecommendations: [],
+        isOpenSCAPRequired: true
+      }));
+      newRows.push(...additionalRows);
+    }
+    
+    // Add OpenSCAP rows at the beginning, keeping user rows at the bottom
+    setRepositoryRows(prev => [...newRows, ...prev.filter(row => !row.isOpenSCAPRequired)]);
+    setOpenscapAddedPackagesCount(2 + (effectiveRules.additionalPackages?.length || 0));
   };
 
   const onIntegrationSelect = (
@@ -1055,15 +1160,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   };
 
   const handleAzureAuthorize = () => {
-    if (azureId.trim()) {
-      setIsAzureAuthorized(true);
-      
-      // Clear Azure login validation error
-      if (validationErrors.azureLogin) {
-        const newErrors = { ...validationErrors };
-        delete newErrors.azureLogin;
-        setValidationErrors(newErrors);
-      }
+    // For demo purposes, allow authorization without requiring specific credentials
+    setIsAzureAuthorized(true);
+    
+    // Clear Azure login validation error
+    if (validationErrors.azureLogin) {
+      const newErrors = { ...validationErrors };
+      delete newErrors.azureLogin;
+      setValidationErrors(newErrors);
     }
   };
 
@@ -1896,11 +2000,11 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
           <Alert
             variant="info"
             isInline
-            title="Register with Red Hat Insights within 30 days"
+            title="Lorem ipsum dolor sit amet"
             style={{ marginTop: '1rem' }}
           >
             <p style={{ marginBottom: '0.5rem' }}>
-              If you don't register your systems within 30 days, you will not be able to use Red Hat Insights capabilities.
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
             </p>
             <p>
               <a href="#" style={{ color: '#0066cc', textDecoration: 'underline' }}>
@@ -1918,7 +2022,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             title="Work in Progress"
             style={{ marginTop: '1rem' }}
           >
-            Satellite registration is currently being developed and will be available in a future release.
+            The satellite step should show what's currently implemented.
           </Alert>
         );
       default:
@@ -1962,21 +2066,41 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   isRequired
                   style={{ marginBottom: '1rem' }}
                 >
-                  <TextInput
-                    id="image-name"
-                    value={imageName}
-                    onChange={(_event, value) => {
-                      setImageName(value);
-                      // Clear validation error when user starts typing
-                      if (validationErrors.imageName && value.trim()) {
-                        const newErrors = { ...validationErrors };
-                        delete newErrors.imageName;
-                        setValidationErrors(newErrors);
-                      }
-                    }}
-                    placeholder="Enter image name"
-                    isRequired
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <TextInput
+                      id="image-name"
+                      value={imageName}
+                      onChange={(_event, value) => {
+                        setImageName(value);
+                        // Clear validation error when user starts typing
+                        if (validationErrors.imageName && value.trim()) {
+                          const newErrors = { ...validationErrors };
+                          delete newErrors.imageName;
+                          setValidationErrors(newErrors);
+                        }
+                      }}
+                      placeholder="Enter image name"
+                      isRequired
+                    />
+                    {imageName && (
+                      <Button
+                        variant="plain"
+                        onClick={() => setImageName('')}
+                        style={{
+                          position: 'absolute',
+                          right: '8px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          padding: '0.25rem',
+                          minWidth: 'auto',
+                          height: 'auto'
+                        }}
+                        aria-label="Clear image name"
+                      >
+                        <TimesIcon style={{ fontSize: '0.875rem', color: '#666' }} />
+                      </Button>
+                    )}
+                  </div>
                 </FormGroup>
 
                 <FormGroup
@@ -1984,12 +2108,32 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   fieldId="image-details"
                   style={{ marginTop: '12px', marginBottom: '1rem' }}
                 >
-                  <TextInput
-                    id="image-details"
-                    value={imageDetails}
-                    onChange={(_event, value) => setImageDetails(value)}
-                    placeholder="Enter image details"
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <TextInput
+                      id="image-details"
+                      value={imageDetails}
+                      onChange={(_event, value) => setImageDetails(value)}
+                      placeholder="Enter image details"
+                    />
+                    {imageDetails && (
+                      <Button
+                        variant="plain"
+                        onClick={() => setImageDetails('')}
+                        style={{
+                          position: 'absolute',
+                          right: '8px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          padding: '0.25rem',
+                          minWidth: 'auto',
+                          height: 'auto'
+                        }}
+                        aria-label="Clear image description"
+                      >
+                        <TimesIcon style={{ fontSize: '0.875rem', color: '#666' }} />
+                      </Button>
+                    )}
+                  </div>
                 </FormGroup>
               </div>
               
@@ -2544,13 +2688,26 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       </Select>
                     </FormGroup>
 
-                    <Button
-                      variant="primary"
-                      onClick={handleAzureAuthorize}
-                      style={{ marginTop: '1rem' }}
-                    >
-                      Authorize Azure
-                    </Button>
+                    {isAzureAuthorized ? (
+                      <div style={{ 
+                        marginTop: '1rem',
+                        padding: '0.75rem',
+                        backgroundColor: '#d4edda',
+                        border: '1px solid #c3e6cb',
+                        borderRadius: '4px',
+                        color: '#155724'
+                      }}>
+                        ✓ Azure account authorized successfully
+                      </div>
+                    ) : (
+                      <Button
+                        variant="primary"
+                        onClick={handleAzureAuthorize}
+                        style={{ marginTop: '1rem' }}
+                      >
+                        Authorize Azure
+                      </Button>
+                    )}
                   </div>
                 )}
 
@@ -2711,6 +2868,17 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       </div>
                     </FormGroup>
                     )}
+
+                    {repeatableBuildOption === 'template' && (
+                      <Alert
+                        variant="warning"
+                        isInline
+                        title="Work in Progress"
+                        style={{ marginTop: '1rem' }}
+                      >
+                        The content template step should show what's currently implemented.
+                      </Alert>
+                    )}
                 </div>
                   
                 {/* Kickstart File Section */}
@@ -2814,7 +2982,34 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                                 isExpanded={isCustomCompliancePolicyOpen}
                                 style={{ width: '400px' }}
                               >
-                                {customCompliancePolicy || 'Select a compliance policy'}
+                                <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                                  <span style={{ 
+                                    flex: 1, 
+                                    overflow: 'hidden', 
+                                    textOverflow: 'ellipsis', 
+                                    whiteSpace: 'nowrap',
+                                    marginRight: '8px'
+                                  }}>
+                                    {customCompliancePolicy || 'Select a compliance policy'}
+                                  </span>
+                                  {customCompliancePolicy && (
+                                    <Button
+                                      variant="plain"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCustomCompliancePolicy('');
+                                        setComplianceType('');
+                                      }}
+                                      style={{ 
+                                        padding: '2px', 
+                                        minWidth: 'auto',
+                                        flexShrink: 0
+                                      }}
+                                    >
+                                      <TimesIcon style={{ fontSize: '0.875rem' }} />
+                                    </Button>
+                                  )}
+                                </div>
                               </MenuToggle>
                             )}
                           >
@@ -2917,7 +3112,35 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                                 isExpanded={isOpenscapProfileOpen}
                                 style={{ width: '400px' }}
                               >
-                                {openscapProfile || 'Select an OpenSCAP profile'}
+                                <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                                  <span style={{ 
+                                    flex: 1, 
+                                    overflow: 'hidden', 
+                                    textOverflow: 'ellipsis', 
+                                    whiteSpace: 'nowrap',
+                                    marginRight: '8px'
+                                  }}>
+                                    {openscapProfile || 'Select an OpenSCAP profile'}
+                                  </span>
+                                  {openscapProfile && (
+                                    <Button
+                                      variant="plain"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setOpenscapProfile('');
+                                        setComplianceType('');
+                                        clearOpenscapInheritance();
+                                      }}
+                                      style={{ 
+                                        padding: '2px', 
+                                        minWidth: 'auto',
+                                        flexShrink: 0
+                                      }}
+                                    >
+                                      <TimesIcon style={{ fontSize: '0.875rem' }} />
+                                    </Button>
+                                  )}
+                                </div>
                               </MenuToggle>
                             )}
                           >
@@ -2988,6 +3211,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       </div>
                     </FormGroup>
                 </div>
+
 
                 {/* Divider */}
                 <div style={{ 
@@ -3167,10 +3391,10 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       <Alert
                         variant="info"
                         isInline
-                        title="Register with Red Hat Insights within 30 days"
+                        title="Lorem ipsum dolor sit amet"
                       >
                         <p style={{ marginBottom: '0.5rem' }}>
-                          If you don't register your systems within 30 days, you will not be able to use Red Hat Insights capabilities.
+                          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
                         </p>
                         <p>
                           <a href="#" style={{ color: '#0066cc', textDecoration: 'underline' }}>
@@ -3189,7 +3413,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                         isInline
                         title="Work in Progress"
                       >
-                        Satellite registration is currently being developed and will be available in a future release.
+                        The satellite step should show what's currently implemented.
                       </Alert>
                     </div>
                   )}
@@ -3201,9 +3425,23 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       case 1:
         return (
           <div>
-            <Title headingLevel="h2" size="xl" style={{ marginBottom: '0rem' }}>
-              Repositories and Packages
-            </Title>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0rem' }}>
+              <Title headingLevel="h2" size="xl" style={{ margin: 0 }}>
+                Repositories and Packages
+              </Title>
+              {openscapAddedPackagesCount > 0 && (
+                <span style={{ 
+                  fontSize: '0.875rem', 
+                  color: '#666',
+                  backgroundColor: '#f0f0f0',
+                  padding: '0.25rem 0.5rem',
+                  borderRadius: '4px',
+                  fontWeight: 500
+                }}>
+                  {openscapAddedPackagesCount} added by OpenSCAP
+                </span>
+              )}
+            </div>
             <p style={{ fontSize: '16px', color: '#666', marginBottom: '1rem' }}>
               The repositories listed below are sourced from your Red Hat Insights account. 
               Need to add more repositories? Visit{' '}
@@ -3224,69 +3462,35 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             {/* Package Interface - Search Mode Only */}
             
                           <Form>
-                {/* Extended Support Subscription - Collapsible */}
+                {/* Extended Support Subscription */}
                   <FormGroup
+                    label="Extended support subscription"
                     fieldId="extended-support"
                     style={{ marginBottom: '2rem' }}
                   >
-                    {/* Collapsible Header */}
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        cursor: 'pointer',
-                        padding: '0.5rem 0',
-                        marginBottom: isExtendedSupportCollapsed ? '0' : '1rem'
-                      }}
-                      onClick={() => setIsExtendedSupportCollapsed(!isExtendedSupportCollapsed)}
-                    >
-                      {isExtendedSupportCollapsed ? (
-                        <ChevronRightIcon style={{ fontSize: '1rem', color: '#666' }} />
-                      ) : (
-                        <ChevronDownIcon style={{ fontSize: '1rem', color: '#666' }} />
-                      )}
-                      <span style={{ fontWeight: 500, color: '#151515', fontSize: '0.875rem' }}>
-                        Extended support subscription
-                      </span>
-                      {isExtendedSupportCollapsed && extendedSupport !== 'none' && (
-                        <span style={{ 
-                          fontSize: '0.75rem', 
-                          color: '#666', 
-                          fontWeight: 400,
-                          marginLeft: '0.5rem'
-                        }}>
-                          ({extendedSupport === 'eus' ? 'EUS enabled' : 'EEUS enabled'})
-                        </span>
-                      )}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <Radio
+                        isChecked={extendedSupport === 'none'}
+                        name="extended-support"
+                        onChange={() => setExtendedSupport('none')}
+                        label="None"
+                        id="extended-support-none"
+                      />
+                      <Radio
+                        isChecked={extendedSupport === 'eus'}
+                        name="extended-support"
+                        onChange={() => setExtendedSupport('eus')}
+                        label="Extended update support (EUS)"
+                        id="extended-support-eus"
+                      />
+                      <Radio
+                        isChecked={extendedSupport === 'eeus'}
+                        name="extended-support"
+                        onChange={() => setExtendedSupport('eeus')}
+                        label="Enhanced extended update support (EEUS)"
+                        id="extended-support-eeus"
+                      />
                     </div>
-
-                    {/* Collapsible Content */}
-                    {!isExtendedSupportCollapsed && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginLeft: '1.5rem' }}>
-                        <Radio
-                          isChecked={extendedSupport === 'none'}
-                          name="extended-support"
-                          onChange={() => setExtendedSupport('none')}
-                          label="None"
-                          id="extended-support-none"
-                        />
-                        <Radio
-                          isChecked={extendedSupport === 'eus'}
-                          name="extended-support"
-                          onChange={() => setExtendedSupport('eus')}
-                          label="Extended update support (EUS)"
-                          id="extended-support-eus"
-                        />
-                        <Radio
-                          isChecked={extendedSupport === 'eeus'}
-                          name="extended-support"
-                          onChange={() => setExtendedSupport('eeus')}
-                          label="Enhanced extended update support (EEUS)"
-                          id="extended-support-eeus"
-                        />
-                      </div>
-                    )}
                   </FormGroup>
 
               {packageInterfaceMode === 'search' ? (
@@ -3338,8 +3542,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                           {row.isOpenSCAPRequired || row.isLocked ? (
                             <TextInput
                               value={row.repositorySearchTerm}
+                              isDisabled
                               readOnly
-                              style={{ width: '100%' }}
+                              style={{ 
+                                width: '100%',
+                                backgroundColor: '#f5f5f5',
+                                color: '#666',
+                                cursor: 'not-allowed'
+                              }}
                             />
                           ) : (
                             <SearchInput
@@ -4272,7 +4482,33 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                         isExpanded={isTimezoneOpen}
                         style={{ width: '300px' }}
                       >
-                        {timezone || 'Select timezone'}
+                        <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                          <span style={{ 
+                            flex: 1, 
+                            overflow: 'hidden', 
+                            textOverflow: 'ellipsis', 
+                            whiteSpace: 'nowrap',
+                            marginRight: '8px'
+                          }}>
+                            {timezone || 'Select timezone'}
+                          </span>
+                          {timezone && (
+                            <Button
+                              variant="plain"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setTimezone('');
+                              }}
+                              style={{ 
+                                padding: '2px', 
+                                minWidth: 'auto',
+                                flexShrink: 0
+                              }}
+                            >
+                              <TimesIcon style={{ fontSize: '0.875rem' }} />
+                            </Button>
+                          )}
+                        </div>
                       </MenuToggle>
                     )}
                   >
@@ -4294,55 +4530,37 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   fieldId="ntp-servers"
                   style={{ marginBottom: '0rem' }}
                 >
-                  <TextInput
-                    id="ntp-servers"
-                    value={ntpServers}
-                    style={{ width: '200px' }}
-                    onChange={(_event, value) => setNtpServers(value)}
-                    placeholder="pool.ntp.org"
-                  />
+                  <div style={{ position: 'relative', width: '200px' }}>
+                    <TextInput
+                      id="ntp-servers"
+                      value={ntpServers}
+                      style={{ width: '200px' }}
+                      onChange={(_event, value) => setNtpServers(value)}
+                      placeholder="pool.ntp.org"
+                    />
+                    {ntpServers && (
+                      <Button
+                        variant="plain"
+                        onClick={() => setNtpServers('')}
+                        style={{
+                          position: 'absolute',
+                          right: '8px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          padding: '0.25rem',
+                          minWidth: 'auto',
+                          height: 'auto'
+                        }}
+                        aria-label="Clear NTP servers"
+                      >
+                        <TimesIcon style={{ fontSize: '0.875rem', color: '#666' }} />
+                      </Button>
+                    )}
+                  </div>
                   <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
                     Comma-separated list of NTP servers
                   </div>
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '0.5rem', 
-                    marginTop: '0.5rem',
-                    fontSize: '0.875rem',
-                    color: '#666',
-                    width: '100%',
-                    maxWidth: '600px'
-                  }}>
-                    <MinusIcon style={{ fontSize: '0.875rem' }} />
-                    <span>Must begin with a lowercase letter or digit</span>
-                  </div>
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '0.5rem', 
-                    marginTop: '0.5rem',
-                    fontSize: '0.875rem',
-                    color: '#666',
-                    width: '100%',
-                    maxWidth: '600px'
-                  }}>
-                    <MinusIcon style={{ fontSize: '0.875rem' }} />
-                    <span>The address can only contain lowercase letters, digits or hyphens</span>
-                  </div>
-                      <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '0.5rem', 
-                    marginTop: '0.5rem',
-                    fontSize: '0.875rem',
-                    color: '#666',
-                    width: '100%',
-                    maxWidth: '600px'
-                  }}>
-                    <MinusIcon style={{ fontSize: '0.875rem' }} />
-                    <span>Sections must be separated by a colon (:), period (.), or a forward slash (/)</span>
-                  </div>
+
                 </FormGroup>
               </div>
 
@@ -4530,51 +4748,33 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   fieldId="hostname"
                   style={{ marginBottom: '0rem', width: '25%' }}
                 >
-                  <TextInput
-                    id="hostname"
-                    value={hostname}
-                    onChange={(_event, value) => setHostname(value)}
-                    placeholder="Enter hostname"
-                  />
-                    <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '0.5rem', 
-                    marginTop: '0.5rem',
-                    fontSize: '0.875rem',
-                    color: '#666',
-                    width: '100%',
-                    maxWidth: '600px'
-                  }}>
-                    <MinusIcon style={{ fontSize: '0.875rem' }} />
-                    <span>Each label must start and end with an alphanumeric character (a-z, 0-9)</span>
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    <TextInput
+                      id="hostname"
+                      value={hostname}
+                      onChange={(_event, value) => setHostname(value)}
+                      placeholder="Enter hostname"
+                    />
+                    {hostname && (
+                      <Button
+                        variant="plain"
+                        onClick={() => setHostname('')}
+                        style={{
+                          position: 'absolute',
+                          right: '8px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          padding: '0.25rem',
+                          minWidth: 'auto',
+                          height: 'auto'
+                        }}
+                        aria-label="Clear hostname"
+                      >
+                        <TimesIcon style={{ fontSize: '0.875rem', color: '#666' }} />
+                      </Button>
+                    )}
                   </div>
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '0.5rem', 
-                    marginTop: '0.5rem',
-                    fontSize: '0.875rem',
-                    color: '#666',
-                    width: '100%',
-                    maxWidth: '600px'
-                  }}>
-                    <MinusIcon style={{ fontSize: '0.875rem' }} />
-                    <span>Separate labels with dots</span>
-                  </div>
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '0.5rem', 
-                    marginTop: '0.5rem',
-                    fontSize: '0.875rem',
-                    color: '#666',
-                    width: '100%',
-                    maxWidth: '600px'
-                  }}>
-                    <MinusIcon style={{ fontSize: '0.875rem' }} />
-                    <span>Hyphens are allowed within labels, but not at the beginning or end</span>
-                  </div>
+
                 </FormGroup>
               </div>
 
@@ -4633,38 +4833,33 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   fieldId="kernel-append"
                   style={{ marginBottom: '1rem' }}
                 >
-                  <TextInput
-                    id="kernel-append"
-                    value={kernelAppend}
-                    onChange={(_event, value) => setKernelAppend(value)}
-                    placeholder="Enter kernel append options"
-                  />
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '0.5rem', 
-                    marginTop: '0.5rem',
-                    fontSize: '0.875rem',
-                    color: '#666',
-                    width: '100%',
-                    maxWidth: '600px'
-                  }}>
-                    <MinusIcon style={{ fontSize: '0.875rem' }} />
-                    <span>Only alphanumeric characters, equals signs, hyphens, underscores, commas, periods, double quotes, and single quotes</span>
+                  <div style={{ position: 'relative' }}>
+                    <TextInput
+                      id="kernel-append"
+                      value={kernelAppend}
+                      onChange={(_event, value) => setKernelAppend(value)}
+                      placeholder="Enter kernel append options"
+                    />
+                    {kernelAppend && (
+                      <Button
+                        variant="plain"
+                        onClick={() => setKernelAppend('')}
+                        style={{
+                          position: 'absolute',
+                          right: '8px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          padding: '0.25rem',
+                          minWidth: 'auto',
+                          height: 'auto'
+                        }}
+                        aria-label="Clear kernel append"
+                      >
+                        <TimesIcon style={{ fontSize: '0.875rem', color: '#666' }} />
+                      </Button>
+                    )}
                   </div>
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '0.5rem', 
-                    marginTop: '0.5rem',
-                    fontSize: '0.875rem',
-                    color: '#666',
-                    width: '100%',
-                    maxWidth: '600px'
-                  }}>
-                    <MinusIcon style={{ fontSize: '0.875rem' }} />
-                    <span>Separate arguments with a comma</span>
-                  </div>
+
                 </FormGroup>
               </div>
 
@@ -4678,9 +4873,23 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               {/* Systemd Services Section */}
 
               <div style={{ marginBottom: '2rem', marginTop : '0rem'}}>
-                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
-                    Systemd services
-                  </Title>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                      Systemd services
+                    </Title>
+                    {openscapAddedServicesCount > 0 && (
+                      <span style={{ 
+                        fontSize: '0.75rem', 
+                        color: '#666',
+                        backgroundColor: '#f0f0f0',
+                        padding: '0.25rem 0.5rem',
+                        borderRadius: '4px',
+                        fontWeight: 500
+                      }}>
+                        {openscapAddedServicesCount} added by OpenSCAP
+                      </span>
+                    )}
+                  </div>
                   <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
                   This is filler text for now.                  
                   </Content>
@@ -4773,32 +4982,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                         </div>
                       ))}
                     </div>
-                    <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '0.5rem', 
-                    marginTop: '0.5rem',
-                    fontSize: '0.875rem',
-                    color: '#666',
-                    width: '100%',
-                    maxWidth: '600px'
-                  }}>
-                    <MinusIcon style={{ fontSize: '0.875rem' }} />
-                    <span>Must begin with a port number (up to 5 digits) or a lowercase name (up to 6 letters); a dash may be used to specify a range</span>
-                  </div>
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '0.5rem', 
-                    marginTop: '0.5rem',
-                    fontSize: '0.875rem',
-                    color: '#666',
-                    width: '100%',
-                    maxWidth: '600px'
-                  }}>
-                    <MinusIcon style={{ fontSize: '0.875rem' }} />
-                    <span>Must include : or / followed by a lowercase protocol like tcp or udp</span>
-                  </div>
+
                   </FormGroup>
 
                   <FormGroup
@@ -4865,7 +5049,12 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 </Button>
               </div>
 
-
+              {/* Divider */}
+              <div style={{ 
+                height: '1px', 
+                backgroundColor: '#d2d2d2', 
+                margin: '1rem 0' 
+              }} />
 
               {/* Users Section */}
 
@@ -4877,150 +5066,168 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   Create user accounts for systems that will use this image. Duplicate usernames are not allowed.                  
                   </Content>
 
-
-                {/* User management table */}
-                <div style={{ border: '1px solid #d2d2d2', borderRadius: '4px', overflow: 'hidden' }}>
-                  {/* Table header */}
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: '100px 1fr 1fr 1fr 1fr 40px', 
-                    gap: '1rem',
-                    padding: '12px 16px',
-                    backgroundColor: '#f5f5f5',
-                    borderBottom: '1px solid #d2d2d2',
-                    fontWeight: 'bold',
-                    fontSize: '14px'
-                  }}>
-                    <div>Administrator</div>
-                    <div>Username</div>
-                    <div>Password</div>
-                    <div>SSH key</div>
-                    <div>Groups</div>
-                    <div></div>
-                  </div>
-                  
-                  {/* Table rows */}
-                  {users.map((user) => (
-                    <div key={user.id} style={{ 
-                      display: 'grid', 
-                      gridTemplateColumns: '100px 1fr 1fr 1fr 1fr 40px', 
-                      gap: '1rem',
-                      padding: '12px 16px',
-                      borderBottom: users.indexOf(user) === users.length - 1 ? 'none' : '1px solid #d2d2d2',
-                      alignItems: 'center'
-                    }}>
-                      {/* Administrator checkbox */}
-                      <Checkbox
-                        id={`admin-${user.id}`}
-                        isChecked={user.isAdministrator}
-                        onChange={(event, checked) => updateUser(user.id, 'isAdministrator', checked)}
-                      />
-                      
-                      {/* Username */}
-                      <div>
-                        <TextInput
-                          type="text"
-                          value={user.username}
-                          onChange={(event, value) => {
-                            updateUser(user.id, 'username', value);
-                            // Check for duplicate usernames
-                            const isDuplicate = checkDuplicateUsername(user.id, value);
-                            setUsernameErrors(prev => {
-                              const newErrors = { ...prev };
-                              if (isDuplicate) {
-                                newErrors[user.id] = 'Duplicate usernames are not allowed';
-                              } else {
-                                delete newErrors[user.id];
-                              }
-                              return newErrors;
-                            });
-                            // Also clear validation errors for other users with same username when this one changes
-                            if (!isDuplicate) {
-                              setUsernameErrors(prev => {
-                                const newErrors = { ...prev };
-                                Object.keys(newErrors).forEach(userId => {
-                                  if (userId !== user.id) {
-                                    const otherUser = users.find(u => u.id === userId);
-                                    if (otherUser && otherUser.username.trim() === value.trim()) {
-                                      delete newErrors[userId];
-                                    }
+                {/* User management rows */}
+                <Stack hasGutter>
+                  {users.map((user, index) => (
+                    <StackItem key={user.id}>
+                      <Grid hasGutter>
+                        <GridItem span={2}>
+                          <FormGroup
+                            label={index === 0 ? "Administrator" : ""}
+                            fieldId={`admin-${user.id}`}
+                          >
+                            <Checkbox
+                              id={`admin-${user.id}`}
+                              isChecked={user.isAdministrator}
+                              onChange={(event, checked) => updateUser(user.id, 'isAdministrator', checked)}
+                              label="Admin privileges"
+                            />
+                          </FormGroup>
+                        </GridItem>
+                        
+                        <GridItem span={2}>
+                          <FormGroup
+                            label={index === 0 ? "Username" : ""}
+                            fieldId={`username-${user.id}`}
+                          >
+                            <TextInput
+                              type="text"
+                              value={user.username}
+                              onChange={(event, value) => {
+                                updateUser(user.id, 'username', value);
+                                // Check for duplicate usernames
+                                const isDuplicate = checkDuplicateUsername(user.id, value);
+                                setUsernameErrors(prev => {
+                                  const newErrors = { ...prev };
+                                  if (isDuplicate) {
+                                    newErrors[user.id] = 'Duplicate usernames are not allowed';
+                                  } else {
+                                    delete newErrors[user.id];
                                   }
+                                  return newErrors;
                                 });
-                                return newErrors;
-                              });
-                            }
-                          }}
-                          placeholder="Username"
-                          style={{ fontSize: '14px' }}
-                          validated={usernameErrors[user.id] ? 'error' : 'default'}
-                        />
-                        {usernameErrors[user.id] && (
-                          <div style={{ 
-                            fontSize: '0.875rem', 
-                            color: '#c9190b', 
-                            marginTop: '0.25rem' 
-                          }}>
-                            {usernameErrors[user.id]}
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Password */}
-                      <TextInput
-                        type="password"
-                        value={user.password}
-                        onChange={(event, value) => updateUser(user.id, 'password', value)}
-                        placeholder="Password"
-                        style={{ fontSize: '14px' }}
-                      />
-                      
-                      {/* SSH key */}
-                      <TextInput
-                        type="text"
-                        value={user.sshKey}
-                        onChange={(event, value) => updateUser(user.id, 'sshKey', value)}
-                        placeholder="SSH key"
-                        style={{ fontSize: '14px' }}
-                      />
-                      
-                      {/* Groups */}
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', alignItems: 'center' }}>
-                        {user.groups.map((group) => (
-                          <Label key={group} onClose={() => removeGroupFromUser(user.id, group)} closeBtnAriaLabel={`Remove ${group}`}>
-                            {group}
-                          </Label>
-                        ))}
-                        <Button
-                          variant="link"
-                          onClick={() => {
-                            const group = prompt('Enter group name:');
-                            if (group) addGroupToUser(user.id, group);
-                          }}
-                          style={{ padding: '2px 8px', fontSize: '12px' }}
-                        >
-                          Add group
-                        </Button>
-                      </div>
-                      
-                      {/* Remove button */}
-                      <Button
-                        variant="plain"
-                        onClick={() => removeUser(user.id)}
-                        isDisabled={users.length === 1}
-                        style={{ minWidth: 'auto', padding: '4px' }}
-                      >
-                        <MinusCircleIcon />
-                      </Button>
-                    </div>
+                                // Also clear validation errors for other users with same username when this one changes
+                                if (!isDuplicate) {
+                                  setUsernameErrors(prev => {
+                                    const newErrors = { ...prev };
+                                    Object.keys(newErrors).forEach(userId => {
+                                      if (userId !== user.id) {
+                                        const otherUser = users.find(u => u.id === userId);
+                                        if (otherUser && otherUser.username.trim() === value.trim()) {
+                                          delete newErrors[userId];
+                                        }
+                                      }
+                                    });
+                                    return newErrors;
+                                  });
+                                }
+                              }}
+                              placeholder="Username"
+                              validated={usernameErrors[user.id] ? 'error' : 'default'}
+                            />
+                            {usernameErrors[user.id] && (
+                              <div style={{ 
+                                fontSize: '0.875rem', 
+                                color: '#c9190b', 
+                                marginTop: '0.25rem' 
+                              }}>
+                                {usernameErrors[user.id]}
+                              </div>
+                            )}
+                          </FormGroup>
+                        </GridItem>
+                        
+                        <GridItem span={2}>
+                          <FormGroup
+                            label={index === 0 ? "Password" : ""}
+                            fieldId={`password-${user.id}`}
+                          >
+                            <TextInput
+                              type="password"
+                              value={user.password}
+                              onChange={(event, value) => updateUser(user.id, 'password', value)}
+                              placeholder="Password"
+                            />
+                          </FormGroup>
+                        </GridItem>
+                        
+                        <GridItem span={3}>
+                          <FormGroup
+                            label={index === 0 ? "SSH key" : ""}
+                            fieldId={`ssh-key-${user.id}`}
+                          >
+                            <TextInput
+                              type="text"
+                              value={user.sshKey}
+                              onChange={(event, value) => updateUser(user.id, 'sshKey', value)}
+                              placeholder="SSH key"
+                            />
+                          </FormGroup>
+                        </GridItem>
+                        
+                        <GridItem span={2}>
+                          <FormGroup
+                            label={index === 0 ? "Groups" : ""}
+                            fieldId={`groups-${user.id}`}
+                          >
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', alignItems: 'center' }}>
+                              {user.groups.map((group) => (
+                                <Label key={group} onClose={() => removeGroupFromUser(user.id, group)} closeBtnAriaLabel={`Remove ${group}`}>
+                                  {group}
+                                </Label>
+                              ))}
+                              <Button
+                                variant="link"
+                                onClick={() => {
+                                  const group = prompt('Enter group name:');
+                                  if (group) addGroupToUser(user.id, group);
+                                }}
+                                style={{ padding: '2px 8px', fontSize: '12px' }}
+                              >
+                                Add group
+                              </Button>
+                            </div>
+                          </FormGroup>
+                        </GridItem>
+                        
+                        <GridItem span={1}>
+                          <FormGroup
+                            label={index === 0 ? "" : ""}
+                            fieldId={`remove-${user.id}`}
+                          >
+                            <div style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: '8px', 
+                              width: '100%'
+                            }}>
+                              <div style={{ flex: 1 }}></div>
+                              <Button
+                                variant="plain"
+                                onClick={() => removeUser(user.id)}
+                                isDisabled={users.length === 1}
+                                style={{ 
+                                  minWidth: 'auto', 
+                                  padding: '4px',
+                                  flexShrink: 0
+                                }}
+                              >
+                                <MinusCircleIcon />
+                              </Button>
+                            </div>
+                          </FormGroup>
+                        </GridItem>
+                      </Grid>
+                    </StackItem>
                   ))}
-                </div>
+                </Stack>
                 
                 {/* Add user button */}
                 <Button
                   variant="link"
                   icon={<PlusIcon />}
                   onClick={addUser}
-                  style={{ marginTop: '1rem', fontSize: '0.875rem' }}
+                  style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}
                 >
                   Add another user
                 </Button>
@@ -5218,6 +5425,59 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 </Card>
               </StackItem>
 
+              {/* Compliance Configuration Card */}
+              <StackItem>
+                <Card>
+                  <CardBody>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                      <Title headingLevel="h3" size="lg" style={{ margin: 0 }}>
+                        Compliance Configuration
+                      </Title>
+                      <Button
+                        variant="link"
+                        onClick={() => setActiveTabKey(0)}
+                        style={{ padding: 0, fontSize: '0.875rem' }}
+                      >
+                        Edit
+                      </Button>
+                    </div>
+                    <DescriptionList isHorizontal>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>Compliance policy</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          <span style={{ color: '#666', fontStyle: 'italic' }}>Not set</span>
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>OpenSCAP profile</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          {openscapProfile ? (
+                            <span>{openscapProfile}</span>
+                          ) : (
+                            <span style={{ color: '#666', fontStyle: 'italic' }}>Not selected</span>
+                          )}
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                      {(openscapProfile && (openscapAddedPackagesCount > 0 || openscapAddedServicesCount > 0)) && (
+                        <DescriptionListGroup>
+                          <DescriptionListTerm>Added Items</DescriptionListTerm>
+                          <DescriptionListDescription>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              {openscapAddedPackagesCount > 0 && (
+                                <Badge isRead>{openscapAddedPackagesCount} packages</Badge>
+                              )}
+                              {openscapAddedServicesCount > 0 && (
+                                <Badge isRead>{openscapAddedServicesCount} services</Badge>
+                              )}
+                            </div>
+                          </DescriptionListDescription>
+                        </DescriptionListGroup>
+                      )}
+                    </DescriptionList>
+                  </CardBody>
+                </Card>
+              </StackItem>
+
               {/* Users Configuration Card */}
               <StackItem>
                 <Card>
@@ -5238,12 +5498,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       <Stack hasGutter>
                         {users.map((user, index) => (
                           <StackItem key={user.id}>
-                            <div style={{ 
-                              padding: '12px', 
-                              backgroundColor: '#f5f5f5', 
-                              borderRadius: '4px',
-                              border: '1px solid #d2d2d2'
-                            }}>
+                            <div>
                               <DescriptionList isHorizontal isCompact>
                                 <DescriptionListGroup>
                                   <DescriptionListTerm>Username</DescriptionListTerm>
@@ -5375,7 +5630,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   <CardBody>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                       <Title headingLevel="h3" size="lg" style={{ margin: 0 }}>
-                        Packages
+                        Packages and Repositories
                       </Title>
                       <Button
                         variant="link"
@@ -5385,41 +5640,63 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                         Edit
                       </Button>
                     </div>
-                    {selectedPackages.length > 0 ? (
-                      <div>
-                        <p style={{ marginBottom: '12px', color: '#666' }}>
-                          {selectedPackages.length} package{selectedPackages.length !== 1 ? 's' : ''} selected
-                        </p>
-                        <LabelGroup>
-                          {selectedPackages.slice(0, 10).map((pkg) => (
-                            <Label key={pkg.id || pkg}>
-                              {pkg.name || pkg}
-                              <Button
-                                variant="plain"
-                                onClick={() => {
-                                  setSelectedPackages(prev => 
-                                    prev.filter(p => (p.id || p) !== (pkg.id || pkg))
-                                  );
-                                }}
-                                style={{ 
-                                  marginLeft: '4px', 
-                                  padding: '0 4px',
-                                  minWidth: 'auto',
-                                  height: 'auto'
-                                }}
-                              >
-                                <TimesIcon style={{ fontSize: '0.75rem' }} />
-                              </Button>
-                            </Label>
-                          ))}
-                          {selectedPackages.length > 10 && (
-                            <Label>+{selectedPackages.length - 10} more</Label>
-                          )}
-                        </LabelGroup>
-                      </div>
-                    ) : (
-                      <p style={{ color: '#666', fontStyle: 'italic' }}>No additional packages selected</p>
-                    )}
+                    <div>
+                      {/* Repositories */}
+                      {repositoryRows.filter(row => row.repository).length > 0 && (
+                        <div style={{ marginBottom: '1.5rem' }}>
+                          <h4 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem', color: '#333' }}>
+                            Repositories ({repositoryRows.filter(row => row.repository).length})
+                          </h4>
+                          <LabelGroup>
+                            {repositoryRows.filter(row => row.repository).map((row) => (
+                              <Label key={row.id} color={row.isOpenSCAPRequired ? 'orange' : 'blue'}>
+                                {row.repository}
+                                {row.isOpenSCAPRequired && (
+                                  <span style={{ fontSize: '0.75rem', marginLeft: '4px' }}>(OpenSCAP)</span>
+                                )}
+                              </Label>
+                            ))}
+                          </LabelGroup>
+                        </div>
+                      )}
+
+                      {/* Packages */}
+                      {selectedPackages.length > 0 ? (
+                        <div>
+                          <h4 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem', color: '#333' }}>
+                            Packages ({selectedPackages.length})
+                          </h4>
+                          <LabelGroup>
+                            {selectedPackages.slice(0, 10).map((pkg) => (
+                              <Label key={pkg.id || pkg}>
+                                {pkg.name || pkg}
+                                <Button
+                                  variant="plain"
+                                  onClick={() => {
+                                    setSelectedPackages(prev => 
+                                      prev.filter(p => (p.id || p) !== (pkg.id || pkg))
+                                    );
+                                  }}
+                                  style={{ 
+                                    marginLeft: '4px', 
+                                    padding: '0 4px',
+                                    minWidth: 'auto',
+                                    height: 'auto'
+                                  }}
+                                >
+                                  <TimesIcon style={{ fontSize: '0.75rem' }} />
+                                </Button>
+                              </Label>
+                            ))}
+                            {selectedPackages.length > 10 && (
+                              <Label>+{selectedPackages.length - 10} more</Label>
+                            )}
+                          </LabelGroup>
+                        </div>
+                      ) : repositoryRows.filter(row => row.repository).length === 0 ? (
+                        <p style={{ color: '#666', fontStyle: 'italic' }}>No repositories or packages selected</p>
+                      ) : null}
+                    </div>
                   </CardBody>
                 </Card>
               </StackItem>
@@ -5490,8 +5767,16 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               variant="default"
             >
               <Tab eventKey={0} title={<TabTitleText>Base image</TabTitleText>} />
-              <Tab eventKey={1} title={<TabTitleText>Repositories and packages</TabTitleText>} />
-              <Tab eventKey={2} title={<TabTitleText>Advanced settings</TabTitleText>} />
+              <Tab eventKey={1} title={
+                <TabTitleText>
+                  Repositories and packages{(complianceType === 'openscap' && openscapProfile && openscapAddedPackagesCount > 0) ? ` (${openscapAddedPackagesCount})` : ''}
+                </TabTitleText>
+              } />
+              <Tab eventKey={2} title={
+                <TabTitleText>
+                  Advanced settings{(complianceType === 'openscap' && openscapProfile && openscapAddedServicesCount > 0) ? ` (${openscapAddedServicesCount})` : ''}
+                </TabTitleText>
+              } />
               <Tab eventKey={3} title={<TabTitleText>Review image</TabTitleText>} />
             </Tabs>
           </div>

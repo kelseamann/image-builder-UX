@@ -85,18 +85,9 @@ const ImageMigrationModal: React.FunctionComponent<ImageMigrationModalProps> = (
   }, [isOpen]);
 
   const validateForm = (): boolean => {
-    const newErrors: typeof errors = {};
-    
-    if (!targetRelease) {
-      newErrors.targetRelease = 'Target release is required';
-    }
-    
-    if (!targetEnvironment) {
-      newErrors.targetEnvironment = 'Target environment is required';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    // No validation required - users can proceed with any combination of fields
+    setErrors({});
+    return true;
   };
 
   const handleConfirm = async () => {
@@ -221,7 +212,7 @@ const ImageMigrationModal: React.FunctionComponent<ImageMigrationModalProps> = (
                 marginBottom: '4px',
                 color: '#495057'
               }}>
-                To <span style={{ color: '#c9190b' }}>*</span>
+                To
               </label>
               <Select
                 id="to-release-select"
@@ -316,7 +307,7 @@ const ImageMigrationModal: React.FunctionComponent<ImageMigrationModalProps> = (
                 marginBottom: '4px',
                 color: '#495057'
               }}>
-                To <span style={{ color: '#c9190b' }}>*</span>
+                To
               </label>
               <Select
                 id="to-environment-select"
