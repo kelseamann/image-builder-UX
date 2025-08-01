@@ -26,6 +26,13 @@ import {
   LabelGroup,
   MenuToggle,
   MenuToggleElement,
+  Menu,
+  MenuContent,
+  MenuList,
+  MenuItem,
+  DrilldownMenu,
+  Divider,
+  MenuContainer,
   Modal,
   ModalVariant,
   Popover,
@@ -124,6 +131,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const [owner, setOwner] = React.useState<string>('kelseamann@redhat.com');
   const [baseImageRelease, setBaseImageRelease] = React.useState<string>('Red Hat Enterprise Linux 9');
   const [isBaseImageReleaseOpen, setIsBaseImageReleaseOpen] = React.useState<boolean>(false);
+  
+  // Drilldown menu state for release dropdown
+  const [activeReleaseMenu, setActiveReleaseMenu] = React.useState<string>('rootReleaseMenu');
+  const [releaseMenuDrilledIn, setReleaseMenuDrilledIn] = React.useState<string[]>([]);
+  const [releaseDrilldownPath, setReleaseDrilldownPath] = React.useState<string[]>([]);
+  const [releaseMenuHeights, setReleaseMenuHeights] = React.useState<{[id: string]: number}>({});
+  const releaseToggleRef = React.useRef<HTMLButtonElement>(null);
+  const releaseMenuRef = React.useRef<HTMLDivElement>(null);
   const [baseImageArchitecture, setBaseImageArchitecture] = React.useState<string>('x86_64');
   const [isBaseImageArchitectureOpen, setIsBaseImageArchitectureOpen] = React.useState<boolean>(false);
   
@@ -954,6 +969,50 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       // Track this modification
       setModifiedFields(prev => new Set(prev.add('baseImageRelease')));
     }
+  };
+
+  // Drilldown menu handlers for release dropdown
+  const onReleaseToggleClick = () => {
+    setIsBaseImageReleaseOpen(!isBaseImageReleaseOpen);
+    setReleaseMenuDrilledIn([]);
+    setReleaseDrilldownPath([]);
+    setActiveReleaseMenu('rootReleaseMenu');
+  };
+
+  const onReleaseDrillIn = (
+    _event: React.KeyboardEvent | React.MouseEvent,
+    fromMenuId: string,
+    toMenuId: string,
+    pathId: string
+  ) => {
+    setReleaseMenuDrilledIn([...releaseMenuDrilledIn, fromMenuId]);
+    setReleaseDrilldownPath([...releaseDrilldownPath, pathId]);
+    setActiveReleaseMenu(toMenuId);
+  };
+
+  const onReleaseDrillOut = (_event: React.KeyboardEvent | React.MouseEvent, toMenuId: string) => {
+    setReleaseMenuDrilledIn(releaseMenuDrilledIn.slice(0, releaseMenuDrilledIn.length - 1));
+    setReleaseDrilldownPath(releaseDrilldownPath.slice(0, releaseDrilldownPath.length - 1));
+    setActiveReleaseMenu(toMenuId);
+  };
+
+  const setReleaseMenuHeight = (menuId: string, height: number) => {
+    if (releaseMenuHeights[menuId] === undefined || (menuId !== 'rootReleaseMenu' && releaseMenuHeights[menuId] !== height)) {
+      setReleaseMenuHeights({
+        ...releaseMenuHeights,
+        [menuId]: height
+      });
+    }
+  };
+
+  const onReleaseItemSelect = (itemId: string) => {
+    setBaseImageRelease(itemId);
+    setIsBaseImageReleaseOpen(false);
+    setModifiedFields(prev => new Set(prev.add('baseImageRelease')));
+    // Reset drilldown state
+    setReleaseMenuDrilledIn([]);
+    setReleaseDrilldownPath([]);
+    setActiveReleaseMenu('rootReleaseMenu');
   };
 
   const onBaseImageArchitectureSelect = (
@@ -2449,49 +2508,105 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   isRequired
                   style={{ marginBottom: '1rem' }}
                 >
-                  <Select
-                    id="base-image-release-select"
+                  <MenuContainer
                     isOpen={isBaseImageReleaseOpen}
-                    selected={baseImageRelease}
-                    onSelect={onBaseImageReleaseSelect}
                     onOpenChange={(isOpen) => setIsBaseImageReleaseOpen(isOpen)}
-                    toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                    menu={
+                      <Menu
+                        id="rootReleaseMenu"
+                        containsDrilldown
+                        drilldownItemPath={releaseDrilldownPath}
+                        drilledInMenus={releaseMenuDrilledIn}
+                        activeMenu={activeReleaseMenu}
+                        onDrillIn={onReleaseDrillIn}
+                        onDrillOut={onReleaseDrillOut}
+                        onGetMenuHeight={setReleaseMenuHeight}
+                        ref={releaseMenuRef}
+                        style={{ width: '300px' }}
+                      >
+                        <MenuContent menuHeight={`${releaseMenuHeights[activeReleaseMenu]}px`}>
+                          <MenuList>
+                            {releaseOptions.map((release) => {
+                              let supportDetail = '';
+                              if (release === 'Red Hat Enterprise Linux 10') {
+                                supportDetail = 'Full support ends: May 2030 | Maintenance support ends: May 2035';
+                              } else if (release === 'Red Hat Enterprise Linux 9') {
+                                supportDetail = 'Full support ends: May 2027 | Maintenance support ends: May 2032';
+                              } else if (release === 'Red Hat Enterprise Linux 8') {
+                                supportDetail = 'Full support ends: May 2024 | Maintenance support ends: May 2029';
+                              }
+                              
+                              return (
+                                <MenuItem 
+                                  key={release} 
+                                  itemId={release}
+                                  onClick={() => onReleaseItemSelect(release)}
+                                >
+                                  <div>
+                                    <div style={{ fontWeight: 500 }}>{release}</div>
+                                    {supportDetail && (
+                                      <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                        {supportDetail}
+                                      </div>
+                                    )}
+                                  </div>
+                                </MenuItem>
+                              );
+                            })}
+                            <Divider component="li" />
+                            <MenuItem
+                              itemId="further_development_rhel"
+                              direction="down"
+                              drilldownMenu={
+                                <DrilldownMenu id="drilldownMenuDevelopment">
+                                  <MenuItem itemId="further_development_rhel_breadcrumb" direction="up">
+                                    Further Development of RHEL
+                                  </MenuItem>
+                                  <Divider component="li" />
+                                  <MenuItem 
+                                    itemId="CentOS Stream 9"
+                                    onClick={() => onReleaseItemSelect('CentOS Stream 9')}
+                                  >
+                                    <div>
+                                      <div style={{ fontWeight: 500 }}>CentOS Stream 9</div>
+                                      <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                        Continuous delivery platform for RHEL 9
+                                      </div>
+                                    </div>
+                                  </MenuItem>
+                                  <MenuItem 
+                                    itemId="CentOS Stream 10"
+                                    onClick={() => onReleaseItemSelect('CentOS Stream 10')}
+                                  >
+                                    <div>
+                                      <div style={{ fontWeight: 500 }}>CentOS Stream 10</div>
+                                      <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                                        Continuous delivery platform for RHEL 10
+                                      </div>
+                                    </div>
+                                  </MenuItem>
+                                </DrilldownMenu>
+                              }
+                            >
+                              Further Development of RHEL
+                            </MenuItem>
+                          </MenuList>
+                        </MenuContent>
+                      </Menu>
+                    }
+                    menuRef={releaseMenuRef}
+                    toggle={
                       <MenuToggle 
-                        ref={toggleRef} 
-                        onClick={() => setIsBaseImageReleaseOpen(!isBaseImageReleaseOpen)}
+                        ref={releaseToggleRef} 
+                        onClick={onReleaseToggleClick}
                         isExpanded={isBaseImageReleaseOpen}
                         style={{ width: '300px' }}
                       >
                         {baseImageRelease || 'Select a release'}
                       </MenuToggle>
-                    )}
-                  >
-                    <SelectList>
-                      {releaseOptions.map((release) => {
-                        let supportDetail = '';
-                        if (release === 'Red Hat Enterprise Linux 10') {
-                          supportDetail = 'Full support ends: May 2030 | Maintenance support ends: May 2035';
-                        } else if (release === 'Red Hat Enterprise Linux 9') {
-                          supportDetail = 'Full support ends: May 2027 | Maintenance support ends: May 2032';
-                        } else if (release === 'Red Hat Enterprise Linux 8') {
-                          supportDetail = 'Full support ends: May 2024 | Maintenance support ends: May 2029';
-                        }
-                        
-                        return (
-                          <SelectOption key={release} value={release}>
-                            <div>
-                              <div style={{ fontWeight: 500 }}>{release}</div>
-                              {supportDetail && (
-                                <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                  {supportDetail}
-                                </div>
-                              )}
-                            </div>
-                          </SelectOption>
-                        );
-                      })}
-                    </SelectList>
-                  </Select>
+                    }
+                    toggleRef={releaseToggleRef}
+                  />
                   <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
                     The latest release is recommended and selected by default
                   </div>
