@@ -2940,3 +2940,324 @@ IMPLEMENTATION DETAILS:
 PURPOSE: Provide immediate context and value proposition for the Image Builder application, helping users understand they can both manage existing images and migrate them across different releases and environments.
 
 =============================
+
+CHANGE #50: Repository Help Tooltip Addition
+Location: BuildImageModal.tsx - Repositories and Packages section, Repository field label
+Date: [Current Date]
+
+Original Content: "Repository" (simple text label)
+Current Content: "Repository" with question circle icon and tooltip
+Suggested Content: [TO BE FILLED BY CONTENT WRITERS]
+Notes: Added OutlinedQuestionCircleIcon next to Repository field label with hover tooltip to help users understand repository sources.
+
+TOOLTIP CONTENT:
+"Missing a repository? This list has been generated from your Insights account. Go to Insights Repositories to add another"
+
+IMPLEMENTATION DETAILS:
+- Icon: OutlinedQuestionCircleIcon from PatternFly react-icons
+- Positioning: Right next to "Repository" label with proper spacing (0.5rem gap)
+- Cursor behavior: Default cursor (no question mark cursor as requested)
+- Color: Muted gray (#6a6e73) to match PatternFly design system
+- Size: Slightly smaller (0.875rem) to complement the label text
+- Conditional rendering: Only shows on the first repository row (index === 0)
+
+TECHNICAL STRUCTURE:
+- Custom label structure using flex container to align text and icon
+- PatternFly Tooltip component with hover behavior
+- Responsive layout maintains alignment across screen sizes
+- Integrated into FormGroup label prop as JSX element
+
+PURPOSE: Provide contextual help about repository sources and guide users to their Insights account for additional repository management when needed.
+
+STATUS: ✅ COMPLETED - Repository help tooltip implemented with proper PatternFly design patterns
+
+=============================
+
+CHANGE #58: Systemd Services Multi-Entry with Comma-Triggered Chips
+Location: BuildImageModal.tsx - Advanced Settings tab, Systemd services section
+Date: [Current Date]
+
+ENHANCEMENT: Replaced traditional text inputs with modern chip-based interface where users type service names and create chips by typing commas, similar to the package selector functionality.
+
+**User Request**: "can we make the systemd services multi-entry function like the package adder? but instead of the selection from a menu triggering a chip to be created, it would be where the user enters a comma"
+
+IMPLEMENTATION DETAILS:
+
+**State Management Changes**:
+- **Before**: String-based state (`systemdDisabledServices`, `systemdMaskedServices`, `systemdEnabledServices`)
+- **After**: Array-based state for chips + input states for typing
+- **Added**: `disabledServicesInput`, `maskedServicesInput`, `enabledServicesInput` for current typing
+
+**UI Component Transformation**:
+- **Replaced**: Standard `TextInput` components
+- **With**: `TextInputGroup` with `TextInputGroupMain` and `TextInputGroupUtilities`
+- **Pattern**: Same as package selector but with comma-triggered chip creation
+
+**Comma-Triggered Chip Creation**:
+```typescript
+onChange={(e) => {
+  const value = e.target.value;
+  if (value.includes(',')) {
+    // Extract service name before comma and add as chip
+    const newService = value.split(',')[0].trim();
+    if (newService && !systemdDisabledServices.includes(newService)) {
+      setSystemdDisabledServices([...systemdDisabledServices, newService]);
+    }
+    setDisabledServicesInput(''); // Clear input after adding
+  } else {
+    setDisabledServicesInput(value);
+  }
+}}
+```
+
+**Color-Coded Service Types**:
+- **Disabled Services**: Blue chips (`color="blue"`)
+- **Masked Services**: Orange chips (`color="orange"`) 
+- **Enabled Services**: Green chips (`color="green"`)
+
+**Enhanced User Experience**:
+1. **Type & Comma**: User types "nginx," → creates blue "nginx" chip
+2. **Individual Removal**: Each chip has X button for removal
+3. **Clear All**: Clear button removes all chips and current input
+4. **Visual Feedback**: Different colors indicate service state type
+5. **Duplicate Prevention**: Same service can't be added twice
+
+**Technical Features**:
+- **PatternFly Components**: Uses `TextInputGroup`, `TextInputGroupMain`, `TextInputGroupUtilities`, `LabelGroup`, `Label`
+- **Native Input**: Raw HTML input for comma detection (PatternFly limitation)
+- **State Synchronization**: Maintains arrays and input states separately
+- **Accessibility**: Proper ARIA labels and keyboard navigation
+
+**Demo Data Updated**:
+- **Before**: "nginx, postgresql, redis" (comma-separated string)
+- **After**: ["nginx", "postgresql", "redis"] (array with chips)
+
+**Backward Compatibility**:
+- OpenSCAP integration maintained for disabled services
+- Review screen displays chips properly
+- All existing functionality preserved
+
+USER WORKFLOW:
+1. **Empty State**: Shows placeholder "Type service name, comma to add..."
+2. **Type Service**: User types "nginx"
+3. **Add Comma**: User types "nginx," → chip appears, input clears
+4. **Continue**: User can type next service name
+5. **Remove**: Click X on any chip to remove individual service
+6. **Clear All**: Use clear button to remove all services
+
+VISUAL DESIGN:
+- **Modern Interface**: Chips inside input field like package selector
+- **Color Coding**: Blue/Orange/Green for disabled/masked/enabled
+- **Responsive**: Chips wrap to multiple lines when needed
+- **Professional**: Consistent with PatternFly design system
+
+PURPOSE: Modernize systemd services configuration with an intuitive, visual interface that makes it easy to add, remove, and manage services while providing clear visual feedback about service states.
+
+BENEFITS:
+1. **Intuitive Input**: Natural comma-triggered chip creation
+2. **Visual Clarity**: Color-coded chips show service types at a glance  
+3. **Easy Management**: Individual removal and bulk clear options
+4. **Professional UX**: Consistent with package selection interface
+5. **Accessibility**: Built-in PatternFly accessibility features
+
+STATUS: ✅ COMPLETED - Systemd services now use modern chip-based interface with comma-triggered creation
+
+=============================
+
+CHANGE #59: NTP Servers Multi-Entry with Comma-Triggered Chips
+Location: BuildImageModal.tsx - Advanced Settings tab, Timezone section, NTP servers field
+Date: [Current Date]
+
+ENHANCEMENT: Applied the same comma-triggered chip interface to NTP servers as implemented for systemd services, providing consistent multi-entry functionality across the application.
+
+**User Request**: "this looks AMAZING thank you! I'd love the same exact comma-separated functionality on NTP servers, please"
+
+IMPLEMENTATION DETAILS:
+
+**State Management Changes**:
+- **Before**: String-based state (`ntpServers: string`)
+- **After**: Array-based state (`ntpServers: string[]`) + input state (`ntpServersInput: string`)
+- **Pattern**: Identical to systemd services implementation
+
+**UI Component Transformation**:
+- **Replaced**: Standard `TextInput` with relative positioning and clear button
+- **With**: `TextInputGroup` with `TextInputGroupMain` and `TextInputGroupUtilities`
+- **Consistency**: Same visual pattern as systemd services and package selector
+
+**Comma-Triggered Chip Creation**:
+```typescript
+onChange={(e) => {
+  const value = e.target.value;
+  if (value.includes(',')) {
+    // Extract server name before comma and add as chip
+    const newServer = value.split(',')[0].trim();
+    if (newServer && !ntpServers.includes(newServer)) {
+      const updatedServers = [...ntpServers, newServer];
+      setNtpServers(updatedServers);
+      validateNTPServers(updatedServers);
+    }
+    setNtpServersInput(''); // Clear input after adding
+  } else {
+    setNtpServersInput(value);
+  }
+}}
+```
+
+**Visual Design**:
+- **Chip Color**: Teal chips (`color="teal"`) for NTP servers
+- **Placeholder**: "e.g. pool.ntp.org, comma to add..." when empty
+- **Validation**: Real-time validation with error states and helper text
+
+**Enhanced Validation Logic**:
+- **Updated Function**: `validateNTPServers(servers: string[])` - now accepts array instead of string
+- **Array Processing**: Validates each server in the array individually
+- **Same Rules**: Server must begin with lowercase letter/digit, contain only valid characters
+- **Better UX**: Validation updates immediately when chips are added/removed
+
+**Demo Data Enhancement**:
+- **Added**: `setNtpServers(['pool.ntp.org', 'time.nist.gov'])` to demo-edit-showcase
+- **Professional**: Shows realistic NTP server configuration
+- **Visual Impact**: Demonstrates chip functionality immediately
+
+**Review Screen Integration**:
+- **Before**: Simple text display
+- **After**: Chips displayed with same teal color and compact styling
+- **Consistent**: Matches other chip displays throughout the application
+
+**User Experience Improvements**:
+1. **Intuitive Input**: Type "pool.ntp.org," → creates teal chip instantly
+2. **Individual Removal**: Click X on any chip to remove specific server
+3. **Clear All**: Clear button removes all servers and current input
+4. **Validation Feedback**: Real-time validation with descriptive error messages
+5. **Visual Consistency**: Same interaction pattern as systemd services
+
+**Technical Features**:
+- **PatternFly Components**: Uses same TextInputGroup pattern for consistency
+- **Duplicate Prevention**: Same server can't be added twice
+- **Focus Management**: Clear button only shows when not actively typing
+- **Responsive Design**: Chips wrap to multiple lines when needed
+- **Accessibility**: Proper ARIA labels and keyboard navigation
+
+**Description Update**:
+- **Before**: "Comma-separated list of NTP servers"
+- **After**: "Network time servers for system clock synchronization"
+- **Reason**: More descriptive and no longer comma-separated input
+
+USER WORKFLOW:
+1. **Empty State**: Shows "e.g. pool.ntp.org, comma to add..."
+2. **Type Server**: User types "pool.ntp.org"
+3. **Add Comma**: User types "pool.ntp.org," → teal chip appears, input clears
+4. **Continue**: User can add more servers like "time.nist.gov,"
+5. **Remove**: Click X on any chip to remove individual server
+6. **Clear All**: Use clear button to remove all servers
+
+BENEFITS:
+1. **Visual Clarity**: Teal chips clearly show configured NTP servers
+2. **Consistent UX**: Same interaction pattern as systemd services
+3. **Professional Interface**: Modern chip-based design matches package selector
+4. **Error Prevention**: Duplicate prevention and validation feedback
+5. **Efficient Management**: Easy addition and removal of multiple servers
+
+PURPOSE: Provide a consistent, modern interface for managing NTP servers that matches the established patterns used throughout the application, improving usability and visual cohesion.
+
+STATUS: ✅ COMPLETED - NTP servers now use modern chip-based interface with identical comma-triggered functionality as systemd services
+
+=============================
+
+CHANGE #60: User Groups Multi-Entry with Comma-Triggered Chips
+Location: BuildImageModal.tsx - Advanced Settings tab, Users section, Groups field
+Date: [Current Date]
+
+ENHANCEMENT: Completed the comma-triggered chip pattern by applying it to user groups, replacing the prompt-based "Add group" button with the same intuitive TextInputGroup interface used for systemd services and NTP servers.
+
+**User Request**: "yes let's continue the chip pattern in user groups, what a perfect idea. thank you!"
+
+IMPLEMENTATION DETAILS:
+
+**Interface Enhancement**:
+- **Extended UserRow**: Added `groupInput: string` field to track typing state for each user
+- **Updated All UserRow Objects**: Added `groupInput: ''` to default user, demo users, and new user creation
+- **Consistent Pattern**: Same TextInputGroup approach as systemd services and NTP servers
+
+**State Management**:
+- **Already Array-Based**: User groups were already `groups: string[]` - perfect for chip interface
+- **Added Input Tracking**: `groupInput: string` field per user for comma-triggered input
+- **Helper Functions Enhanced**: Updated `addGroupToUser()` to prevent duplicates
+
+**UI Component Transformation**:
+- **Replaced**: Prompt-based "Add group" button with dialog
+- **With**: `TextInputGroup` with `TextInputGroupMain` and `TextInputGroupUtilities`
+- **Visual Consistency**: Same layout pattern as other comma-triggered fields
+
+**Comma-Triggered Chip Creation**:
+```typescript
+const handleGroupInputChange = (userId: string, value: string) => {
+  if (value.includes(',')) {
+    // Extract group name before comma and add as chip
+    const newGroup = value.split(',')[0].trim();
+    if (newGroup) {
+      addGroupToUser(userId, newGroup);
+    }
+    updateUserGroupInput(userId, ''); // Clear input after adding
+  } else {
+    updateUserGroupInput(userId, value);
+  }
+};
+```
+
+**Enhanced Helper Functions**:
+- **addGroupToUser()**: Now prevents duplicate groups with `!user.groups.includes(group.trim())`
+- **removeGroupFromUser()**: Unchanged - still removes individual groups
+- **NEW: updateUserGroupInput()**: Updates individual user's group input state
+- **NEW: handleGroupInputChange()**: Handles comma-triggered logic per user
+
+**Visual Design**:
+- **Chip Color**: Purple chips (`color="purple"`) for user groups
+- **Per-User Interface**: Each user has their own TextInputGroup for groups
+- **Dynamic Placeholder**: "e.g. wheel, comma to add..." when empty, "Type group, comma to add..." when groups exist
+- **Compact Design**: Fits well in the user management grid layout
+
+**User Experience Improvements**:
+1. **Natural Input**: Type "wheel," → creates purple "wheel" chip instantly
+2. **Per-User Management**: Each user has independent group management
+3. **Individual Removal**: Click X on any chip to remove specific group
+4. **Clear All**: Clear button removes all groups and current input for that user
+5. **No More Prompts**: Eliminated disruptive prompt() dialogs
+
+**Review Screen Integration**:
+- **Updated Color**: Changed from `color="grey"` to `color="purple"` for consistency
+- **Same Display**: User groups already showed as chips on review screen
+- **Visual Harmony**: Purple chips match the input interface colors
+
+**Demo Data Enhancement**:
+- **Admin User**: ['wheel', 'docker'] groups display as purple chips
+- **Deploy User**: ['deploy'] group displays as purple chip
+- **Interactive**: Users can immediately see comma-triggered functionality
+
+**Technical Benefits**:
+1. **Pattern Consistency**: Same interaction model as systemd services and NTP servers
+2. **No Duplicate Prevention**: Enhanced `addGroupToUser()` prevents duplicate groups
+3. **Per-User State**: Each user manages their own group input independently
+4. **Accessibility**: Built-in PatternFly accessibility features
+5. **Professional UX**: Eliminates jarring prompt() dialogs
+
+USER WORKFLOW:
+1. **Empty State**: Shows "e.g. wheel, comma to add..." placeholder
+2. **Type Group**: User types "wheel"
+3. **Add Comma**: User types "wheel," → purple chip appears, input clears
+4. **Continue**: User can add more groups like "docker," → another purple chip
+5. **Remove**: Click X on any chip to remove individual group
+6. **Clear All**: Use clear button to remove all groups for that user
+
+BENEFITS:
+1. **Intuitive Interface**: Same comma-triggered pattern users learned from other fields
+2. **Visual Consistency**: Purple chips clearly identify user groups
+3. **Professional Design**: Modern interface replaces outdated prompt dialogs
+4. **Efficient Management**: Quick addition and removal of multiple groups
+5. **Individual Control**: Each user manages their own groups independently
+
+PURPOSE: Complete the comma-triggered chip pattern throughout the application, providing a consistent and intuitive interface for all multi-value inputs while eliminating disruptive prompt dialogs.
+
+STATUS: ✅ COMPLETED - User groups now use modern chip-based interface with comma-triggered creation, completing the consistent pattern across systemd services, NTP servers, and user groups
+
+=============================

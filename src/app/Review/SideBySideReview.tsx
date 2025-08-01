@@ -1,6 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  Alert,
   Button,
   Card,
   CardBody,
@@ -109,21 +108,11 @@ export const SideBySideReview: React.FunctionComponent = () => {
     { id: 'sudo', name: 'sudo', version: '1.9.5p2', repository: 'BaseOS' }
   ];
 
-  const [availableRepositories] = useState<string[]>([
-    'Red Hat',
-    'EPEL',
-    'CentOS Stream',
-    'Fedora',
-    'RPM Fusion',
-    'Custom Repository 1',
-    'Custom Repository 2'
-  ]);
+  // Removed unused availableRepositories, timezone, and isTimezoneOpen state
 
   // Advanced settings state
   const [registrationMethod, setRegistrationMethod] = useState<string>('auto');
   const [organizationId, setOrganizationId] = useState<string>('11009103');
-  const [timezone, setTimezone] = useState<string>('');
-  const [isTimezoneOpen, setIsTimezoneOpen] = useState<boolean>(false);
   const [hostname, setHostname] = useState<string>('');
   const [kernelPackage, setKernelPackage] = useState<string>('kernel');
   const [isKernelPackageOpen, setIsKernelPackageOpen] = useState<boolean>(false);
@@ -744,7 +733,7 @@ export const SideBySideReview: React.FunctionComponent = () => {
           {/* Users Management */}
           <FormGroup label="Users" fieldId="users" style={{ marginBottom: '1rem' }}>
             <Stack hasGutter>
-              {users.map((user, index) => (
+              {users.map((user) => (
                 <StackItem key={user.id}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Checkbox
@@ -894,7 +883,7 @@ export const SideBySideReview: React.FunctionComponent = () => {
                 {repositoryRows.filter(row => row.repository).length > 0 ? (
                   <div style={{ marginTop: '0.5rem' }}>
                     <div style={{ marginLeft: '1rem' }}>• Red Hat (OpenSCAP required)</div>
-                    {repositoryRows.filter(row => row.repository).map((row, index) => (
+                    {repositoryRows.filter(row => row.repository).map((row) => (
                       <div key={row.id} style={{ marginLeft: '1rem' }}>
                         • {row.repository}
                       </div>
@@ -1018,7 +1007,7 @@ export const SideBySideReview: React.FunctionComponent = () => {
                     {users.length} user{users.length !== 1 ? 's' : ''} configured
                   </p>
                   <Stack hasGutter>
-                    {users.map((user, index) => (
+                    {users.map((user) => (
                       <StackItem key={user.id}>
                         <div style={{ 
                           padding: '0.5rem', 

@@ -3,7 +3,6 @@ import {
   Alert, 
   AlertActionCloseButton, 
   AlertVariant,
-  Badge,
   Button,
   Card,
   CardBody,
@@ -39,7 +38,7 @@ import {
   ToolbarItem,
   Tooltip
 } from '@patternfly/react-core';
-import { AngleDownIcon, AngleRightIcon, BuildIcon, CheckCircleIcon, CopyIcon, DownloadIcon, EditIcon, EllipsisVIcon, ExclamationCircleIcon, ExclamationTriangleIcon, ExternalLinkAltIcon, FilterIcon, InfoCircleIcon, MigrationIcon, OutlinedStarIcon, PlayIcon, StarIcon, TimesIcon, TrashIcon } from '@patternfly/react-icons';
+import { AngleDownIcon, AngleRightIcon, BuildIcon, CheckCircleIcon, CopyIcon, EditIcon, EllipsisVIcon, ExclamationCircleIcon, ExclamationTriangleIcon, ExternalLinkAltIcon, FilterIcon, MigrationIcon, OutlinedStarIcon, PlayIcon, StarIcon, TimesIcon } from '@patternfly/react-icons';
 import { ImageInfo, ImageMigrationModal, MigrationData } from './ImageMigrationModal';
 import { type ImageItem, UseBaseImageModal } from './UseBaseImageModal';
 import BuildImageModal from './BuildImageModal';
@@ -247,12 +246,7 @@ const Dashboard: React.FunctionComponent = () => {
     });
   };
 
-  const openMigrationModal = (image: ImageTableRow) => {
-    setSelectedImage(image);
-    setIsModalOpen(true);
-    // Clear any previous alerts
-    setAlertInfo(null);
-  };
+  // Removed unused openMigrationModal function
 
   const openMigrationOverlay = (image: ImageTableRow) => {
     setSelectedImage(image);
@@ -640,19 +634,7 @@ const Dashboard: React.FunctionComponent = () => {
     setIsSecondaryFilterOpen(false);
   };
 
-  const clearAllFilters = () => {
-    setPrimaryFilter('');
-    setSecondaryFilter('');
-    setNameSearchText('');
-    setSortField('');
-    setSortDirection('asc');
-    setSelectedRows(new Set());
-    setPage(1);
-  };
-
-  const hasActiveFilters = () => {
-    return primaryFilter || secondaryFilter || sortField;
-  };
+  // Removed unused clearAllFilters and hasActiveFilters functions
 
   const toggleRowSelection = (imageId: string) => {
     const newSelected = new Set(selectedRows);

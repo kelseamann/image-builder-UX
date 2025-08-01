@@ -14,7 +14,7 @@ import {
   Popover,
   Title,
 } from '@patternfly/react-core';
-import { BuilderImageIcon, InfoCircleIcon, NetworkIcon, OptimizeIcon, VirtualMachineIcon } from '@patternfly/react-icons';
+import { InfoCircleIcon } from '@patternfly/react-icons';
 
 interface UseBaseImageModalProps {
   isOpen: boolean;

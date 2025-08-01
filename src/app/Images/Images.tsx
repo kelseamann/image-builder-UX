@@ -3,7 +3,6 @@ import {
   Alert, 
   AlertActionCloseButton, 
   AlertVariant,
-  Badge,
   Button,
   Card,
   CardBody,
@@ -26,8 +25,8 @@ import {
   ToolbarItem,
   Tooltip
 } from '@patternfly/react-core';
-import { AngleDownIcon, AngleRightIcon, BuildIcon, CheckCircleIcon, CopyIcon, EllipsisVIcon, ExclamationCircleIcon, ExclamationTriangleIcon, FilterIcon, InfoCircleIcon, MigrationIcon, OutlinedStarIcon, StarIcon, TableIcon } from '@patternfly/react-icons';
-import { ImageInfo, MigrationData } from '../Dashboard/ImageMigrationModal';
+import { AngleDownIcon, AngleRightIcon, BuildIcon, CheckCircleIcon, CopyIcon, EllipsisVIcon, ExclamationCircleIcon, ExclamationTriangleIcon, FilterIcon, MigrationIcon, OutlinedStarIcon, StarIcon, TableIcon } from '@patternfly/react-icons';
+import { ImageInfo } from '../Dashboard/ImageMigrationModal';
 
 interface ImageTableRow extends ImageInfo {
   id: string;
@@ -168,7 +167,7 @@ const Images: React.FunctionComponent = () => {
     setPage(1);
   }, [primaryFilter, secondaryFilter, favoritesFilter, sortField, sortDirection]);
 
-  const handleMigrationClick = (image?: ImageInfo) => {
+  const handleMigrationClick = () => {
     setAlertInfo({
       variant: AlertVariant.info,
       title: 'Migration Feature',
@@ -1053,7 +1052,7 @@ const Images: React.FunctionComponent = () => {
                             <Divider />
                             <DropdownItem 
                               onClick={() => {
-                                handleMigrationClick(image);
+                                handleMigrationClick();
                                 setOpenDropdowns(new Set());
                               }}
                             >
