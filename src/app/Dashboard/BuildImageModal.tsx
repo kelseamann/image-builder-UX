@@ -1893,6 +1893,36 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   };
 
   const handleTabClick = (event: React.MouseEvent | React.KeyboardEvent, tabIndex: string | number) => {
+    // If trying to leave the base image tab (tab 0), validate target environment first
+    if (activeTabKey === 0 && tabIndex !== 0) {
+      const hasTargetEnvironment = selectedCloudProvider.length > 0 || 
+                                  privateCloudFormat.length > 0 || 
+                                  otherFormat.length > 0;
+      
+      if (!hasTargetEnvironment) {
+        // Set validation error and prevent tab change
+        setValidationErrors({
+          targetEnvironment: "Select one or multiple target environments for this image configuration"
+        });
+        
+        // Scroll to the target environment section to make error visible
+        if (imageOutputRef.current && contentAreaRef.current) {
+          const element = imageOutputRef.current;
+          const container = contentAreaRef.current;
+          const containerRect = container.getBoundingClientRect();
+          const elementRect = element.getBoundingClientRect();
+          const scrollTop = container.scrollTop + elementRect.top - containerRect.top - 20;
+          
+          container.scrollTo({
+            top: scrollTop,
+            behavior: 'smooth'
+          });
+        }
+        
+        return; // Don't allow tab change
+      }
+    }
+    
     setActiveTabKey(tabIndex);
     
     // Reset section indexes when switching tabs
@@ -1917,6 +1947,18 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       errors.imageName = 'Image name is required';
       if (!firstErrorRef) {
         firstErrorRef = imageDetailsRef;
+      }
+    }
+    
+    // Check target environment selection (in image output section)
+    const hasTargetEnvironment = selectedCloudProvider.length > 0 || 
+                                privateCloudFormat.length > 0 || 
+                                otherFormat.length > 0;
+    
+    if (!hasTargetEnvironment) {
+      errors.targetEnvironment = 'Select one or multiple target environments for this image configuration';
+      if (!firstErrorRef) {
+        firstErrorRef = imageOutputRef;
       }
     }
     
