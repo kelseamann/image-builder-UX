@@ -2540,6 +2540,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                                 <MenuItem 
                                   key={release} 
                                   itemId={release}
+                                  isSelected={baseImageRelease === release}
                                   onClick={() => onReleaseItemSelect(release)}
                                 >
                                   <div>
@@ -2565,6 +2566,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                                   <Divider component="li" />
                                   <MenuItem 
                                     itemId="CentOS Stream 9"
+                                    isSelected={baseImageRelease === 'CentOS Stream 9'}
                                     onClick={() => onReleaseItemSelect('CentOS Stream 9')}
                                   >
                                     <div>
@@ -2576,6 +2578,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                                   </MenuItem>
                                   <MenuItem 
                                     itemId="CentOS Stream 10"
+                                    isSelected={baseImageRelease === 'CentOS Stream 10'}
                                     onClick={() => onReleaseItemSelect('CentOS Stream 10')}
                                   >
                                     <div>
