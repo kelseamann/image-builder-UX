@@ -158,7 +158,8 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const [hostname, setHostname] = React.useState<string>('');
   const [kernelPackage, setKernelPackage] = React.useState<string>('kernel');
   const [isKernelPackageOpen, setIsKernelPackageOpen] = React.useState<boolean>(false);
-  const [kernelAppend, setKernelAppend] = React.useState<string>('');
+  const [kernelAppend, setKernelAppend] = React.useState<string[]>([]);
+  const [kernelAppendInput, setKernelAppendInput] = React.useState<string>('');
 
   // Validation states for advanced settings
   const [ntpValidated, setNtpValidated] = React.useState<'default' | 'success' | 'error'>('default');
@@ -402,7 +403,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
         setFirewallPorts(['80:tcp', '443:tcp', '22:ssh']);
         setFirewallEnabledServices(['ssh', 'http', 'https']);
         setSystemdEnabledServices(['nginx', 'postgresql', 'redis']);
-        setKernelAppend('console=ttyS0');
+        setKernelAppend(['console=ttyS0']);
         
         // Add some demo packages and repositories
         setSelectedPackages([
@@ -1830,18 +1831,20 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     return true;
   };
 
-  const validateKernelAppend = (input: string): boolean => {
-    if (!input.trim()) {
+  const validateKernelAppend = (options: string[]): boolean => {
+    if (options.length === 0) {
       setKernelValidated('default');
       setKernelHelperText('Enter kernel append options for system configuration');
       return true;
     }
     
     const validCharsRegex = /^[a-zA-Z0-9=\-_,.\"' ]*$/;
-    if (!validCharsRegex.test(input)) {
-      setKernelValidated('error');
-      setKernelHelperText('Only alphanumeric characters, equals signs, hyphens, underscores, commas, periods, double quotes, and single quotes are allowed');
-      return false;
+    for (const option of options) {
+      if (!validCharsRegex.test(option)) {
+        setKernelValidated('error');
+        setKernelHelperText('Only alphanumeric characters, equals signs, hyphens, underscores, commas, periods, double quotes, and single quotes are allowed');
+        return false;
+      }
     }
     
     setKernelValidated('default');
@@ -4589,41 +4592,68 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   fieldId="kernel-append"
                   style={{ marginBottom: '1rem' }}
                 >
-                  <div style={{ position: 'relative' }}>
-                    <TextInput
-                      id="kernel-append"
-                      value={kernelAppend}
-                      onChange={(_event, value) => {
-                        setKernelAppend(value);
-                        validateKernelAppend(value);
-                      }}
-                      onFocus={() => setKernelFocused(true)}
-                      onBlur={() => setKernelFocused(false)}
-                      validated={kernelValidated}
-                      placeholder="Enter kernel append options"
-                    />
-                    {kernelAppend && !kernelFocused && (
-                      <Button
-                        variant="plain"
-                        onClick={() => {
-                          setKernelAppend('');
-                          validateKernelAppend('');
+                  <TextInputGroup style={{ width: '60%' }}>
+                    <TextInputGroupMain>
+                      <LabelGroup>
+                        {kernelAppend.map((option, index) => (
+                          <Label
+                            key={index}
+                            variant="filled"
+                            color="grey"
+                            onClose={() => {
+                              const newOptions = kernelAppend.filter((_, i) => i !== index);
+                              setKernelAppend(newOptions);
+                              validateKernelAppend(newOptions);
+                            }}
+                          >
+                            {option}
+                          </Label>
+                        ))}
+                      </LabelGroup>
+                      <input
+                        type="text"
+                        value={kernelAppendInput}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value.includes(',')) {
+                            const newOption = value.split(',')[0].trim();
+                            if (newOption && !kernelAppend.includes(newOption)) {
+                              const updatedOptions = [...kernelAppend, newOption];
+                              setKernelAppend(updatedOptions);
+                              validateKernelAppend(updatedOptions);
+                            }
+                            setKernelAppendInput('');
+                          } else {
+                            setKernelAppendInput(value);
+                          }
                         }}
+                        onFocus={() => setKernelFocused(true)}
+                        onBlur={() => setKernelFocused(false)}
+                        placeholder={kernelAppend.length > 0 ? "Type option, comma to add..." : "e.g. console=ttyS0, comma to add..."}
                         style={{
-                          position: 'absolute',
-                          right: '8px',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          padding: '0.25rem',
-                          minWidth: 'auto',
-                          height: 'auto'
+                          border: 'none',
+                          outline: 'none',
+                          background: 'transparent',
+                          flex: 1,
+                          minWidth: '150px'
                         }}
-                        aria-label="Clear kernel append"
-                      >
-                        <TimesIcon style={{ fontSize: '0.875rem', color: '#666' }} />
-                      </Button>
+                      />
+                    </TextInputGroupMain>
+                    {(kernelAppend.length > 0 || kernelAppendInput) && (
+                      <TextInputGroupUtilities>
+                        <Button
+                          variant="plain"
+                          onClick={() => {
+                            setKernelAppend([]);
+                            setKernelAppendInput('');
+                            validateKernelAppend([]);
+                          }}
+                          aria-label="Clear kernel append options"
+                          icon={<TimesIcon />}
+                        />
+                      </TextInputGroupUtilities>
                     )}
-                  </div>
+                  </TextInputGroup>
                   {kernelValidated === 'error' && (
                     <FormHelperText>
                       <HelperText>
@@ -5569,9 +5599,15 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                             <DescriptionListTerm>Kernel</DescriptionListTerm>
                             <DescriptionListDescription>
                               {kernelPackage}
-                              {kernelAppend && (
+                              {kernelAppend.length > 0 && (
                                 <div style={{ marginTop: '4px' }}>
-                                  <span style={{ fontSize: '0.875rem', color: '#666' }}>{kernelAppend}</span>
+                                  <LabelGroup>
+                                    {kernelAppend.map((option, index) => (
+                                      <Label key={index} variant="filled" color="grey" isCompact>
+                                        {option}
+                                      </Label>
+                                    ))}
+                                  </LabelGroup>
                                 </div>
                               )}
                             </DescriptionListDescription>

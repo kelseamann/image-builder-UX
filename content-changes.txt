@@ -3261,3 +3261,62 @@ PURPOSE: Complete the comma-triggered chip pattern throughout the application, p
 STATUS: ✅ COMPLETED - User groups now use modern chip-based interface with comma-triggered creation, completing the consistent pattern across systemd services, NTP servers, and user groups
 
 =============================
+
+CHANGE #61: Kernel Append Options Multi-Entry with Comma-Triggered Chips
+Location: BuildImageModal.tsx - Advanced Settings > Kernel > Append field
+Date: [Current Date]
+
+IMPLEMENTATION DETAILS:
+
+**State Changes:**
+- Changed `kernelAppend` from `string` to `string[]`
+- Added `kernelAppendInput: string` for current text input
+- Updated demo data from `'console=ttyS0'` to `['console=ttyS0']`
+
+**UI Transformation:**
+- Replaced standard `TextInput` with `TextInputGroup`
+- Implemented inline chip display using `LabelGroup` and `Label` components
+- Used grey color (`color="grey"`) for kernel option chips
+- Added clear all functionality with `TextInputGroupUtilities`
+
+**Comma-Triggered Logic:**
+- Type kernel option + comma → creates new chip
+- Prevents duplicate kernel options
+- Clears input field after successful addition
+- Example: Type "console=ttyS0," → grey chip appears
+
+**Validation Updates:**
+- Modified `validateKernelAppend()` to accept `string[]` parameter
+- Validates each kernel option in the array individually
+- Maintains same character restrictions as before
+- Shows error state when invalid characters are detected
+
+**Review Screen:**
+- Replaced text display with grey `Label` chips
+- Uses `isCompact` prop for smaller chip display
+- Shows all kernel options as individual chips
+
+**Visual Design:**
+- **Color**: Grey chips for neutral kernel configuration appearance
+- **Layout**: Inline chips within the input field boundary
+- **Typography**: Standard PatternFly Label typography
+- **Spacing**: Consistent with other chip implementations
+
+USAGE EXAMPLE:
+1. **Add Options**: Type "console=ttyS0," → grey chip appears
+2. **Multiple Options**: Type "quiet," → second grey chip appears  
+3. **Remove Individual**: Click X on specific chip to remove
+4. **Clear All**: Use clear button to remove all kernel options
+
+BENEFITS:
+1. **Consistent UX**: Same comma-triggered pattern as packages, services, NTP servers, user groups
+2. **Visual Clarity**: Grey chips distinguish kernel options from other configuration types
+3. **Individual Control**: Remove specific kernel options without affecting others
+4. **Input Efficiency**: Rapid addition of multiple kernel parameters
+5. **Professional Interface**: Modern chip-based design replaces basic text input
+
+PURPOSE: Complete the comprehensive comma-triggered chip pattern across ALL multi-value inputs in the application, ensuring consistent user experience and modern interface design for kernel configuration.
+
+STATUS: ✅ COMPLETED - Kernel append options now use modern chip-based interface with comma-triggered creation, finalizing the universal chip pattern implementation
+
+=============================
