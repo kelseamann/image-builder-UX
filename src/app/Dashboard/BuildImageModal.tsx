@@ -121,6 +121,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   // Base image form state
   const [imageName, setImageName] = React.useState<string>('my-custom-image');
   const [imageDetails, setImageDetails] = React.useState<string>('');
+  const [owner, setOwner] = React.useState<string>('kelseamann@redhat.com');
   const [baseImageRelease, setBaseImageRelease] = React.useState<string>('Red Hat Enterprise Linux 9');
   const [isBaseImageReleaseOpen, setIsBaseImageReleaseOpen] = React.useState<boolean>(false);
   const [baseImageArchitecture, setBaseImageArchitecture] = React.useState<string>('x86_64');
@@ -179,6 +180,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   // Focus states for main fields
   const [imageNameFocused, setImageNameFocused] = React.useState<boolean>(false);
   const [imageDetailsFocused, setImageDetailsFocused] = React.useState<boolean>(false);
+  const [ownerFocused, setOwnerFocused] = React.useState<boolean>(false);
 
   // Public cloud state
   const [selectedCloudProvider, setSelectedCloudProvider] = React.useState<string[]>([]);
@@ -2291,6 +2293,41 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                           height: 'auto'
                         }}
                         aria-label="Clear image description"
+                      >
+                        <TimesIcon style={{ fontSize: '0.875rem', color: '#666' }} />
+                      </Button>
+                    )}
+                  </div>
+                </FormGroup>
+
+                <FormGroup
+                  label="Owner"
+                  fieldId="image-owner"
+                  style={{ marginTop: '12px', marginBottom: '1rem' }}
+                >
+                  <div style={{ position: 'relative' }}>
+                    <TextInput
+                      id="image-owner"
+                      value={owner}
+                      onChange={(_event, value) => setOwner(value)}
+                      onFocus={() => setOwnerFocused(true)}
+                      onBlur={() => setOwnerFocused(false)}
+                      placeholder="Enter owner email"
+                    />
+                    {owner && !ownerFocused && (
+                      <Button
+                        variant="plain"
+                        onClick={() => setOwner('')}
+                        style={{
+                          position: 'absolute',
+                          right: '8px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          padding: '0.25rem',
+                          minWidth: 'auto',
+                          height: 'auto'
+                        }}
+                        aria-label="Clear owner"
                       >
                         <TimesIcon style={{ fontSize: '0.875rem', color: '#666' }} />
                       </Button>
@@ -5281,6 +5318,12 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                         <DescriptionListTerm>Details</DescriptionListTerm>
                         <DescriptionListDescription>
                           {imageDetails || <span style={{ color: '#666', fontStyle: 'italic' }}>Not specified</span>}
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>Owner</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          {owner || <span style={{ color: '#666', fontStyle: 'italic' }}>Not specified</span>}
                         </DescriptionListDescription>
                       </DescriptionListGroup>
                       <DescriptionListGroup>
