@@ -481,6 +481,12 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
     });
     // Track target environment change
     setModifiedFields(prev => new Set(prev.add('targetEnvironment')));
+    // Clear target environment validation error when user makes a selection
+    if (validationErrors.targetEnvironment) {
+      const newErrors = { ...validationErrors };
+      delete newErrors.targetEnvironment;
+      setValidationErrors(newErrors);
+    }
   };
 
   // Helper function to handle other format selection
@@ -495,6 +501,12 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
         return [...prev, format];
       }
     });
+    // Clear target environment validation error when user makes a selection
+    if (validationErrors.targetEnvironment) {
+      const newErrors = { ...validationErrors };
+      delete newErrors.targetEnvironment;
+      setValidationErrors(newErrors);
+    }
   };
   
   // Helper function to handle private cloud format selection
@@ -509,6 +521,12 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
         return [...prev, format];
       }
     });
+    // Clear target environment validation error when user makes a selection
+    if (validationErrors.targetEnvironment) {
+      const newErrors = { ...validationErrors };
+      delete newErrors.targetEnvironment;
+      setValidationErrors(newErrors);
+    }
   };
 
 
@@ -1971,6 +1989,16 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
           let hasValidationError = false;
           const newValidationErrors: {[key: string]: string} = {};
           
+          // Validate target environment selection
+          const hasTargetEnvironment = selectedCloudProvider.length > 0 || 
+                                      privateCloudFormat.length > 0 || 
+                                      otherFormat.length > 0;
+          
+          if (!hasTargetEnvironment) {
+            newValidationErrors.targetEnvironment = "Select one or multiple target environments for this image configuration";
+            hasValidationError = true;
+          }
+          
           // Note: Snapshot date section validation removed - Enable repeatable build now auto-populates with today's date
           
           setValidationErrors(newValidationErrors);
@@ -2472,6 +2500,28 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       ))}
                     </SelectList>
                   </Select>
+                </FormGroup>
+
+                {/* Target Environment Section */}
+                <FormGroup
+                  label="Target environment"
+                  fieldId="target-environment"
+                  isRequired
+                  style={{ marginBottom: '1rem' }}
+                >
+                  <div style={{ fontSize: '14px', color: '#6a6e73', marginBottom: '1rem' }}>
+                    Select one or multiple target environments for this image configuration
+                  </div>
+                  {validationErrors.targetEnvironment && (
+                    <Alert
+                      variant="warning"
+                      isInline
+                      title="Target environment required"
+                      style={{ marginTop: '0.5rem' }}
+                    >
+                      <p>{validationErrors.targetEnvironment}</p>
+                    </Alert>
+                  )}
                 </FormGroup>
 
                 <FormGroup
