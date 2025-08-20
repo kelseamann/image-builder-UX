@@ -47,6 +47,7 @@ import {
   SplitItem,
   Stack,
   StackItem,
+  Switch,
   Tab,
   TabTitleText,
   Tabs,
@@ -208,12 +209,14 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const [awsAccountId, setAwsAccountId] = React.useState<string>('');
   const [awsDefaultRegion, setAwsDefaultRegion] = React.useState<string>('us-east-1');
   const [isAwsRegionOpen, setIsAwsRegionOpen] = React.useState<boolean>(false);
+  const [isAwsIntegrationEnabled, setIsAwsIntegrationEnabled] = React.useState<boolean>(true);
   
   // GCP integration state
   const [gcpAccountType, setGcpAccountType] = React.useState<string>('Google account');
   const [isGcpAccountTypeOpen, setIsGcpAccountTypeOpen] = React.useState<boolean>(false);
   const [gcpEmailOrDomain, setGcpEmailOrDomain] = React.useState<string>('');
   const [gcpImageSharing, setGcpImageSharing] = React.useState<string>('google-account');
+  const [gcpShareAccount, setGcpShareAccount] = React.useState<string>('');
   
   // Azure integration state
   const [azureHypervGeneration, setAzureHypervGeneration] = React.useState<string>('Generation 2 (BIOS)');
@@ -223,6 +226,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const [azureId, setAzureId] = React.useState<string>('');
   const [isAzureAuthorized, setIsAzureAuthorized] = React.useState<boolean>(false);
   const [azureResourceGroup, setAzureResourceGroup] = React.useState<string>('');
+  const [azureSubscriptionId, setAzureSubscriptionId] = React.useState<string>('');
   
   // Private cloud state
   const [isVMWareSelected, setIsVMWareSelected] = React.useState<boolean>(false);
@@ -2661,6 +2665,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     </SelectList>
                   </Select>
                 </FormGroup>
+              </div>
 
                 {/* Target Environment Section */}
                 <FormGroup
@@ -2793,89 +2798,10 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   </div>
                 </FormGroup>
 
-                <FormGroup
-                  label="Public cloud"
-                  fieldId="public-cloud"
-                  style={{ marginBottom: '1rem' }}
-                >
-                  <div style={{ 
-                    fontSize: '14px', 
-                    color: '#6a6e73', 
-                    marginBottom: '1rem' 
-                  }}>
-                    Selecting a public cloud provider will prompt you to sign in to your account on the next step
-                  </div>
-                  <Gallery hasGutter minWidths={{ default: '200px' }}>
-                    <Card
-                      isClickable
-                      isSelected={selectedCloudProvider.includes('aws')}
-                      onClick={() => handleCloudProviderSelect('aws')}
-                      style={{ 
-                        cursor: 'pointer',
-                        border: selectedCloudProvider.includes('aws') ? '2px solid #0066cc' : '1px solid #d2d2d2',
-                        backgroundColor: selectedCloudProvider.includes('aws') ? '#f0f8ff' : '#fff'
-                      }}
-                    >
-                      <CardBody style={{ textAlign: 'center', padding: '16px' }}>
-                        <div style={{ fontSize: '24px', marginBottom: '8px' }}>☁️</div>
-                        <div>Amazon Web Services</div>
-                      </CardBody>
-                    </Card>
-                    
-                    <Card
-                      isClickable
-                      isSelected={selectedCloudProvider.includes('gcp')}
-                      onClick={() => handleCloudProviderSelect('gcp')}
-                      style={{ 
-                        cursor: 'pointer',
-                        border: selectedCloudProvider.includes('gcp') ? '2px solid #0066cc' : '1px solid #d2d2d2',
-                        backgroundColor: selectedCloudProvider.includes('gcp') ? '#f0f8ff' : '#fff'
-                      }}
-                    >
-                      <CardBody style={{ textAlign: 'center', padding: '16px' }}>
-                        <div style={{ fontSize: '24px', marginBottom: '8px' }}>☁️</div>
-                        <div>Google Cloud Platform</div>
-                      </CardBody>
-                    </Card>
-                    
-                    <Card
-                      isClickable
-                      isSelected={selectedCloudProvider.includes('azure')}
-                      onClick={() => handleCloudProviderSelect('azure')}
-                      style={{ 
-                        cursor: 'pointer',
-                        border: selectedCloudProvider.includes('azure') ? '2px solid #0066cc' : '1px solid #d2d2d2',
-                        backgroundColor: selectedCloudProvider.includes('azure') ? '#f0f8ff' : '#fff'
-                      }}
-                    >
-                      <CardBody style={{ textAlign: 'center', padding: '16px' }}>
-                        <div style={{ fontSize: '24px', marginBottom: '8px' }}>☁️</div>
-                        <div>Microsoft Azure</div>
-                      </CardBody>
-                    </Card>
-                    
-                    <Tooltip content="No sign-in required for Oracle Cloud Infrastructure">
-                      <Card
-                        isClickable
-                        isSelected={selectedCloudProvider.includes('oci')}
-                        onClick={() => handleCloudProviderSelect('oci')}
-                        style={{ 
-                          cursor: 'pointer',
-                          border: selectedCloudProvider.includes('oci') ? '2px solid #0066cc' : '1px solid #d2d2d2',
-                          backgroundColor: selectedCloudProvider.includes('oci') ? '#f0f8ff' : '#fff'
-                        }}
-                      >
-                        <CardBody style={{ textAlign: 'center', padding: '16px' }}>
-                          <div style={{ fontSize: '24px', marginBottom: '8px' }}>☁️</div>
-                          <div>Oracle Cloud Infrastructure</div>
-                        </CardBody>
-                      </Card>
-                    </Tooltip>
-                  </Gallery>
-                </FormGroup>
 
-                {/* AWS Integration Section */}
-                {selectedCloudProvider.includes('aws') && (
+
+                {/* Removed old AWS Integration Section - now inline with checkbox */}
+                {false && selectedCloudProvider.includes('aws') && (
                   <div style={{ 
                     marginBottom: '1rem',
                     padding: '1.5rem',
@@ -2955,8 +2881,8 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   </div>
                 )}
 
-                {/* GCP Integration Section */}
-                {selectedCloudProvider.includes('gcp') && (
+                {/* Removed old GCP Integration Section - now inline with checkbox */}
+                {false && selectedCloudProvider.includes('gcp') && (
                   <div style={{ 
                     marginBottom: '1rem',
                     padding: '1.5rem',
@@ -3017,8 +2943,8 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   </div>
                 )}
 
-                {/* Azure Integration Section */}
-                {selectedCloudProvider.includes('azure') && (
+                {/* Removed old Azure Integration Section - now inline with checkbox */}
+                {false && selectedCloudProvider.includes('azure') && (
                   <div style={{ 
                     marginBottom: '1rem',
                     padding: '1.5rem',
@@ -3120,8 +3046,8 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   </div>
                 )}
 
-                {/* Oracle Cloud Infrastructure Section */}
-                {selectedCloudProvider.includes('oci') && (
+                {/* Removed old Oracle Section - now inline with checkbox */}
+                {false && selectedCloudProvider.includes('oci') && (
                   <div style={{ 
                     marginBottom: '1rem',
                     padding: '1.5rem',
@@ -3300,43 +3226,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       margin: '0rem 0 2rem 0' 
                     }} />
 
-                    
-              <div style={{ marginBottom: '1rem' }}>
-                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
-                      First boot configuration
-                    </Title>
-                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
-                  Configure the image with a custom script that will execute on its first boot.  
-                  </Content>
 
-                  </div>
-                    
-                    <div style={{
-                      '--pf-v5-c-file-upload__file-details-textarea--FontFamily': '"Red Hat Mono", "Monaco", "Menlo", "Ubuntu Mono", monospace'
-                    } as React.CSSProperties}>
-                      <FileUpload
-                        id="kickstart-file"
-                        type="text"
-                      value={kickstartFile || 'Manually enter the script here.'} 
-                      style={{color: '#000000' }}
-                        filename={kickstartFilename}
-                        onTextChange={(event: React.ChangeEvent<HTMLTextAreaElement>, text: string) => {
-                          setKickstartFile(text);
-                          setKickstartFilename('');
-                        }}
-                        onClearClick={() => {
-                          setKickstartFile('');
-                          setKickstartFilename('');
-                        }}
-                        isLoading={isKickstartLoading}
-                        browseButtonText="Upload"
-                        clearButtonText="Clear"
-                      />
-                      <div className="pf-v6-u-font-size-sm pf-v6-u-color-200 pf-v6-u-mt-xs">
-                        Supports bash shell, python or Ansible playbooks
-                    </div>
-                      </div>
-                    </div>
                     
                 {/* Compliance Section */}
                 <div style={{ marginBottom: '2rem' }}>
@@ -5458,6 +5348,51 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   Add another user
                 </Button>
               </div>
+
+              {/* First Boot Configuration Section - moved from Base Settings */}
+              <div style={{ marginBottom: '2rem' }}>
+                {/* Divider before First Boot Configuration */}
+                <div style={{ 
+                  height: '1px', 
+                  backgroundColor: '#d2d2d2', 
+                  margin: '2rem 0' 
+                }} />
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <Title headingLevel="h3" size="lg" className="pf-v6-u-mb-sm">
+                    First boot configuration
+                  </Title>
+                  <Content component="p" className="pf-v6-u-color-200 pf-v6-u-font-size-sm pf-v6-u-mb-md">
+                    Configure the image with a custom script that will execute on its first boot.  
+                  </Content>
+                </div>
+                    
+                <div style={{
+                  '--pf-v5-c-file-upload__file-details-textarea--FontFamily': '"Red Hat Mono", "Monaco", "Menlo", "Ubuntu Mono", monospace'
+                } as React.CSSProperties}>
+                  <FileUpload
+                    id="kickstart-file"
+                    type="text"
+                    value={kickstartFile || 'Manually enter the script here.'} 
+                    style={{color: '#000000' }}
+                    filename={kickstartFilename}
+                    onTextChange={(event: React.ChangeEvent<HTMLTextAreaElement>, text: string) => {
+                      setKickstartFile(text);
+                      setKickstartFilename('');
+                    }}
+                    onClearClick={() => {
+                      setKickstartFile('');
+                      setKickstartFilename('');
+                    }}
+                    isLoading={isKickstartLoading}
+                    browseButtonText="Upload"
+                    clearButtonText="Clear"
+                  />
+                  <div className="pf-v6-u-font-size-sm pf-v6-u-color-200 pf-v6-u-mt-xs">
+                    Supports bash shell, python or Ansible playbooks
+                  </div>
+                </div>
+              </div>
             </Form>
           </div>
         );
@@ -5980,8 +5915,8 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       title="Register systems using this image"
       isOpen={isOpen}
       onClose={onClose}
-      width="min(1400px, 95vw)"
-      style={{ height: '85vh', maxHeight: '900px' }}
+      width="min(1600px, 98vw)"
+      style={{ height: '90vh', maxHeight: '1000px' }}
     >
             <div style={{ 
         height: '100%',
@@ -6008,42 +5943,132 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             Create custom system images with your preferred configurations, packages, and settings. Build images for different target environments and deployment scenarios.
           </p>
           
-          {/* Tabs */}
-          <div>
-            <Tabs
-              activeKey={activeTabKey}
-              onSelect={handleTabClick}
-              variant="default"
-            >
-              <Tab eventKey={0} title={<TabTitleText>Base image</TabTitleText>} />
-              <Tab eventKey={1} title={
-                <TabTitleText>
-                  Repositories and packages{(complianceType === 'openscap' && openscapProfile && openscapAddedPackagesCount > 0) ? ` (${openscapAddedPackagesCount})` : ''}
-                </TabTitleText>
-              } />
-              <Tab eventKey={2} title={
-                <TabTitleText>
-                  Advanced settings{(complianceType === 'openscap' && openscapProfile && openscapAddedServicesCount > 0) ? ` (${openscapAddedServicesCount})` : ''}
-                </TabTitleText>
-              } />
-              <Tab eventKey={3} title={<TabTitleText>Review image</TabTitleText>} />
-            </Tabs>
-          </div>
+
         </div>
 
-        {/* Content Area */}
-        <div 
-          ref={contentAreaRef}
-          style={{ 
-          flex: 1,
-          minHeight: 0,
-          maxHeight: '100%',
-          padding: '24px 24px 24px 32px',
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          transition: 'all 0.2s ease-in-out'
-        }}>
-          {renderTabContent()}
+        {/* Wizard Layout */}
+        <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+          {/* Left Sidebar - Wizard Steps */}
+          <div style={{ 
+            width: '250px', 
+            backgroundColor: '#f8f8f8', 
+            borderRight: '1px solid #d2d2d2',
+            padding: '1.5rem 1rem',
+            flexShrink: 0
+          }}>
+            <nav>
+              {[
+                { key: 0, title: 'Base settings' },
+                { key: 1, title: 'Repositories and packages' },
+                { key: 2, title: 'Advanced settings' },
+                { key: 3, title: 'Review' }
+              ].map((step, index) => {
+                const isActive = Number(activeTabKey) === step.key;
+                const isCompleted = Number(activeTabKey) > step.key;
+                const isPending = Number(activeTabKey) < step.key;
+                
+                return (
+                  <div 
+                    key={step.key}
+                    onClick={(e) => handleTabClick(e, step.key)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      padding: '1rem',
+                      marginBottom: '0.5rem',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      backgroundColor: isActive ? '#0066cc' : 'transparent',
+                      color: isActive ? '#fff' : '#151515',
+                      border: isActive ? '1px solid #0066cc' : '1px solid transparent',
+                      transition: 'all 0.2s ease-in-out'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.backgroundColor = '#e7f1fa';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }
+                    }}
+                  >
+                    {/* Step Number */}
+                    <div style={{
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      backgroundColor: isActive || isCompleted ? '#0066cc' : '#d2d2d2',
+                      color: isActive || isCompleted ? '#fff' : '#666',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      marginRight: '12px',
+                      flexShrink: 0
+                    }}>
+                      {isCompleted ? '✓' : index + 1}
+                    </div>
+                    
+                    {/* Step Content */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        marginBottom: '2px',
+                        color: isActive ? '#fff' : '#151515'
+                      }}>
+                        {step.title}
+                        {step.key === 1 && complianceType === 'openscap' && openscapProfile && openscapAddedPackagesCount > 0 && 
+                          ` (${openscapAddedPackagesCount})`
+                        }
+                        {step.key === 2 && complianceType === 'openscap' && openscapProfile && openscapAddedServicesCount > 0 && 
+                          ` (${openscapAddedServicesCount})`
+                        }
+                      </div>
+                      {/* Dynamic descriptions for compliance-affected steps */}
+                      {step.key === 1 && complianceType === 'openscap' && openscapProfile && openscapAddedPackagesCount > 0 && (
+                        <div style={{
+                          fontSize: '12px',
+                          color: isActive ? '#cce7ff' : '#666',
+                          marginTop: '2px'
+                        }}>
+                          {openscapAddedPackagesCount} packages added by compliance policy
+                        </div>
+                      )}
+                      {step.key === 2 && complianceType === 'openscap' && openscapProfile && openscapAddedServicesCount > 0 && (
+                        <div style={{
+                          fontSize: '12px',
+                          color: isActive ? '#cce7ff' : '#666',
+                          marginTop: '2px'
+                        }}>
+                          {openscapAddedServicesCount} services added by compliance policy
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </nav>
+          </div>
+          
+          {/* Right Content Area */}
+          <div 
+            ref={contentAreaRef}
+            style={{ 
+              flex: 1,
+              minHeight: 0,
+              maxHeight: '100%',
+              padding: '24px 24px 24px 32px',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              transition: 'all 0.2s ease-in-out'
+            }}
+          >
+            {renderTabContent()}
+          </div>
         </div>
 
         {/* Footer Section */}
@@ -6052,76 +6077,97 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
           padding: '16px 24px',
           borderTop: '1px solid #d2d2d2'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px' }}>
-            <Button
-              variant="secondary"
-              onClick={handleCancel}
-              isDisabled={isLoading}
-            >
-              Cancel
-            </Button>
-            {activeTabKey !== 3 && (
-              <Button
-                variant="secondary"
-                onClick={handleNextSection}
-                isDisabled={isLoading}
-              >
-                Next
-              </Button>
-            )}
-            {activeTabKey !== 3 && (
-              <Button
-                variant="primary"
-                onClick={() => {
-                  // Only navigate to review if on base image tab and validation passes
-                  if (activeTabKey === 0) {
-                    const validationResult = validateBaseImageForm();
-                    if (!validationResult.isValid) {
-                      // Validation failed, stay on current tab and scroll to first error
-                      if (contentAreaRef.current && validationResult.firstErrorRef && validationResult.firstErrorRef.current) {
-                        // Scroll to the specific error section
-                        const element = validationResult.firstErrorRef.current;
-                        const container = contentAreaRef.current;
-                        const containerRect = container.getBoundingClientRect();
-                        const elementRect = element.getBoundingClientRect();
-                        const scrollTop = container.scrollTop + elementRect.top - containerRect.top - 20;
-                        
-                        container.scrollTo({
-                          top: scrollTop,
-                          behavior: 'smooth'
-                        });
-                      }
-                      return;
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {/* Left side - Back button */}
+            <div>
+              {Number(activeTabKey) > 0 && (
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    const newTabKey = Number(activeTabKey) - 1;
+                    setActiveTabKey(newTabKey);
+                    // Smooth scroll to top of content area
+                    if (contentAreaRef.current) {
+                      contentAreaRef.current.scrollTo({ top: 0, behavior: 'smooth' });
                     }
-                  }
-                  
-                  setActiveTabKey(3);
-                  // Reset section indexes when jumping to Review tab
-                  setCurrentBaseImageSection(0);
-                  setCurrentAdvancedSection(0);
-                  // Smooth scroll to top when navigating to Review tab to ensure users see the cloud expiration alert
-                  if (contentAreaRef.current) {
-                    contentAreaRef.current.scrollTo({
-                      top: 0,
-                      behavior: 'smooth'
-                    });
-                  }
-                }}
-                isDisabled={false}
-              >
-                Review image
-              </Button>
-            )}
-            {activeTabKey === 3 && (
+                  }}
+                  isDisabled={isLoading}
+                >
+                  Back
+                </Button>
+              )}
+            </div>
+            
+            {/* Right side - Cancel, Next/Review/Build buttons */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <Button
-                variant="primary"
-                onClick={handleConfirm}
-                isLoading={isLoading}
+                variant="link"
+                onClick={handleCancel}
                 isDisabled={isLoading}
               >
-                {isLoading ? 'Building...' : 'Build image'}
+                Cancel
               </Button>
-            )}
+              
+              {/* Next/Review/Build button */}
+              {Number(activeTabKey) < 3 && (
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    const currentStep = Number(activeTabKey);
+                    
+                    // Validate base settings before allowing progression
+                    if (currentStep === 0) {
+                      const validationResult = validateBaseImageForm();
+                      if (!validationResult.isValid) {
+                        // Validation failed, stay on current tab and scroll to first error
+                        if (contentAreaRef.current && validationResult.firstErrorRef && validationResult.firstErrorRef.current) {
+                          const element = validationResult.firstErrorRef.current;
+                          const container = contentAreaRef.current;
+                          const containerRect = container.getBoundingClientRect();
+                          const elementRect = element.getBoundingClientRect();
+                          const scrollTop = container.scrollTop + elementRect.top - containerRect.top - 20;
+                          
+                          container.scrollTo({
+                            top: scrollTop,
+                            behavior: 'smooth'
+                          });
+                        }
+                        return; // Don't proceed if validation fails
+                      }
+                    }
+                    
+                    const nextStep = currentStep + 1;
+                    setActiveTabKey(nextStep);
+                    
+                    // Reset section indexes when navigating
+                    if (nextStep === 3) {
+                      setCurrentBaseImageSection(0);
+                      setCurrentAdvancedSection(0);
+                    }
+                    
+                    // Smooth scroll to top of content area
+                    if (contentAreaRef.current) {
+                      contentAreaRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }}
+                  isDisabled={isLoading}
+                >
+                  {Number(activeTabKey) === 2 ? 'Review' : 'Next'}
+                </Button>
+              )}
+              
+              {/* Build image button on final step */}
+              {Number(activeTabKey) === 3 && (
+                <Button
+                  variant="primary"
+                  onClick={handleConfirm}
+                  isLoading={isLoading}
+                  isDisabled={isLoading}
+                >
+                  {isLoading ? 'Building...' : 'Build image'}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
