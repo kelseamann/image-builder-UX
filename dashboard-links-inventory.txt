@@ -1,0 +1,122 @@
+DASHBOARD LINKS INVENTORY
+========================
+
+Generated: $(date)
+Description: Complete inventory of all links, navigation items, and external references in the Image Builder UX dashboard.
+
+=== NAVIGATION LINKS (Internal Routes) ===
+
+Main Navigation (Sidebar):
+- Dashboard → / (PatternFly Seed | Main Dashboard)
+- Wizard Prototype → /prototype (PatternFly Seed | Wizard Prototype)
+- Settings → Expandable group
+  - General → /settings/general (PatternFly Seed | General Settings)
+  - Profile → /settings/profile (PatternFly Seed | Profile Settings)
+
+Skip to Content:
+- Skip to Content → #primary-app-container (accessibility link)
+
+=== EXTERNAL LINKS (Open in New Tab) ===
+
+Documentation Links:
+1. "Deploying and managing RHEL systems in the hybrid cloud"
+   - Location: BuildImageModal → Base Image tab → Image output section
+   - URL: https://docs.redhat.com/en/documentation/red_hat_insights/1-latest/html/deploying_and_managing_rhel_systems_in_hybrid_clouds/index
+   - Purpose: Educational link about hybrid cloud deployment
+
+2. "More about RHEL on WSL Support"
+   - Location: BuildImageModal → Base Image tab → WSL checkbox tooltip
+   - URL: https://access.redhat.com/articles/7115538
+   - Purpose: Support policy information for RHEL on Windows Subsystem for Linux
+
+3. "Insights Repositories"
+   - Location: BuildImageModal → Repositories and packages tab → Repository section
+   - URL: https://console.redhat.com/insights/content/repositories
+   - Purpose: Manage additional repositories in Red Hat Insights
+
+4. JIRA Issue Link
+   - Location: Images page → HMS-8807 feature banner
+   - URL: https://issues.redhat.com/browse/HMS-8807
+   - Purpose: Link to related JIRA issue for new feature
+
+=== PLACEHOLDER LINKS (href="#") ===
+
+Dashboard Table Actions:
+1. "Launch instance" 
+   - Location: Dashboard → Images table → Action column
+   - Purpose: Opens launch modal for ready images
+   - Current: Opens modal (not external)
+
+2. "Download blueprint (.json)"
+   - Location: Dashboard → Images table → Action column  
+   - Purpose: Downloads image blueprint
+   - Current: Console log placeholder
+
+3. AWS Account ID Link (e.g., "12345678")
+   - Location: Dashboard → Images table → Expanded row details
+   - Purpose: Link to AWS account (placeholder)
+   - Current: href="#" with external link icon
+
+Compliance Links (Removed per user request):
+4. "Manage with Insights compliance" 
+   - Location: BuildImageModal → Compliance tab → Custom compliance section
+   - Purpose: Link to Insights compliance management
+   - Status: ❌ REMOVED - Previously href="#"
+
+5. "Learn more about OpenSCAP profiles"
+   - Location: BuildImageModal → Compliance tab → OpenSCAP section  
+   - Purpose: Educational link about OpenSCAP
+   - Status: ❌ REMOVED - Previously href="#"
+
+Registration Links:
+6. "Manage Activation keys" (appears in multiple locations)
+   - Location: BuildImageModal → Registration sections (appears twice)
+   - Purpose: Link to activation key management
+   - Current: href="#" with external link icon
+
+7. "Learn more about registration" (appears in multiple locations)
+   - Location: BuildImageModal → Registration sections (appears twice)
+   - Purpose: Educational link about registration process
+   - Current: href="#" with external link icon
+
+=== BUTTON LINKS (variant="link") ===
+
+Modal Actions:
+- Cancel buttons in various modals
+- "Add more" buttons for dynamic sections
+- Close/dismiss actions
+- Secondary actions in forms
+
+Table Actions:
+- Filter/search related actions
+- Pagination controls
+- Sorting mechanisms
+
+=== SUMMARY ===
+
+Total External Links: 4 active URLs
+Total Placeholder Links: ~6 href="#" links  
+Total Navigation Routes: 5 internal routes
+Total Button Links: ~15+ variant="link" buttons
+
+Active External Domains:
+- docs.redhat.com (documentation)
+- access.redhat.com (support articles)
+- console.redhat.com (Insights console)
+- issues.redhat.com (JIRA)
+
+=== NOTES ===
+
+1. Most educational/help links are currently placeholders (href="#")
+2. Compliance-related links were recently removed per user request
+3. AWS-related links in table details are placeholders
+4. All external links properly use target="_blank" and rel="noopener noreferrer"
+5. External links include appropriate ExternalLinkAltIcon indicators
+
+=== RECOMMENDATIONS ===
+
+For Production:
+1. Replace href="#" placeholders with actual documentation URLs
+2. Implement proper download functionality for blueprint links
+3. Add proper AWS console integration for account links
+4. Consider adding more contextual help links where appropriate

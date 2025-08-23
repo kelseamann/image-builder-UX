@@ -187,14 +187,40 @@ const UseBaseImageModal: React.FunctionComponent<UseBaseImageModalProps> = ({
   return (
     <Modal
       variant={ModalVariant.large}
-      title="Popular Downloads for Red Hat Enterprise Linux" 
       isOpen={isOpen}
       onClose={onClose}
     >
-      <div style={{ padding: '24px' }}>
-        <p style={{ marginBottom: '32px', fontSize: '16px', lineHeight: '1.5' }}>
-          Choose from popular Red Hat Enterprise Linux base images to start building your custom image.
-        </p>
+      <div style={{ 
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        maxHeight: '100%'
+      }}>
+        {/* Header Section */}
+        <div style={{ 
+          flexShrink: 0,
+          padding: '32px 24px 0 32px'
+        }}>
+          <Title headingLevel="h1" size="xl" style={{ marginBottom: '8px' }}>
+            Download RHEL
+          </Title>
+          <p style={{ 
+            fontSize: '16px', 
+            lineHeight: '1.5',
+            marginBottom: '24px',
+            color: '#666'
+          }}>
+            Use download to quickly access the latest stable version of your image, or select Build Latest to begin customizing with Image Builder.
+          </p>
+        </div>
+        
+        {/* Content Section */}
+        <div style={{ 
+          flex: 1,
+          padding: '24px 32px',
+          overflow: 'auto'
+        }}>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
           {imageGroups.map((group, groupIndex) => (
@@ -230,7 +256,7 @@ const UseBaseImageModal: React.FunctionComponent<UseBaseImageModalProps> = ({
                                   variant="secondary"
                                   onClick={() => handleDownload(image.name)}
                                 >
-                                  Download
+                                  Download blueprint (.json)
                                 </Button>
                               </FlexItem>
                               <FlexItem>
@@ -263,6 +289,7 @@ const UseBaseImageModal: React.FunctionComponent<UseBaseImageModalProps> = ({
               )}
             </div>
           ))}
+        </div>
         </div>
       </div>
     </Modal>

@@ -10,3 +10,6 @@ declare module '*.m4a';
 declare module '*.rdf';
 declare module '*.ttl';
 declare module '*.pdf';
+
+// Build-time constants
+declare const __BUILD_TIMESTAMP__: string;

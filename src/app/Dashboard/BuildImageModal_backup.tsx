@@ -60,7 +60,6 @@ import {
 } from '@patternfly/react-core';
 
 import { 
-  ArrowRightIcon,
   ExternalLinkAltIcon, 
   InfoCircleIcon,
   MagicIcon,
@@ -3809,151 +3808,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                     </div>
                   </FormGroup>
 
-              {/* NEW: Included Repositories Section */}
-              <div style={{ marginBottom: '2rem' }}>
-                <Title headingLevel="h3" size="md" style={{ marginBottom: '0.5rem' }}>
-                  Included repositories
-                </Title>
-                <p style={{ fontSize: '14px', color: '#666', marginBottom: '1rem' }}>
-                  Can't find a repository? Make sure it's been added to your account on{' '}
-                  <a 
-                    href="https://console.redhat.com/insights/content/repositories" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    style={{ color: '#0066cc', textDecoration: 'underline' }}
-                  >
-                    Insights Repositories
-                    <ExternalLinkAltIcon style={{ fontSize: '0.75rem', marginLeft: '0.25rem' }} />
-                  </a>
-                </p>
-
-                <div style={{ marginBottom: '1rem' }}>
-                  <Title headingLevel="h4" size="md" style={{ marginBottom: '0.5rem' }}>
-                    Repositories
-                  </Title>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                    <SearchInput
-                      placeholder=""
-                      style={{ width: '300px' }}
-                    />
-                    <Button variant="control" icon={<ArrowRightIcon />} />
-                  </div>
-
-                  <table style={{ 
-                    width: '100%', 
-                    borderCollapse: 'collapse',
-                    border: '1px solid #d2d2d2',
-                    backgroundColor: 'white'
-                  }}>
-                    <thead>
-                      <tr>
-                        <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #d2d2d2', fontWeight: 600, fontSize: '0.875rem' }}>Name</th>
-                        <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #d2d2d2', fontWeight: 600, fontSize: '0.875rem' }}>Application stream</th>
-                        <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #d2d2d2', fontWeight: 600, fontSize: '0.875rem' }}>Retirement date</th>
-                        <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #d2d2d2', fontWeight: 600, fontSize: '0.875rem' }}>Source</th>
-                        <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #d2d2d2', fontWeight: 600, fontSize: '0.875rem', width: '60px' }}></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>My application</td>
-                        <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}><div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ color: '#0066cc' }}>⚡</span>Code branch</div></td>
-                        <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>My application</td>
-                        <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>Included repository</td>
-                        <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', textAlign: 'center' }}><Button variant="plain" icon={<MinusCircleIcon />} /></td>
-                      </tr>
-                      <tr>
-                        <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>My application</td>
-                        <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}><div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ color: '#0066cc' }}>⚡</span>Code branch</div></td>
-                        <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>My application</td>
-                        <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>Other repository</td>
-                        <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', textAlign: 'center' }}><Button variant="plain" icon={<MinusCircleIcon />} /></td>
-                      </tr>
-                      <tr>
-                        <td style={{ padding: '12px', fontSize: '0.875rem' }}>My application</td>
-                        <td style={{ padding: '12px', fontSize: '0.875rem' }}><div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ color: '#0066cc' }}>⚡</span>Code branch</div></td>
-                        <td style={{ padding: '12px', fontSize: '0.875rem' }}>My application</td>
-                        <td style={{ padding: '12px', fontSize: '0.875rem' }}>Included repository</td>
-                        <td style={{ padding: '12px', textAlign: 'center' }}><Button variant="plain" icon={<MinusCircleIcon />} /></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* NEW: Selected Packages Section */}
-              <div style={{ marginBottom: '2rem' }}>
-                <Title headingLevel="h3" size="md" style={{ marginBottom: '1rem' }}>
-                  Selected packages
-                </Title>
-
-                <div style={{ display: 'flex', alignItems: 'end', gap: '1rem', marginBottom: '1rem' }}>
-                  <FormGroup label="Package Type" fieldId="package-type-new">
-                    <Select
-                      id="package-type-select-new"
-                      isOpen={false}
-                      selected="Individual packages"
-                      onSelect={() => {}}
-                      onOpenChange={() => {}}
-                      toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                        <MenuToggle ref={toggleRef} onClick={() => {}} isExpanded={false} style={{ width: '180px' }}>
-                          Individual packages
-                        </MenuToggle>
-                      )}
-                    >
-                      <SelectList>
-                        <SelectOption value="individual">Individual packages</SelectOption>
-                        <SelectOption value="groups">Package groups</SelectOption>
-                      </SelectList>
-                    </Select>
-                  </FormGroup>
-
-                  <FormGroup label="Packages" fieldId="packages-search-new" style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <SearchInput value="" onChange={() => {}} onClear={() => {}} placeholder="" style={{ flex: 1 }} />
-                      <Button variant="control" icon={<ArrowRightIcon />} />
-                    </div>
-                  </FormGroup>
-                </div>
-
-                <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #d2d2d2', backgroundColor: 'white' }}>
-                  <thead>
-                    <tr>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #d2d2d2', fontWeight: 600, fontSize: '0.875rem' }}>Name</th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #d2d2d2', fontWeight: 600, fontSize: '0.875rem' }}>Application stream</th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #d2d2d2', fontWeight: 600, fontSize: '0.875rem' }}>Retirement date</th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #d2d2d2', fontWeight: 600, fontSize: '0.875rem' }}>Source</th>
-                      <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #d2d2d2', fontWeight: 600, fontSize: '0.875rem', width: '60px' }}></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>My application</td>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}><div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ color: '#0066cc' }}>⚡</span>Code branch</div></td>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>My application</td>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>Included repository</td>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', textAlign: 'center' }}><Button variant="plain" icon={<MinusCircleIcon />} /></td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>My application</td>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}><div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ color: '#0066cc' }}>⚡</span>Code branch</div></td>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>My application</td>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>Other repository</td>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', textAlign: 'center' }}><Button variant="plain" icon={<MinusCircleIcon />} /></td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '12px', fontSize: '0.875rem' }}>My application</td>
-                      <td style={{ padding: '12px', fontSize: '0.875rem' }}><div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ color: '#0066cc' }}>⚡</span>Code branch</div></td>
-                      <td style={{ padding: '12px', fontSize: '0.875rem' }}>My application</td>
-                      <td style={{ padding: '12px', fontSize: '0.875rem' }}>Included repository</td>
-                      <td style={{ padding: '12px', textAlign: 'center' }}><Button variant="plain" icon={<MinusCircleIcon />} /></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              {/* OLD: Repository Rows - Grouped Layout - HIDDEN */}
-              <div style={{ display: 'none' }}>
+              {/* Repository Rows - Grouped Layout */}
               <>
 
               <Stack hasGutter>
@@ -4408,9 +4263,8 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 </Button>
               </div>
                 </>
-              </div>
               
-              {/* End of repository interface - OLD SYSTEM HIDDEN */}
+              {/* End of repository interface */}
             </Form>
           </div>
         );

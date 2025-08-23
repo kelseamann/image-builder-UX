@@ -21,6 +21,7 @@ import {
 } from '@patternfly/react-core';
 import { IAppRoute, IAppRouteGroup, routes } from '@app/routes';
 import { BarsIcon } from '@patternfly/react-icons';
+import { DeploymentBanner } from '@app/components/DeploymentBanner';
 
 interface IAppLayout {
   children: React.ReactNode;
@@ -176,6 +177,7 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
       sidebar={sidebarOpen && Sidebar}
       skipToContent={PageSkipToContent}
     >
+      <DeploymentBanner />
       {children}
     </Page>
   );

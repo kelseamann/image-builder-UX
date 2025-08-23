@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { Dashboard } from '@app/Dashboard/Dashboard';
-import { Images } from './Images/Images';
-import { Support } from '@app/Support/Support';
+// import { Prototype } from '@app/Prototype/Prototype';
 import { GeneralSettings } from '@app/Settings/General/GeneralSettings';
 import { ProfileSettings } from '@app/Settings/Profile/ProfileSettings';
 import { NotFound } from '@app/NotFound/NotFound';
@@ -31,20 +30,13 @@ const routes: AppRouteConfig[] = [
     path: '/',
     title: 'PatternFly Seed | Main Dashboard',
   },
-  {
-    element: <Images />,
-    exact: true,
-    label: 'HMS-8807',
-    path: '/images',
-    title: 'PatternFly Seed | HMS-8807',
-  },
-  {
-    element: <Support />,
-    exact: true,
-    label: 'Support',
-    path: '/support',
-    title: 'PatternFly Seed | Support Page',
-  },
+  // {
+  //   element: <Prototype />,
+  //   exact: true,
+  //   label: 'Wizard Prototype',
+  //   path: '/prototype',
+  //   title: 'PatternFly Seed | Wizard Prototype',
+  // },
   {
     label: 'Settings',
     routes: [

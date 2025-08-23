@@ -16,6 +16,9 @@ import {
   Label,
   MenuToggle,
   MenuToggleElement,
+  Modal,
+  ModalBody,
+  ModalVariant,
   PageSection,
   Pagination,
   SearchInput,
@@ -42,6 +45,7 @@ interface ImageTableRow extends ImageInfo {
 }
 
 const Images: React.FunctionComponent = () => {
+  const [isLaunchModalOpen, setIsLaunchModalOpen] = React.useState(false);
   const [alertInfo, setAlertInfo] = React.useState<{
     variant: AlertVariant;
     title: string;
@@ -588,6 +592,22 @@ const Images: React.FunctionComponent = () => {
     });
   };
 
+  // Helper function to determine available actions based on selected images
+  const getSelectedImagesInfo = () => {
+    const selectedImages = imageData.filter(img => selectedRows.has(img.id));
+    const readyImages = selectedImages.filter(img => img.status === 'ready');
+    const nonReadyImages = selectedImages.filter(img => img.status !== 'ready');
+    
+    return {
+      total: selectedImages.length,
+      ready: readyImages.length,
+      nonReady: nonReadyImages.length,
+      hasOnlyNonReady: nonReadyImages.length > 0 && readyImages.length === 0,
+      hasMixed: readyImages.length > 0 && nonReadyImages.length > 0,
+      hasOnlyReady: readyImages.length > 0 && nonReadyImages.length === 0
+    };
+  };
+
   const handleBulkRebuild = () => {
     if (selectedRows.size === 0) return;
     
@@ -682,7 +702,7 @@ const Images: React.FunctionComponent = () => {
                 </FlexItem>
                 <FlexItem>
                   <Button variant="secondary" isDisabled>
-                    Use a Base Image
+                    Download RHEL
                   </Button>
                 </FlexItem>
                 <FlexItem>
@@ -826,36 +846,36 @@ const Images: React.FunctionComponent = () => {
                   </div>
                 </ToolbarItem>
 
-                <ToolbarItem>
-                  <Button
-                    variant="secondary"
-                    icon={<MigrationIcon />}
-                    onClick={handleBulkMigration}
-                    isDisabled={selectedRows.size === 0}
-                  >
-                    Migrate ({selectedRows.size})
-                  </Button>
-                </ToolbarItem>
-                <ToolbarItem>
-                  <Button
-                    variant="secondary"
-                    icon={<CopyIcon />}
-                    onClick={handleBulkDuplicate}
-                    isDisabled={selectedRows.size === 0}
-                  >
-                    Duplicate ({selectedRows.size})
-                  </Button>
-                </ToolbarItem>
-                <ToolbarItem>
-                  <Button
-                    variant="secondary"
-                    icon={<BuildIcon />}
-                    onClick={handleBulkRebuild}
-                    isDisabled={selectedRows.size === 0}
-                  >
-                    Rebuild ({selectedRows.size})
-                  </Button>
-                </ToolbarItem>
+                {(() => {
+                  const selectionInfo = getSelectedImagesInfo();
+                  const hasNonReadySelected = selectionInfo.hasOnlyNonReady || selectionInfo.hasMixed;
+                  
+                  return (
+                    <>
+
+                      <ToolbarItem>
+                        <Button
+                          variant="secondary"
+                          icon={<CopyIcon />}
+                          onClick={handleBulkDuplicate}
+                          isDisabled={selectedRows.size === 0 || hasNonReadySelected}
+                        >
+                          Duplicate ({selectedRows.size})
+                        </Button>
+                      </ToolbarItem>
+                      <ToolbarItem>
+                        <Button
+                          variant="secondary"
+                          icon={<BuildIcon />}
+                          onClick={handleBulkRebuild}
+                          isDisabled={selectedRows.size === 0}
+                        >
+                          Rebuild ({selectedRows.size})
+                        </Button>
+                      </ToolbarItem>
+                    </>
+                  );
+                })()}
 
               </ToolbarContent>
             </Toolbar>
@@ -954,16 +974,9 @@ const Images: React.FunctionComponent = () => {
                       )}
                     </th>
                     <th 
-                      style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600, cursor: 'pointer' }}
-                      onClick={() => handleSort('owner')}
+                      style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600 }}
                     >
-                      {sortField === 'owner' ? (
-                        <Tooltip content={getSortTooltipText('owner', sortDirection)}>
-                          <span>Owner{getSortIcon('owner')}</span>
-                        </Tooltip>
-                      ) : (
-                        <>Owner{getSortIcon('owner')}</>
-                      )}
+                      Instance
                     </th>
                     <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600 }}> </th>
                   </tr>
@@ -1024,7 +1037,48 @@ const Images: React.FunctionComponent = () => {
                       <td style={{ padding: '1rem 1.5rem' }}>{image.targetEnvironment}</td>
 
                       <td style={{ padding: '1rem 1.5rem' }}>{getStatusBadge(image.status, image.targetEnvironment)}</td>
-                      <td style={{ padding: '1rem 1.5rem' }}>{image.owner}</td>
+                      <td style={{ padding: '1rem 1.5rem' }}>
+                        {image.status === 'ready' ? (
+                          <a
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setIsLaunchModalOpen(true);
+                            }}
+                            style={{ 
+                              color: '#0066cc', 
+                              textDecoration: 'none',
+                              fontWeight: 500,
+                              display: 'inline-block',
+                              minWidth: '200px'
+                            }}
+                            onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                            onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
+                          >
+                            Launch instance
+                          </a>
+                        ) : (
+                          <a
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              console.log(`Downloading ${image.name}`);
+                              // TODO: Add download functionality
+                            }}
+                            style={{ 
+                              color: '#0066cc', 
+                              textDecoration: 'none',
+                              fontWeight: 500,
+                              display: 'inline-block',
+                              minWidth: '200px'
+                            }}
+                            onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                            onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
+                          >
+                            Download blueprint (.json)
+                          </a>
+                        )}
+                      </td>
                       <td style={{ padding: '1rem 1.5rem' }} onClick={(e) => e.stopPropagation()}>
                         <Dropdown
                           toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
@@ -1050,14 +1104,7 @@ const Images: React.FunctionComponent = () => {
                               Edit (disabled)
                             </DropdownItem>
                             <Divider />
-                            <DropdownItem 
-                              onClick={() => {
-                                handleMigrationClick();
-                                setOpenDropdowns(new Set());
-                              }}
-                            >
-                              Migrate
-                            </DropdownItem>
+
                             <DropdownItem 
                               onClick={() => {
                                 duplicateImage(image);
@@ -1080,7 +1127,7 @@ const Images: React.FunctionComponent = () => {
                                 setOpenDropdowns(new Set());
                               }}
                             >
-                              Download
+                              Download blueprint (.json)
                             </DropdownItem>
                             <Divider />
                             <DropdownItem 
@@ -1163,6 +1210,23 @@ const Images: React.FunctionComponent = () => {
 
 
       </PageSection>
+
+      {/* Launch Instance Modal */}
+      <Modal
+        variant={ModalVariant.small}
+        title="Launch Instance"
+        isOpen={isLaunchModalOpen}
+        onClose={() => setIsLaunchModalOpen(false)}
+      >
+        <ModalBody>
+          <p style={{ marginBottom: '1rem' }}>
+            This launch functionality will be replaced by whatever the launch decommission team comes up with.
+          </p>
+          <p style={{ color: '#666', fontSize: '0.875rem' }}>
+            This is a placeholder modal for demonstration purposes.
+          </p>
+        </ModalBody>
+      </Modal>
     </>
   );
 };

@@ -134,6 +134,8 @@ export const SideBySideReview: React.FunctionComponent = () => {
     }
   ]);
 
+  // TODO: Add modal state when we implement the simplified wizard
+
   // Scroll synchronization logic
   const synchronizeScroll = (sourcePanel: HTMLDivElement, targetPanel: HTMLDivElement) => {
     if (isScrolling.current) return;
@@ -1058,6 +1060,8 @@ export const SideBySideReview: React.FunctionComponent = () => {
           <strong>💡 Tip:</strong> The panels scroll together automatically, or use the section buttons below to jump to specific areas.
         </p>
         
+        {/* TODO: Add simplified horizontal tab modal wizard here */}
+        
         {/* Section Navigation */}
         <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
           <Button
@@ -1137,6 +1141,8 @@ export const SideBySideReview: React.FunctionComponent = () => {
           {renderReviewPanel()}
         </div>
       </div>
+      
+      {/* TODO: Add SimplifiedBuildModal here when implemented */}
     </PageSection>
   );
 }; 

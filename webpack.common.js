@@ -5,6 +5,7 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import CopyPlugin from 'copy-webpack-plugin';
 import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
 import Dotenv from 'dotenv-webpack';
+import webpack from 'webpack';
 const BG_IMAGES_DIRNAME = 'bgimages';
 const ASSET_PATH = process.env.ASSET_PATH || (process.env.NODE_ENV === 'production' ? '' : '/');
 
@@ -109,6 +110,9 @@ export default (env) => {
       new Dotenv({
         systemvars: true,
         silent: true,
+      }),
+      new webpack.DefinePlugin({
+        __BUILD_TIMESTAMP__: JSON.stringify(new Date().toISOString()),
       }),
       new CopyPlugin({
         patterns: [{ from: './src/favicon.png', to: 'images' }],

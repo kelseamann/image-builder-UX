@@ -38,17 +38,20 @@ import {
   ToolbarItem,
   Tooltip
 } from '@patternfly/react-core';
-import { AngleDownIcon, AngleRightIcon, BuildIcon, CheckCircleIcon, CopyIcon, EditIcon, EllipsisVIcon, ExclamationCircleIcon, ExclamationTriangleIcon, ExternalLinkAltIcon, FilterIcon, MigrationIcon, OutlinedStarIcon, PlayIcon, StarIcon, TimesIcon } from '@patternfly/react-icons';
-import { ImageInfo, ImageMigrationModal, MigrationData } from './ImageMigrationModal';
+import { AngleDownIcon, AngleRightIcon, BuildIcon, CheckCircleIcon, CopyIcon, EditIcon, EllipsisVIcon, ExclamationCircleIcon, ExclamationTriangleIcon, ExternalLinkAltIcon, FilterIcon, OutlinedStarIcon, PlayIcon, StarIcon, TimesIcon } from '@patternfly/react-icons';
 import { type ImageItem, UseBaseImageModal } from './UseBaseImageModal';
 import BuildImageModal from './BuildImageModal';
 
-interface ImageTableRow extends ImageInfo {
+interface ImageTableRow {
   id: string;
+  name: string;
+  tag: string;
+  currentRelease: string;
+  targetEnvironment: 'AWS' | 'GCP' | 'Azure' | 'Bare metal' | 'VMWare';
+  currentEnvironment: string;
   status: 'ready' | 'expired' | 'build failed';
   lastUpdate: string;
   dateUpdated: Date;
-  targetEnvironment: 'AWS' | 'GCP' | 'Azure' | 'Bare metal' | 'VMWare';
   owner: string;
   isFavorited: boolean;
   uuid: string;
@@ -58,9 +61,10 @@ interface ImageTableRow extends ImageInfo {
 
 const Dashboard: React.FunctionComponent = () => {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [isLaunchModalOpen, setIsLaunchModalOpen] = React.useState(false);
   const [isUseBaseImageModalOpen, setIsUseBaseImageModalOpen] = React.useState(false);
   const [isBuildImageModalOpen, setIsBuildImageModalOpen] = React.useState(false);
-  const [isOverlayOpen, setIsOverlayOpen] = React.useState(false);
+
   const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
   const [selectedImage, setSelectedImage] = React.useState<ImageTableRow | null>(null);
   const [imageToDelete, setImageToDelete] = React.useState<ImageTableRow | null>(null);
@@ -82,16 +86,7 @@ const Dashboard: React.FunctionComponent = () => {
   const [perPage, setPerPage] = React.useState(10);
   const [expandedRows, setExpandedRows] = React.useState<Set<string>>(new Set());
   
-  // Overlay form state
-  const [overlayTargetRelease, setOverlayTargetRelease] = React.useState('');
-  const [overlayTargetEnvironment, setOverlayTargetEnvironment] = React.useState('');
-  const [isOverlayReleaseSelectOpen, setIsOverlayReleaseSelectOpen] = React.useState(false);
-  const [isOverlayEnvironmentSelectOpen, setIsOverlayEnvironmentSelectOpen] = React.useState(false);
-  const [isOverlayLoading, setIsOverlayLoading] = React.useState(false);
-  const [overlayErrors, setOverlayErrors] = React.useState<{
-    targetRelease?: string;
-    targetEnvironment?: string;
-  }>({});
+
   const [showDemoAlert, setShowDemoAlert] = React.useState(true);
   
   // Only show demo alert on GitHub Pages, not on localhost
@@ -222,105 +217,9 @@ const Dashboard: React.FunctionComponent = () => {
     }
   ]);
 
-  const handleMigrationConfirm = async (migrationData: MigrationData): Promise<void> => {
-    // Simulate API call
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // Simulate success/failure randomly for demo
-        if (Math.random() > 0.3) {
-          setAlertInfo({
-            variant: AlertVariant.success,
-            title: 'Migration Successful',
-            message: `Image "${selectedImage?.name}" successfully migrated to ${migrationData.targetRelease} in ${migrationData.targetEnvironment} environment.`,
-          });
-          resolve();
-        } else {
-          setAlertInfo({
-            variant: AlertVariant.danger,
-            title: 'Migration Failed',
-            message: `Failed to migrate image "${selectedImage?.name}". Please try again or contact support.`,
-          });
-          reject(new Error('Migration failed'));
-        }
-      }, 2000);
-    });
-  };
 
-  // Removed unused openMigrationModal function
 
-  const openMigrationOverlay = (image: ImageTableRow) => {
-    setSelectedImage(image);
-    setIsOverlayOpen(true);
-    // Clear any previous alerts
-    setAlertInfo(null);
-    // Reset overlay form
-    setOverlayTargetRelease('');
-    setOverlayTargetEnvironment('');
-    setOverlayErrors({});
-  };
-
-  const closeOverlay = () => {
-    if (!isOverlayLoading) {
-      setIsOverlayOpen(false);
-      setSelectedImage(null);
-    }
-  };
-
-  const validateOverlayForm = (): boolean => {
-    const newErrors: typeof overlayErrors = {};
-    
-    if (!overlayTargetRelease) {
-      newErrors.targetRelease = 'Target release is required';
-    }
-    
-    if (!overlayTargetEnvironment) {
-      newErrors.targetEnvironment = 'Target environment is required';
-    }
-
-    setOverlayErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleOverlayConfirm = async () => {
-    if (!validateOverlayForm()) {
-      return;
-    }
-
-    setIsOverlayLoading(true);
-    try {
-      await handleMigrationConfirm({
-        targetRelease: overlayTargetRelease,
-        targetEnvironment: overlayTargetEnvironment,
-      });
-      setIsOverlayOpen(false);
-    } catch (error) {
-      console.error('Migration failed:', error);
-    } finally {
-      setIsOverlayLoading(false);
-    }
-  };
-
-  const onOverlayReleaseSelect = (
-    _event: React.MouseEvent<Element, MouseEvent> | undefined,
-    selection: string | number | undefined,
-  ) => {
-    setOverlayTargetRelease(String(selection));
-    setIsOverlayReleaseSelectOpen(false);
-    if (overlayErrors.targetRelease) {
-      setOverlayErrors(prev => ({ ...prev, targetRelease: undefined }));
-    }
-  };
-
-  const onOverlayEnvironmentSelect = (
-    _event: React.MouseEvent<Element, MouseEvent> | undefined,
-    selection: string | number | undefined,
-  ) => {
-    setOverlayTargetEnvironment(String(selection));
-    setIsOverlayEnvironmentSelectOpen(false);
-    if (overlayErrors.targetEnvironment) {
-      setOverlayErrors(prev => ({ ...prev, targetEnvironment: undefined }));
-    }
-  };
+  // Migration functionality has been removed
 
   // Available options for overlay form
   const availableReleases = [
@@ -675,17 +574,23 @@ const Dashboard: React.FunctionComponent = () => {
     setExpandedRows(newExpanded);
   };
 
-  const handleBulkMigration = () => {
-    if (selectedRows.size === 0) return;
+  // Helper function to determine available actions based on selected images
+  const getSelectedImagesInfo = () => {
+    const selectedImages = imageData.filter(img => selectedRows.has(img.id));
+    const readyImages = selectedImages.filter(img => img.status === 'ready');
+    const nonReadyImages = selectedImages.filter(img => img.status !== 'ready');
     
-    // For bulk migration, we'll use the first selected image as the template
-    const firstSelectedImage = imageData.find(img => selectedRows.has(img.id));
-    if (firstSelectedImage) {
-      setSelectedImage(firstSelectedImage);
-      setIsModalOpen(true);
-      setAlertInfo(null);
-    }
+    return {
+      total: selectedImages.length,
+      ready: readyImages.length,
+      nonReady: nonReadyImages.length,
+      hasOnlyNonReady: nonReadyImages.length > 0 && readyImages.length === 0,
+      hasMixed: readyImages.length > 0 && nonReadyImages.length > 0,
+      hasOnlyReady: readyImages.length > 0 && nonReadyImages.length === 0
+    };
   };
+
+
 
   const duplicateImage = (image: ImageTableRow) => {
     const duplicatedImage = {
@@ -920,7 +825,10 @@ const Dashboard: React.FunctionComponent = () => {
                 Image Builder
               </Title>
               <p style={{ marginTop: '0.5rem', color: '#666' }}>
-                Manage and migrate your system images across releases and environments
+                Manage your system images across releases and environments
+              </p>
+              <p style={{ marginTop: '0.25rem', color: '#666', fontSize: '0.875rem' }}>
+                ⚠️ Images expire after 14 days. Download before expiration to preserve a configuration if you want to upload it later.
               </p>
             </FlexItem>
             <FlexItem>
@@ -935,7 +843,7 @@ const Dashboard: React.FunctionComponent = () => {
                 </FlexItem>
                 <FlexItem>
                   <Button variant="secondary" onClick={() => setIsUseBaseImageModalOpen(true)}>
-                    Use a Base Image
+                    Download RHEL
                   </Button>
                 </FlexItem>
                 <FlexItem>
@@ -1070,54 +978,54 @@ const Dashboard: React.FunctionComponent = () => {
                 </ToolbarItem>
               )}
 
-              <ToolbarItem>
-                <Button
-                  variant="primary"
-                  icon={<EditIcon />}
-                  onClick={() => {
-                    if (selectedRows.size === 1) {
-                      const selectedImageId = Array.from(selectedRows)[0];
-                      const selectedImage = imageData.find(img => img.id === selectedImageId);
-                      if (selectedImage) {
-                        handleEditImage(selectedImage);
-                      }
-                    }
-                  }}
-                  isDisabled={selectedRows.size !== 1}
-                >
-                  Edit
-                </Button>
-              </ToolbarItem>
-              <ToolbarItem>
-                <Button
-                  variant="secondary"
-                  icon={<MigrationIcon />}
-                  onClick={handleBulkMigration}
-                  isDisabled={selectedRows.size === 0}
-                >
-                  Migrate ({selectedRows.size})
-                </Button>
-              </ToolbarItem>
-              <ToolbarItem>
-                <Button
-                  variant="secondary"
-                  icon={<CopyIcon />}
-                  onClick={handleBulkDuplicate}
-                  isDisabled={selectedRows.size === 0}
-                >
-                  Duplicate ({selectedRows.size})
-                </Button>
-              </ToolbarItem>
-              <ToolbarItem>
-                <Button
-                  variant="secondary"
-                  icon={<BuildIcon />}
-                  onClick={handleBulkRebuild}
-                  isDisabled={selectedRows.size === 0}
-                >
-                  Rebuild ({selectedRows.size})
-                </Button>
-              </ToolbarItem>
+              {(() => {
+                const selectionInfo = getSelectedImagesInfo();
+                const hasNonReadySelected = selectionInfo.hasOnlyNonReady || selectionInfo.hasMixed;
+                
+                return (
+                  <>
+                    <ToolbarItem>
+                      <Button
+                        variant="primary"
+                        icon={<EditIcon />}
+                        onClick={() => {
+                          if (selectedRows.size === 1) {
+                            const selectedImageId = Array.from(selectedRows)[0];
+                            const selectedImage = imageData.find(img => img.id === selectedImageId);
+                            if (selectedImage) {
+                              handleEditImage(selectedImage);
+                            }
+                          }
+                        }}
+                        isDisabled={selectedRows.size !== 1 || hasNonReadySelected}
+                      >
+                        Edit
+                      </Button>
+                    </ToolbarItem>
+
+                    <ToolbarItem>
+                      <Button
+                        variant="secondary"
+                        icon={<CopyIcon />}
+                        onClick={handleBulkDuplicate}
+                        isDisabled={selectedRows.size === 0 || hasNonReadySelected}
+                      >
+                        Duplicate ({selectedRows.size})
+                      </Button>
+                    </ToolbarItem>
+                    <ToolbarItem>
+                      <Button
+                        variant="secondary"
+                        icon={<BuildIcon />}
+                        onClick={handleBulkRebuild}
+                        isDisabled={selectedRows.size === 0}
+                      >
+                        Rebuild ({selectedRows.size})
+                      </Button>
+                    </ToolbarItem>
+                  </>
+                );
+              })()}
 
             </ToolbarContent>
           </Toolbar>
@@ -1153,26 +1061,7 @@ const Dashboard: React.FunctionComponent = () => {
                       style={{ cursor: 'pointer' }}
                     />
                   </th>
-                  <th style={{ padding: '1rem 0.5rem' }} onClick={(e) => e.stopPropagation()}>
-                    <Button
-                      variant="plain"
-                      onClick={() => {
-                        const newSelected = new Set(selectedRows);
-                        if (newSelected.has('all')) {
-                          newSelected.clear();
-                        } else {
-                          newSelected.add('all');
-                        }
-                        setSelectedRows(newSelected);
-                      }}
-                      style={{ padding: '0.25rem' }}
-                    >
-                      {selectedRows.has('all') ? (
-                        <TimesIcon style={{ fontSize: '0.875rem' }} />
-                      ) : (
-                        <AngleDownIcon style={{ fontSize: '0.875rem' }} />
-                      )}
-                    </Button>
+                  <th style={{ padding: '1rem 0.5rem' }}>
                   </th>
                   <th 
                     style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600, cursor: 'pointer' }}
@@ -1236,16 +1125,9 @@ const Dashboard: React.FunctionComponent = () => {
                     )}
                   </th>
                   <th 
-                    style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600, cursor: 'pointer' }}
-                    onClick={() => handleSort('owner')}
+                    style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600 }}
                   >
-                    {sortField === 'owner' ? (
-                      <Tooltip content={getSortTooltipText('owner', sortDirection)}>
-                        <span>Owner{getSortIcon('owner')}</span>
-                      </Tooltip>
-                    ) : (
-                      <>Owner{getSortIcon('owner')}</>
-                    )}
+                    Instance
                   </th>
                   <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600 }}> </th>
                 </tr>
@@ -1274,14 +1156,14 @@ const Dashboard: React.FunctionComponent = () => {
                           )}
                         </Button>
                       </td>
-                      <td style={{ padding: '1rem 0.75rem 1rem 1.5rem' }} onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={selectedRows.has(image.id)}
-                        onChange={() => toggleRowSelection(image.id)}
-                        style={{ cursor: 'pointer' }}
-                      />
-                    </td>
+                                              <td style={{ padding: '1rem 0.75rem 1rem 1.5rem' }} onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={selectedRows.has(image.id)}
+                          onChange={() => toggleRowSelection(image.id)}
+                          style={{ cursor: 'pointer' }}
+                        />
+                      </td>
                     <td style={{ padding: '1rem 0.5rem' }} onClick={(e) => e.stopPropagation()}>
                       <Button
                         variant="plain"
@@ -1306,7 +1188,48 @@ const Dashboard: React.FunctionComponent = () => {
                     <td style={{ padding: '1rem 1.5rem' }}>{image.targetEnvironment}</td>
 
                     <td style={{ padding: '1rem 1.5rem' }}>{getStatusBadge(image.status, image.targetEnvironment)}</td>
-                    <td style={{ padding: '1rem 1.5rem' }}>{image.owner}</td>
+                    <td style={{ padding: '1rem 1.5rem' }}>
+                      {image.status === 'ready' ? (
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setIsLaunchModalOpen(true);
+                          }}
+                          style={{ 
+                            color: '#0066cc', 
+                            textDecoration: 'none',
+                            fontWeight: 500,
+                            display: 'inline-block',
+                            minWidth: '200px'
+                          }}
+                          onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                          onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
+                        >
+                          Launch instance
+                        </a>
+                      ) : (
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            console.log(`Downloading ${image.name}`);
+                            // TODO: Add download functionality
+                          }}
+                          style={{ 
+                            color: '#0066cc', 
+                            textDecoration: 'none',
+                            fontWeight: 500,
+                            display: 'inline-block',
+                            minWidth: '200px'
+                          }}
+                          onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                          onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
+                        >
+                          Download blueprint (.json)
+                        </a>
+                      )}
+                    </td>
                     <td style={{ padding: '1rem 1.5rem' }} onClick={(e) => e.stopPropagation()}>
                       <Dropdown
                         toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
@@ -1347,14 +1270,7 @@ const Dashboard: React.FunctionComponent = () => {
                             Edit
                           </DropdownItem>
                           <Divider />
-                          <DropdownItem 
-                            onClick={() => {
-                              openMigrationOverlay(image);
-                              setOpenDropdowns(new Set());
-                            }}
-                          >
-                            Migrate
-                          </DropdownItem>
+
                           <DropdownItem 
                             onClick={() => {
                               duplicateImage(image);
@@ -1377,7 +1293,7 @@ const Dashboard: React.FunctionComponent = () => {
                               setOpenDropdowns(new Set());
                             }}
                           >
-                            Download
+                            Download blueprint (.json)
                           </DropdownItem>
                           <Divider />
                           <DropdownItem 
@@ -1495,254 +1411,9 @@ const Dashboard: React.FunctionComponent = () => {
         </CardBody>
       </Card>
 
-      {/* Migration Overlay Form */}
-      {isOverlayOpen && selectedImage && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            padding: '2rem',
-            maxWidth: '500px',
-            width: '90%',
-            maxHeight: '90vh',
-            overflow: 'auto',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-          }}>
-            {/* Header */}
-            <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Title headingLevel="h2" size="lg">
-                Migrate Image
-              </Title>
-              <Button
-                variant="plain"
-                onClick={closeOverlay}
-                isDisabled={isOverlayLoading}
-                style={{ padding: '0.25rem' }}
-              >
-                <TimesIcon />
-              </Button>
-            </div>
 
-            <p style={{ marginBottom: '1.5rem', color: '#666' }}>
-              Move your image to a new release and target environment.
-            </p>
 
-            {/* Form */}
-            <Form>
-              {/* Release Group */}
-              <FormGroup
-                label="Release"
-                fieldId="overlay-release-group"
-              >
-                <div style={{ marginBottom: '8px' }}>
-                  <label style={{ 
-                    display: 'block', 
-                    fontSize: '14px', 
-                    fontWeight: 500, 
-                    marginBottom: '4px',
-                    color: '#495057'
-                  }}>
-                    From
-                  </label>
-                  <TextInput
-                    id="overlay-from-release"
-                    value={selectedImage.currentRelease}
-                    readOnly
-                    style={{ 
-                      backgroundColor: '#f8f9fa',
-                      color: '#495057'
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ 
-                    display: 'block', 
-                    fontSize: '14px', 
-                    fontWeight: 500, 
-                    marginBottom: '4px',
-                    color: '#495057'
-                  }}>
-                    To <span style={{ color: '#c9190b' }}>*</span>
-                  </label>
-                  <Select
-                    id="overlay-to-release-select"
-                    aria-label="Select target release"
-                    toggle={(toggleRef) => (
-                      <MenuToggle 
-                        ref={toggleRef} 
-                        onClick={() => setIsOverlayReleaseSelectOpen(!isOverlayReleaseSelectOpen)}
-                        isExpanded={isOverlayReleaseSelectOpen}
-                        isDisabled={isOverlayLoading}
-                        style={{ width: '100%' }}
-                      >
-                        {overlayTargetRelease || 'Choose a target release'}
-                      </MenuToggle>
-                    )}
-                    onSelect={onOverlayReleaseSelect}
-                    selected={overlayTargetRelease}
-                    isOpen={isOverlayReleaseSelectOpen}
-                    onOpenChange={setIsOverlayReleaseSelectOpen}
-                  >
-                    <SelectList>
-                      {availableReleases.map((release) => {
-                        let supportDetail = '';
-                        if (release === 'Red Hat Enterprise Linux 10') {
-                          supportDetail = 'Full support ends: May 2030 | Maintenance support ends: May 2035';
-                        } else if (release === 'Red Hat Enterprise Linux 9') {
-                          supportDetail = 'Full support ends: May 2027 | Maintenance support ends: May 2032';
-                        } else if (release === 'Red Hat Enterprise Linux 8') {
-                          supportDetail = 'Full support ends: May 2024 | Maintenance support ends: May 2029';
-                        }
-                        
-                        return (
-                          <SelectOption 
-                            key={release} 
-                            value={release}
-                            isDisabled={release === selectedImage.currentRelease}
-                          >
-                            <div>
-                              <div style={{ fontWeight: 500 }}>{release}</div>
-                              {supportDetail && (
-                                <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                  {supportDetail}
-                                </div>
-                              )}
-                            </div>
-                          </SelectOption>
-                        );
-                      })}
-                    </SelectList>
-                  </Select>
-                  {overlayErrors.targetRelease && (
-                    <FormHelperText>
-                      <HelperText>
-                        <HelperTextItem variant="error">{overlayErrors.targetRelease}</HelperTextItem>
-                      </HelperText>
-                    </FormHelperText>
-                  )}
-                </div>
-              </FormGroup>
 
-              {/* Environment Group */}
-              <FormGroup
-                label="Environment"
-                fieldId="overlay-environment-group"
-              >
-                <div style={{ marginBottom: '8px' }}>
-                  <label style={{ 
-                    display: 'block', 
-                    fontSize: '14px', 
-                    fontWeight: 500, 
-                    marginBottom: '4px',
-                    color: '#495057'
-                  }}>
-                    From
-                  </label>
-                  <TextInput
-                    id="overlay-from-environment"
-                    value={selectedImage.currentEnvironment}
-                    readOnly
-                    style={{ 
-                      backgroundColor: '#f8f9fa',
-                      color: '#495057'
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ 
-                    display: 'block', 
-                    fontSize: '14px', 
-                    fontWeight: 500, 
-                    marginBottom: '4px',
-                    color: '#495057'
-                  }}>
-                    To <span style={{ color: '#c9190b' }}>*</span>
-                  </label>
-                  <Select
-                    id="overlay-to-environment-select"
-                    aria-label="Select target environment"
-                    toggle={(toggleRef) => (
-                      <MenuToggle 
-                        ref={toggleRef} 
-                        onClick={() => setIsOverlayEnvironmentSelectOpen(!isOverlayEnvironmentSelectOpen)}
-                        isExpanded={isOverlayEnvironmentSelectOpen}
-                        isDisabled={isOverlayLoading}
-                        style={{ width: '100%' }}
-                      >
-                        {overlayTargetEnvironment || 'Choose a target environment'}
-                      </MenuToggle>
-                    )}
-                    onSelect={onOverlayEnvironmentSelect}
-                    selected={overlayTargetEnvironment}
-                    isOpen={isOverlayEnvironmentSelectOpen}
-                    onOpenChange={setIsOverlayEnvironmentSelectOpen}
-                  >
-                    <SelectList>
-                      {availableEnvironments.map((environment) => (
-                        <SelectOption 
-                          key={environment} 
-                          value={environment}
-                          isDisabled={environment === selectedImage.currentEnvironment}
-                        >
-                          {environment}
-                        </SelectOption>
-                      ))}
-                    </SelectList>
-                  </Select>
-                  {overlayErrors.targetEnvironment && (
-                    <FormHelperText>
-                      <HelperText>
-                        <HelperTextItem variant="error">{overlayErrors.targetEnvironment}</HelperTextItem>
-                      </HelperText>
-                    </FormHelperText>
-                  )}
-                </div>
-              </FormGroup>
-            </Form>
-
-            {/* Footer */}
-            <div style={{ 
-              borderTop: '1px solid #d2d2d2', 
-              marginTop: '1.5rem', 
-              paddingTop: '1.5rem',
-              display: 'flex', 
-              gap: '1rem', 
-              justifyContent: 'flex-end' 
-            }}>
-              <Button
-                variant="primary"
-                onClick={handleOverlayConfirm}
-                isDisabled={isOverlayLoading}
-                isLoading={isOverlayLoading}
-                spinnerAriaValueText="Migrating image..."
-              >
-                {isOverlayLoading ? 'Migrating...' : 'Migrate Image'}
-              </Button>
-              <Button variant="link" onClick={closeOverlay} isDisabled={isOverlayLoading}>
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <ImageMigrationModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        imageInfo={selectedImage || undefined}
-        onConfirm={handleMigrationConfirm}
-      />
       
       <UseBaseImageModal
         isOpen={isUseBaseImageModalOpen}
@@ -1841,6 +1512,23 @@ const Dashboard: React.FunctionComponent = () => {
           </Flex>
         </div>
       )}
+
+      {/* Launch Instance Modal */}
+      <Modal
+        variant={ModalVariant.small}
+        title="Launch Instance"
+        isOpen={isLaunchModalOpen}
+        onClose={() => setIsLaunchModalOpen(false)}
+      >
+        <ModalBody>
+          <p style={{ marginBottom: '1rem' }}>
+            This launch functionality will be replaced by whatever the launch decommission team comes up with.
+          </p>
+          <p style={{ color: '#666', fontSize: '0.875rem' }}>
+            This is a placeholder modal for demonstration purposes.
+          </p>
+        </ModalBody>
+      </Modal>
     </>
   );
 };
