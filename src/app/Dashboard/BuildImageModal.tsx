@@ -115,6 +115,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const firewallRef = React.useRef<HTMLDivElement>(null);
 
   const usersRef = React.useRef<HTMLDivElement>(null);
+  const firstBootRef = React.useRef<HTMLDivElement>(null);
   
   // Track current section index for each tab
   const [currentBaseImageSection, setCurrentBaseImageSection] = React.useState<number>(0);
@@ -233,8 +234,8 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const [isVMWareSelected, setIsVMWareSelected] = React.useState<boolean>(false);
   const [vmwareFormat, setVmwareFormat] = React.useState<string>('ova');
   
-  // Other formats state
-  const [otherFormat, setOtherFormat] = React.useState<string[]>([]);
+  // Other formats state - Auto-check Baremetal for testing
+  const [otherFormat, setOtherFormat] = React.useState<string[]>(['iso']);
   
   // Private cloud formats state
   const [privateCloudFormat, setPrivateCloudFormat] = React.useState<string[]>([]);
@@ -700,6 +701,28 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   
   const [searchPackageType, setSearchPackageType] = React.useState<string>('individual');
   const [isSearchPackageTypeOpen, setIsSearchPackageTypeOpen] = React.useState<boolean>(false);
+  
+  // Separate state for Selected packages section dropdown
+  const [selectedPackageType, setSelectedPackageType] = React.useState<string>('individual');
+  const [isSelectedPackageTypeOpen, setIsSelectedPackageTypeOpen] = React.useState<boolean>(false);
+  
+  // Typeahead dropdown state for demo
+  const [repositoryTypeaheadOpen, setRepositoryTypeaheadOpen] = React.useState<boolean>(false);
+  const [repositoryTypeaheadValue, setRepositoryTypeaheadValue] = React.useState<string>('');
+  const [packageTypeaheadOpen, setPackageTypeaheadOpen] = React.useState<boolean>(false);
+  const [packageTypeaheadValue, setPackageTypeaheadValue] = React.useState<string>('');
+  
+  // External search state
+  const [isSearchingExternalRepos, setIsSearchingExternalRepos] = React.useState<boolean>(false);
+  const [isSearchingExternalPackages, setIsSearchingExternalPackages] = React.useState<boolean>(false);
+  
+  // Dynamic table rows state
+  const [addedRepositories, setAddedRepositories] = React.useState<Array<{id: string, name: string, applicationStream: string, retirementDate: string}>>([]);
+  const [addedPackages, setAddedPackages] = React.useState<Array<{id: string, name: string, applicationStream: string, retirementDate: string}>>([]);
+  
+  // Lightspeed feature state - track user selections for AI suggestions
+  const [repositorySelectionHistory, setRepositorySelectionHistory] = React.useState<string[]>([]);
+  const [packageSelectionHistory, setPackageSelectionHistory] = React.useState<string[]>([]);
   const [searchResultsPage, setSearchResultsPage] = React.useState<number>(1);
   const [searchResultsPerPage, setSearchResultsPerPage] = React.useState<number>(10);
 
@@ -881,6 +904,50 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
   const searchPackageTypes = [
     'Individual packages',
     'Package groups'
+  ];
+
+  // Mock data for typeahead dropdowns
+  const mockRepositories = [
+    'Red Hat Enterprise Linux BaseOS',
+    'Red Hat Enterprise Linux AppStream', 
+    'Red Hat Enterprise Linux CRB',
+    'EPEL (Extra Packages for Enterprise Linux)',
+    'Red Hat CodeReady Builder',
+    'Custom Repository',
+    'Third-party Repository'
+  ];
+
+  const mockPackages = [
+    'bash - Bash shell',
+    'bind - DNS server',
+    'bzip2 - Compression utility',
+    'httpd - Apache HTTP Server',
+    'nginx - High performance web server',
+    'mysql-server - MySQL database server',
+    'postgresql-server - PostgreSQL database server',
+    'php - PHP scripting language',
+    'nodejs - JavaScript runtime',
+    'python3 - Python programming language',
+    'gcc - GNU Compiler Collection',
+    'git - Version control system',
+    'vim - Vi improved text editor'
+  ];
+
+  // External search mock data
+  const externalRepositories = [
+    'something3 - External repository',
+    'something-dev - Development repository',
+    'something-tools - Tools repository',
+    'external-repo-1 - External repo 1',
+    'external-repo-2 - External repo 2'
+  ];
+
+  const externalPackages = [
+    'something3 - External package',
+    'something-dev - Development package',
+    'something-tools - Tools package',
+    'external-package-1 - External package 1',
+    'external-package-2 - External package 2'
   ];
 
   // Sample search results data
@@ -1361,6 +1428,258 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
       setSearchPackageType(selection === 'individual' ? 'individual' : 'groups');
       setIsSearchPackageTypeOpen(false);
     }
+  };
+
+  // Selected packages section dropdown handler
+  const onSelectedPackageTypeSelect = (
+    _event: React.MouseEvent<Element, MouseEvent> | undefined,
+    selection: string | number | undefined,
+  ) => {
+    if (typeof selection === 'string') {
+      setSelectedPackageType(selection === 'individual' ? 'individual' : 'groups');
+      setIsSelectedPackageTypeOpen(false);
+    }
+  };
+
+  // Lightspeed AI suggestion generators
+  const generateRepositoryLightspeedSuggestions = (): string[] => {
+    const suggestions: string[] = [];
+    
+    // Generate suggestions based on combined package and repository history
+    const hasSelectionHistory = repositorySelectionHistory.length > 0 || packageSelectionHistory.length > 0;
+    
+    if (hasSelectionHistory) {
+      // Check recent package selections to suggest relevant repositories
+      if (packageSelectionHistory.length > 0) {
+        const lastPackage = packageSelectionHistory[0].toLowerCase();
+        
+        // Shell/development tools - suggest development repositories
+        if (lastPackage.includes('bash') || lastPackage.includes('git') || lastPackage.includes('gcc') || lastPackage.includes('vim')) {
+          suggestions.push('EPEL (Extra Packages for Enterprise Linux)');
+          suggestions.push('Red Hat CodeReady Builder');
+          suggestions.push('Red Hat Software Collections');
+        }
+        // Web servers - suggest web-related repositories
+        else if (lastPackage.includes('nginx') || lastPackage.includes('httpd') || lastPackage.includes('php')) {
+          suggestions.push('EPEL (Extra Packages for Enterprise Linux)');
+          suggestions.push('Red Hat Enterprise Linux AppStream');
+          suggestions.push('Custom Web Repository');
+        }
+        // Database packages - suggest database repositories
+        else if (lastPackage.includes('mysql') || lastPackage.includes('postgresql') || lastPackage.includes('database')) {
+          suggestions.push('Red Hat Enterprise Linux CRB');
+          suggestions.push('Custom Database Repository');
+          suggestions.push('EPEL (Extra Packages for Enterprise Linux)');
+        }
+        // Network/compression tools - suggest general repositories
+        else {
+          suggestions.push('Red Hat Enterprise Linux AppStream');
+          suggestions.push('EPEL (Extra Packages for Enterprise Linux)');
+          suggestions.push('Red Hat CodeReady Builder');
+        }
+      }
+      
+      // Also consider repository history
+      if (repositorySelectionHistory.length > 0) {
+        const lastRepo = repositorySelectionHistory[0].toLowerCase();
+        if (lastRepo.includes('appstream')) {
+          suggestions.push('Red Hat Enterprise Linux CRB');
+          suggestions.push('EPEL (Extra Packages for Enterprise Linux)');
+        } else if (lastRepo.includes('epel')) {
+          suggestions.push('Red Hat Enterprise Linux AppStream');
+          suggestions.push('Red Hat CodeReady Builder');
+        }
+      }
+    } else {
+      // Default suggestions for new users
+      suggestions.push('Red Hat Enterprise Linux AppStream');
+      suggestions.push('EPEL (Extra Packages for Enterprise Linux)');
+      suggestions.push('Red Hat CodeReady Builder');
+    }
+    
+    // Filter out duplicates and already selected repositories
+    const uniqueSuggestions = Array.from(new Set(suggestions));
+    const filteredSuggestions = uniqueSuggestions.filter(suggestion => 
+      !repositorySelectionHistory.some(selected => 
+        selected.toLowerCase() === suggestion.toLowerCase()
+      )
+    );
+    
+    return filteredSuggestions.slice(0, 3); // Limit to top 3 suggestions
+  };
+
+  const generatePackageLightspeedSuggestions = (): string[] => {
+    const suggestions: string[] = [];
+    
+    // Always show suggestions when user has selection history
+    if (packageSelectionHistory.length > 0) {
+      const lastSelection = packageSelectionHistory[0].toLowerCase();
+      
+      // Shell/command line tools - if they selected bash, suggest related tools
+      if (lastSelection.includes('bash') || lastSelection.includes('zsh') || lastSelection.includes('fish')) {
+        suggestions.push('git - Version control system');
+        suggestions.push('vim - Vi improved text editor');
+        suggestions.push('htop - Interactive process viewer');
+      }
+      // Web servers - suggest complementary packages
+      else if (lastSelection.includes('nginx') || lastSelection.includes('httpd') || lastSelection.includes('apache')) {
+        suggestions.push('php - PHP scripting language');
+        suggestions.push('certbot - SSL certificate management');
+        suggestions.push('fail2ban - Intrusion prevention');
+      }
+      // Development tools - suggest related packages
+      else if (lastSelection.includes('gcc') || lastSelection.includes('git') || lastSelection.includes('make')) {
+        suggestions.push('nodejs - JavaScript runtime');
+        suggestions.push('docker - Container platform');
+        suggestions.push('python3 - Python programming language');
+      }
+      // Database tools - suggest related packages
+      else if (lastSelection.includes('mysql') || lastSelection.includes('postgresql') || lastSelection.includes('database')) {
+        suggestions.push('php - PHP scripting language');
+        suggestions.push('python3 - Python programming language');
+        suggestions.push('nodejs - JavaScript runtime');
+      }
+      // Compression tools - suggest file management tools
+      else if (lastSelection.includes('bzip2') || lastSelection.includes('gzip') || lastSelection.includes('tar')) {
+        suggestions.push('curl - Data transfer utility');
+        suggestions.push('wget - File retrieval utility');
+        suggestions.push('tree - Directory tree viewer');
+      }
+      // DNS/network tools - suggest network utilities
+      else if (lastSelection.includes('bind') || lastSelection.includes('dns') || lastSelection.includes('network')) {
+        suggestions.push('curl - Data transfer utility');
+        suggestions.push('nginx - High performance web server');
+        suggestions.push('fail2ban - Intrusion prevention');
+      }
+      // Generic suggestions based on any previous selection
+      else {
+        suggestions.push('curl - Data transfer utility');
+        suggestions.push('git - Version control system');
+        suggestions.push('vim - Vi improved text editor');
+      }
+    } else {
+      // Default suggestions for new users
+      suggestions.push('curl - Data transfer utility');
+      suggestions.push('htop - Interactive process viewer');
+      suggestions.push('tree - Directory tree viewer');
+    }
+    
+    // Filter out items already selected to avoid duplicates
+    const filteredSuggestions = suggestions.filter(suggestion => 
+      !packageSelectionHistory.some(selected => 
+        selected.toLowerCase() === suggestion.toLowerCase()
+      )
+    );
+    
+    return filteredSuggestions.slice(0, 3); // Limit to top 3 suggestions
+  };
+
+  // Typeahead handlers for demo
+  const getFilteredTypeaheadRepositories = () => {
+    if (!repositoryTypeaheadValue && !isSearchingExternalRepos) {
+      // Show Lightspeed suggestions when no input and not searching externally
+      return generateRepositoryLightspeedSuggestions();
+    }
+    
+    if (!repositoryTypeaheadValue && isSearchingExternalRepos) {
+      // Show all external results when external search is active but no input
+      return externalRepositories;
+    }
+    
+    // Show filtered results when typing
+    const normalResults = mockRepositories.filter(repo => 
+      repo.toLowerCase().startsWith(repositoryTypeaheadValue.toLowerCase())
+    );
+    
+    // If searching externally, also include external results
+    if (isSearchingExternalRepos) {
+      const externalResults = externalRepositories.filter(repo => 
+        repo.toLowerCase().startsWith(repositoryTypeaheadValue.toLowerCase())
+      );
+      return [...normalResults, ...externalResults];
+    }
+    
+    return normalResults;
+  };
+
+  const getFilteredTypeaheadPackages = () => {
+    if (!packageTypeaheadValue && !isSearchingExternalPackages) {
+      // Show Lightspeed suggestions when no input and not searching externally
+      return generatePackageLightspeedSuggestions();
+    }
+    
+    if (!packageTypeaheadValue && isSearchingExternalPackages) {
+      // Show all external results when external search is active but no input
+      return externalPackages;
+    }
+    
+    // Show filtered results when typing
+    const normalResults = mockPackages.filter(pkg => 
+      pkg.toLowerCase().startsWith(packageTypeaheadValue.toLowerCase())
+    );
+    
+    // If searching externally, also include external results
+    if (isSearchingExternalPackages) {
+      const externalResults = externalPackages.filter(pkg => 
+        pkg.toLowerCase().startsWith(packageTypeaheadValue.toLowerCase())
+      );
+      return [...normalResults, ...externalResults];
+    }
+    
+    return normalResults;
+  };
+
+  const onRepositoryTypeaheadSelect = (selection: string) => {
+    // Add to repositories table at the top
+    const newRepository = {
+      id: `repo-${Date.now()}`,
+      name: selection,
+      applicationStream: 'RHEL 9',
+      retirementDate: '2032-05-31'
+    };
+    setAddedRepositories(prev => [newRepository, ...prev]);
+    
+    // Track selection for Lightspeed suggestions
+    setRepositorySelectionHistory(prev => {
+      const updated = [selection, ...prev.filter(item => item !== selection)];
+      return updated.slice(0, 10); // Keep last 10 selections
+    });
+    
+    // Clear search input and reset external search
+    setRepositoryTypeaheadValue('');
+    setRepositoryTypeaheadOpen(false);
+    setIsSearchingExternalRepos(false);
+  };
+
+  const onPackageTypeaheadSelect = (selection: string) => {
+    // Add to packages table at the top
+    const newPackage = {
+      id: `pkg-${Date.now()}`,
+      name: selection,
+      applicationStream: 'RHEL 9',
+      retirementDate: '2032-05-31'
+    };
+    setAddedPackages(prev => [newPackage, ...prev]);
+    
+    // Track selection for Lightspeed suggestions
+    setPackageSelectionHistory(prev => {
+      const updated = [selection, ...prev.filter(item => item !== selection)];
+      return updated.slice(0, 10); // Keep last 10 selections
+    });
+    
+    // Clear search input and reset external search
+    setPackageTypeaheadValue('');
+    setPackageTypeaheadOpen(false);
+    setIsSearchingExternalPackages(false);
+  };
+
+  // Functions to remove items from tables
+  const removeAddedRepository = (id: string) => {
+    setAddedRepositories(prev => prev.filter(repo => repo.id !== id));
+  };
+
+  const removeAddedPackage = (id: string) => {
+    setAddedPackages(prev => prev.filter(pkg => pkg.id !== id));
   };
 
   // Repository row management functions
@@ -2158,7 +2477,8 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
             kernelRef,
             systemdRef,
             firewallRef,
-            usersRef
+            usersRef,
+            firstBootRef
           ];
           
           if (currentAdvancedSection < advancedSections.length) {
@@ -3814,30 +4134,144 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 <Title headingLevel="h3" size="md" style={{ marginBottom: '0.5rem' }}>
                   Included repositories
                 </Title>
-                <p style={{ fontSize: '14px', color: '#666', marginBottom: '1rem' }}>
-                  Can't find a repository? Make sure it's been added to your account on{' '}
-                  <a 
-                    href="https://console.redhat.com/insights/content/repositories" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    style={{ color: '#0066cc', textDecoration: 'underline' }}
-                  >
-                    Insights Repositories
-                    <ExternalLinkAltIcon style={{ fontSize: '0.75rem', marginLeft: '0.25rem' }} />
-                  </a>
-                </p>
 
                 <div style={{ marginBottom: '1rem' }}>
-                  <Title headingLevel="h4" size="md" style={{ marginBottom: '0.5rem' }}>
-                    Repositories
-                  </Title>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                    <div style={{ position: 'relative', width: '300px' }}>
                     <SearchInput
-                      placeholder=""
-                      style={{ width: '300px' }}
-                    />
-                    <Button variant="control" icon={<ArrowRightIcon />} />
+                        value={repositoryTypeaheadValue}
+                        onChange={(_event, value) => {
+                          setRepositoryTypeaheadValue(value);
+                          setRepositoryTypeaheadOpen(true); // Always show dropdown when typing
+                          setIsSearchingExternalRepos(false); // Reset external search when typing
+                        }}
+                        onClear={() => {
+                          setRepositoryTypeaheadValue('');
+                          setRepositoryTypeaheadOpen(false);
+                          setIsSearchingExternalRepos(false); // Reset external search when clearing
+                        }}
+                        onFocus={() => {
+                          // Show Lightspeed suggestions when focusing empty input
+                          if (!repositoryTypeaheadValue) {
+                            setRepositoryTypeaheadOpen(true);
+                          }
+                        }}
+                        onBlur={() => {
+                          // Close dropdown when clicking outside (with small delay to allow selection)
+                          setTimeout(() => setRepositoryTypeaheadOpen(false), 150);
+                        }}
+                        placeholder="Search repositories..."
+                        style={{ width: '100%' }}
+                      />
+                      {repositoryTypeaheadOpen && (
+                        <div data-dropdown="repository" style={{
+                          position: 'absolute',
+                          top: '100%',
+                          left: 0,
+                          right: 0,
+                          backgroundColor: 'white',
+                          border: '1px solid #d2d2d2',
+                          borderTop: 'none',
+                          borderRadius: '0 0 4px 4px',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                          zIndex: 1000,
+                          maxHeight: '200px',
+                          overflowY: 'auto'
+                        }}>
+                          {getFilteredTypeaheadRepositories().length > 0 ? (
+                            getFilteredTypeaheadRepositories().map((repo) => {
+                              const isLightspeedSuggestion = !repositoryTypeaheadValue && generateRepositoryLightspeedSuggestions().includes(repo);
+                              return (
+                                <div
+                                  key={repo}
+                                  onClick={() => onRepositoryTypeaheadSelect(repo)}
+                                  style={{
+                                    padding: '8px 12px',
+                                    cursor: 'pointer',
+                                    borderBottom: '1px solid #f0f0f0',
+                                    fontSize: '0.875rem',
+                                    backgroundColor: isLightspeedSuggestion ? '#f8f9ff' : 'white',
+                                    borderLeft: isLightspeedSuggestion ? '3px solid #0066cc' : 'none'
+                                  }}
+                                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isLightspeedSuggestion ? '#eef1ff' : '#f0f0f0'}
+                                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isLightspeedSuggestion ? '#f8f9ff' : 'white'}
+                                >
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    {isLightspeedSuggestion && (
+                                      <MagicIcon style={{ fontSize: '14px', color: '#0066cc', flexShrink: 0 }} />
+                                    )}
+                                    <div style={{ flex: 1 }}>
+                                      <div style={{ fontWeight: isLightspeedSuggestion ? 500 : 400 }}>
+                                        {repo}
+                                      </div>
+                                      {isLightspeedSuggestion && (
+                                        <div style={{ fontSize: '0.75rem', color: '#6a6e73', marginTop: '2px' }}>
+                                          Suggested based on your selections • Enabled by RHEL Lightspeed
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          ) : repositoryTypeaheadValue ? (
+                            // Empty state when user has typed something but no results
+                            <div style={{ padding: '24px', textAlign: 'center' }}>
+                              <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginBottom: '8px' }}>
+                                No results for "{repositoryTypeaheadValue}" in known repositories. If you know the name of your repository, make sure it's included in your{' '}
+                                <a href="#" style={{ color: '#0066cc', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                                  Insights Repositories
+                                  <ExternalLinkAltIcon style={{ fontSize: '0.75rem', color: '#0066cc' }} />
+                                </a>{' '}
+                                account.
+                              </div>
+                              <button
+                                style={{
+                                  background: 'transparent',
+                                  border: '1px solid #d2d2d2',
+                                  borderRadius: '4px',
+                                  padding: '8px 16px',
+                                  fontSize: '0.875rem',
+                                  color: '#0066cc',
+                                  cursor: 'pointer',
+                                  marginTop: '8px'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f0f0'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                onClick={() => {
+                                  setRepositoryTypeaheadValue(''); // Clear the search input
+                                  setIsSearchingExternalRepos(true);
+                                  setRepositoryTypeaheadOpen(true);
+                                  // Refocus the search input to keep it active
+                                  setTimeout(() => {
+                                    const searchInput = document.querySelector('input[placeholder="Search repositories..."]') as HTMLInputElement;
+                                    if (searchInput) {
+                                      searchInput.focus();
+                                    }
+                                  }, 10);
+                                }}
+                              >
+                                Search repositories outside of this image
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
+                      )}
+                    </div>
                   </div>
+
+                  <p style={{ fontSize: '14px', color: '#666', marginBottom: '1rem' }}>
+                    Can't find a repository? Make sure it's been added to your account on{' '}
+                    <a 
+                      href="https://console.redhat.com/insights/content/repositories" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style={{ color: '#0066cc', textDecoration: 'underline' }}
+                    >
+                      Insights Repositories
+                      <ExternalLinkAltIcon style={{ fontSize: '0.75rem', marginLeft: '0.25rem' }} />
+                    </a>
+                  </p>
 
                   <table style={{ 
                     width: '100%', 
@@ -3850,30 +4284,38 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                         <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #d2d2d2', fontWeight: 600, fontSize: '0.875rem' }}>Name</th>
                         <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #d2d2d2', fontWeight: 600, fontSize: '0.875rem' }}>Application stream</th>
                         <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #d2d2d2', fontWeight: 600, fontSize: '0.875rem' }}>Retirement date</th>
-                        <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #d2d2d2', fontWeight: 600, fontSize: '0.875rem' }}>Source</th>
                         <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #d2d2d2', fontWeight: 600, fontSize: '0.875rem', width: '60px' }}></th>
                       </tr>
                     </thead>
                     <tbody>
+                      {/* Dynamic repository rows - appear at top */}
+                      {addedRepositories.map((repo) => (
+                        <tr key={repo.id}>
+                          <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>{repo.name}</td>
+                          <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>{repo.applicationStream}</td>
+                          <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>{repo.retirementDate}</td>
+                          <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', textAlign: 'center' }}>
+                            <Button variant="plain" icon={<MinusCircleIcon />} onClick={() => removeAddedRepository(repo.id)} />
+                          </td>
+                        </tr>
+                      ))}
+                      {/* Static repository rows */}
                       <tr>
                         <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>My application</td>
                         <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}><div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ color: '#0066cc' }}>⚡</span>Code branch</div></td>
                         <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>My application</td>
-                        <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>Included repository</td>
                         <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', textAlign: 'center' }}><Button variant="plain" icon={<MinusCircleIcon />} /></td>
                       </tr>
                       <tr>
                         <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>My application</td>
                         <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}><div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ color: '#0066cc' }}>⚡</span>Code branch</div></td>
                         <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>My application</td>
-                        <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>Other repository</td>
                         <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', textAlign: 'center' }}><Button variant="plain" icon={<MinusCircleIcon />} /></td>
                       </tr>
                       <tr>
                         <td style={{ padding: '12px', fontSize: '0.875rem' }}>My application</td>
                         <td style={{ padding: '12px', fontSize: '0.875rem' }}><div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ color: '#0066cc' }}>⚡</span>Code branch</div></td>
                         <td style={{ padding: '12px', fontSize: '0.875rem' }}>My application</td>
-                        <td style={{ padding: '12px', fontSize: '0.875rem' }}>Included repository</td>
                         <td style={{ padding: '12px', textAlign: 'center' }}><Button variant="plain" icon={<MinusCircleIcon />} /></td>
                       </tr>
                     </tbody>
@@ -3891,13 +4333,18 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   <FormGroup label="Package Type" fieldId="package-type-new">
                     <Select
                       id="package-type-select-new"
-                      isOpen={false}
-                      selected="Individual packages"
-                      onSelect={() => {}}
-                      onOpenChange={() => {}}
+                      isOpen={isSelectedPackageTypeOpen}
+                      selected={selectedPackageType === 'individual' ? 'Individual packages' : 'Package groups'}
+                      onSelect={onSelectedPackageTypeSelect}
+                      onOpenChange={(isOpen) => setIsSelectedPackageTypeOpen(isOpen)}
                       toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                        <MenuToggle ref={toggleRef} onClick={() => {}} isExpanded={false} style={{ width: '180px' }}>
-                          Individual packages
+                        <MenuToggle 
+                          ref={toggleRef} 
+                          onClick={() => setIsSelectedPackageTypeOpen(!isSelectedPackageTypeOpen)} 
+                          isExpanded={isSelectedPackageTypeOpen} 
+                          style={{ width: '180px' }}
+                        >
+                          {selectedPackageType === 'individual' ? 'Individual packages' : 'Package groups'}
                         </MenuToggle>
                       )}
                     >
@@ -3909,9 +4356,126 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   </FormGroup>
 
                   <FormGroup label="Packages" fieldId="packages-search-new" style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <SearchInput value="" onChange={() => {}} onClear={() => {}} placeholder="" style={{ flex: 1 }} />
-                      <Button variant="control" icon={<ArrowRightIcon />} />
+                    <div style={{ position: 'relative' }}>
+                      <SearchInput
+                        value={packageTypeaheadValue}
+                        onChange={(_event, value) => {
+                          setPackageTypeaheadValue(value);
+                          setPackageTypeaheadOpen(true); // Always show dropdown when typing
+                          setIsSearchingExternalPackages(false); // Reset external search when typing
+                        }}
+                        onClear={() => {
+                          setPackageTypeaheadValue('');
+                          setPackageTypeaheadOpen(false);
+                          setIsSearchingExternalPackages(false); // Reset external search when clearing
+                        }}
+                        onFocus={() => {
+                          // Show Lightspeed suggestions when focusing empty input
+                          if (!packageTypeaheadValue) {
+                            setPackageTypeaheadOpen(true);
+                          }
+                        }}
+                        onBlur={() => {
+                          // Close dropdown when clicking outside (with small delay to allow selection)
+                          setTimeout(() => setPackageTypeaheadOpen(false), 150);
+                        }}
+                        placeholder="Search packages..."
+                        style={{ width: '100%' }}
+                      />
+                      {packageTypeaheadOpen && (
+                        <div data-dropdown="package" style={{
+                          position: 'absolute',
+                          top: '100%',
+                          left: 0,
+                          right: 0,
+                          backgroundColor: 'white',
+                          border: '1px solid #d2d2d2',
+                          borderTop: 'none',
+                          borderRadius: '0 0 4px 4px',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                          zIndex: 1000,
+                          maxHeight: '200px',
+                          overflowY: 'auto'
+                        }}>
+                          {getFilteredTypeaheadPackages().length > 0 ? (
+                            getFilteredTypeaheadPackages().map((pkg) => {
+                              const isLightspeedSuggestion = !packageTypeaheadValue && generatePackageLightspeedSuggestions().includes(pkg);
+                              return (
+                                <div
+                                  key={pkg}
+                                  onClick={() => onPackageTypeaheadSelect(pkg)}
+                                  style={{
+                                    padding: '8px 12px',
+                                    cursor: 'pointer',
+                                    borderBottom: '1px solid #f0f0f0',
+                                    fontSize: '0.875rem',
+                                    backgroundColor: isLightspeedSuggestion ? '#f8f9ff' : 'white',
+                                    borderLeft: isLightspeedSuggestion ? '3px solid #0066cc' : 'none'
+                                  }}
+                                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isLightspeedSuggestion ? '#eef1ff' : '#f0f0f0'}
+                                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isLightspeedSuggestion ? '#f8f9ff' : 'white'}
+                                >
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    {isLightspeedSuggestion && (
+                                      <MagicIcon style={{ fontSize: '14px', color: '#0066cc', flexShrink: 0 }} />
+                                    )}
+                                    <div style={{ flex: 1 }}>
+                                      <div style={{ fontWeight: isLightspeedSuggestion ? 500 : 400 }}>
+                                        {pkg}
+                                      </div>
+                                      {isLightspeedSuggestion && (
+                                        <div style={{ fontSize: '0.75rem', color: '#6a6e73', marginTop: '2px' }}>
+                                          Suggested based on your selections • Enabled by RHEL Lightspeed
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          ) : packageTypeaheadValue ? (
+                            // Empty state when user has typed something but no results
+                            <div style={{ padding: '24px', textAlign: 'center' }}>
+                              <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginBottom: '8px' }}>
+                                No results for "{packageTypeaheadValue}" in known repositories. If you know the name of your repository, make sure it's included in your{' '}
+                                <a href="#" style={{ color: '#0066cc', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                                  Insights Repositories
+                                  <ExternalLinkAltIcon style={{ fontSize: '0.75rem', color: '#0066cc' }} />
+                                </a>{' '}
+                                account.
+                              </div>
+                              <button
+                                style={{
+                                  background: 'transparent',
+                                  border: '1px solid #d2d2d2',
+                                  borderRadius: '4px',
+                                  padding: '8px 16px',
+                                  fontSize: '0.875rem',
+                                  color: '#0066cc',
+                                  cursor: 'pointer',
+                                  marginTop: '8px'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f0f0'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                onClick={() => {
+                                  setPackageTypeaheadValue(''); // Clear the search input
+                                  setIsSearchingExternalPackages(true);
+                                  // Small delay to ensure state updates, then open dropdown and refocus
+                                  setTimeout(() => {
+                                    setPackageTypeaheadOpen(true);
+                                    const searchInput = document.querySelector('input[placeholder="Search packages..."]') as HTMLInputElement;
+                                    if (searchInput) {
+                                      searchInput.focus();
+                                    }
+                                  }, 50);
+                                }}
+                              >
+                                Search packages outside of this image
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
+                      )}
                     </div>
                   </FormGroup>
                 </div>
@@ -3922,31 +4486,33 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                       <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #d2d2d2', fontWeight: 600, fontSize: '0.875rem' }}>Name</th>
                       <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #d2d2d2', fontWeight: 600, fontSize: '0.875rem' }}>Application stream</th>
                       <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #d2d2d2', fontWeight: 600, fontSize: '0.875rem' }}>Retirement date</th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #d2d2d2', fontWeight: 600, fontSize: '0.875rem' }}>Source</th>
                       <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #d2d2d2', fontWeight: 600, fontSize: '0.875rem', width: '60px' }}></th>
                     </tr>
                   </thead>
                   <tbody>
+                    {/* Dynamic package rows - appear at top */}
+                    {addedPackages.map((pkg) => (
+                      <tr key={pkg.id}>
+                        <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>{pkg.name}</td>
+                        <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>{pkg.applicationStream}</td>
+                        <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>{pkg.retirementDate}</td>
+                        <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', textAlign: 'center' }}>
+                          <Button variant="plain" icon={<MinusCircleIcon />} onClick={() => removeAddedPackage(pkg.id)} />
+                        </td>
+                    </tr>
+                    ))}
+                    {/* Static package rows - BaseOS and AppStream */}
                     <tr>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>My application</td>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}><div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ color: '#0066cc' }}>⚡</span>Code branch</div></td>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>My application</td>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>Included repository</td>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', textAlign: 'center' }}><Button variant="plain" icon={<MinusCircleIcon />} /></td>
+                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>BaseOS</td>
+                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem', color: '#6a6e73' }}>Added to all RHEL builds</td>
+                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>2032-05-31</td>
+                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', textAlign: 'center' }}><Button variant="plain" icon={<MinusCircleIcon />} isDisabled /></td>
                     </tr>
                     <tr>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>My application</td>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}><div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ color: '#0066cc' }}>⚡</span>Code branch</div></td>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>My application</td>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>Other repository</td>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', textAlign: 'center' }}><Button variant="plain" icon={<MinusCircleIcon />} /></td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '12px', fontSize: '0.875rem' }}>My application</td>
-                      <td style={{ padding: '12px', fontSize: '0.875rem' }}><div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ color: '#0066cc' }}>⚡</span>Code branch</div></td>
-                      <td style={{ padding: '12px', fontSize: '0.875rem' }}>My application</td>
-                      <td style={{ padding: '12px', fontSize: '0.875rem' }}>Included repository</td>
-                      <td style={{ padding: '12px', textAlign: 'center' }}><Button variant="plain" icon={<MinusCircleIcon />} /></td>
+                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>AppStream</td>
+                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem', color: '#6a6e73' }}>Added to all RHEL builds</td>
+                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}>2032-05-31</td>
+                      <td style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', textAlign: 'center' }}><Button variant="plain" icon={<MinusCircleIcon />} isDisabled /></td>
                     </tr>
                   </tbody>
                 </table>
@@ -4982,6 +5548,73 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   </Content>
                 
                 <FormGroup
+                  label="Enabled services"
+                  fieldId="systemd-enabled-services"
+                  style={{ marginBottom: '1rem' }}
+                >
+                  <TextInputGroup style={{ width: '60%' }}>
+                    <TextInputGroupMain>
+                      <LabelGroup>
+                        {systemdEnabledServices.map((service, index) => (
+                          <Label 
+                            key={index}
+                            variant="filled" 
+                            color="green"
+                            onClose={() => {
+                              const newServices = systemdEnabledServices.filter((_, i) => i !== index);
+                              setSystemdEnabledServices(newServices);
+                            }}
+                          >
+                            {service}
+                          </Label>
+                        ))}
+                      </LabelGroup>
+                      <input
+                        type="text"
+                        value={enabledServicesInput}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value.includes(',')) {
+                            // Extract service name before comma and add as chip
+                            const newService = value.split(',')[0].trim();
+                            if (newService && !systemdEnabledServices.includes(newService)) {
+                              setSystemdEnabledServices([...systemdEnabledServices, newService]);
+                            }
+                            setEnabledServicesInput(''); // Clear input after adding
+                          } else {
+                            setEnabledServicesInput(value);
+                          }
+                        }}
+                        placeholder={systemdEnabledServices.length > 0 ? "Type service name, comma to add..." : "Type service name, comma to add..."}
+                        style={{ 
+                          border: 'none', 
+                          outline: 'none', 
+                          background: 'transparent',
+                          flex: 1,
+                          minWidth: '150px'
+                        }}
+                      />
+                    </TextInputGroupMain>
+                    {(systemdEnabledServices.length > 0 || enabledServicesInput) && (
+                      <TextInputGroupUtilities>
+                        <Button
+                          variant="plain"
+                          onClick={() => {
+                            setSystemdEnabledServices([]);
+                            setEnabledServicesInput('');
+                          }}
+                          aria-label="Clear enabled services"
+                          icon={<TimesIcon />}
+                        />
+                      </TextInputGroupUtilities>
+                    )}
+                  </TextInputGroup>
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+                    These services are currently active and set to start automatically at boot.
+                  </div>
+                </FormGroup>
+
+                <FormGroup
                   label="Disabled services"
                   fieldId="systemd-disabled-services"
                   style={{ marginBottom: '1rem' }}
@@ -5051,7 +5684,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                 <FormGroup
                   label="Masked services"
                   fieldId="systemd-masked-services"
-                  style={{ marginBottom: '1rem' }}
+                  style={{ marginBottom: '0rem' }}
                 >
                   <TextInputGroup style={{ width: '60%' }}>
                     <TextInputGroupMain>
@@ -5112,73 +5745,6 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                   </TextInputGroup>
                   <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
                     These services are completely blocked from being started manually or automatically.
-                  </div>
-                </FormGroup>
-
-                <FormGroup
-                  label="Enabled services"
-                  fieldId="systemd-enabled-services"
-                  style={{ marginBottom: '0rem' }}
-                >
-                  <TextInputGroup style={{ width: '60%' }}>
-                    <TextInputGroupMain>
-                      <LabelGroup>
-                        {systemdEnabledServices.map((service, index) => (
-                          <Label 
-                            key={index}
-                            variant="filled" 
-                            color="green"
-                            onClose={() => {
-                              const newServices = systemdEnabledServices.filter((_, i) => i !== index);
-                              setSystemdEnabledServices(newServices);
-                            }}
-                          >
-                            {service}
-                          </Label>
-                        ))}
-                      </LabelGroup>
-                      <input
-                        type="text"
-                        value={enabledServicesInput}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (value.includes(',')) {
-                            // Extract service name before comma and add as chip
-                            const newService = value.split(',')[0].trim();
-                            if (newService && !systemdEnabledServices.includes(newService)) {
-                              setSystemdEnabledServices([...systemdEnabledServices, newService]);
-                            }
-                            setEnabledServicesInput(''); // Clear input after adding
-                          } else {
-                            setEnabledServicesInput(value);
-                          }
-                        }}
-                        placeholder={systemdEnabledServices.length > 0 ? "Type service name, comma to add..." : "Type service name, comma to add..."}
-                        style={{ 
-                          border: 'none', 
-                          outline: 'none', 
-                          background: 'transparent',
-                          flex: 1,
-                          minWidth: '150px'
-                        }}
-                      />
-                    </TextInputGroupMain>
-                    {(systemdEnabledServices.length > 0 || enabledServicesInput) && (
-                      <TextInputGroupUtilities>
-                        <Button
-                          variant="plain"
-                          onClick={() => {
-                            setSystemdEnabledServices([]);
-                            setEnabledServicesInput('');
-                          }}
-                          aria-label="Clear enabled services"
-                          icon={<TimesIcon />}
-                        />
-                      </TextInputGroupUtilities>
-                    )}
-                  </TextInputGroup>
-                  <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
-                    These services are currently active and set to start automatically at boot.
                   </div>
                 </FormGroup>
               </div>
@@ -5328,7 +5894,6 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
                               id={`admin-${user.id}`}
                               isChecked={user.isAdministrator}
                               onChange={(event, checked) => updateUser(user.id, 'isAdministrator', checked)}
-                              label="Admin privileges"
                             />
                           </FormGroup>
                         </GridItem>
@@ -5496,7 +6061,7 @@ const BuildImageModal: React.FunctionComponent<BuildImageModalProps> = ({
               </div>
 
               {/* First Boot Configuration Section - moved from Base Settings */}
-              <div style={{ marginBottom: '2rem' }}>
+              <div ref={firstBootRef} style={{ marginBottom: '2rem' }}>
                 {/* Divider before First Boot Configuration */}
                 <div style={{ 
                   height: '1px', 
