@@ -1466,6 +1466,7 @@ const Dashboard: React.FunctionComponent = () => {
         )}
       </Modal>
 
+
   </PageSection>
   
       {/* Discrete Demo Footer - Outside PageSection for proper visibility */}
