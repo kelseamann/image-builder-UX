@@ -28,7 +28,10 @@ interface IAppLayout {
 }
 
 const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
-  const [sidebarOpen, setSidebarOpen] = React.useState(true);
+  // Initialize sidebar state based on screen size
+  const [sidebarOpen, setSidebarOpen] = React.useState(() => {
+    return window.innerWidth >= 1200; // Collapse on screens smaller than 1200px
+  });
   const [hasVisitedHMS, setHasVisitedHMS] = React.useState(() => {
     return localStorage.getItem('hasVisitedHMS') === 'true';
   });
@@ -42,6 +45,22 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
       localStorage.setItem('hasVisitedHMS', 'true');
     }
   }, [location.pathname, hasVisitedHMS]);
+
+  // Handle responsive sidebar behavior
+  React.useEffect(() => {
+    const handleResize = () => {
+      const isLargeScreen = window.innerWidth >= 1200;
+      // Only auto-close/open if user hasn't manually toggled recently
+      if (isLargeScreen && !sidebarOpen) {
+        setSidebarOpen(true);
+      } else if (!isLargeScreen && sidebarOpen) {
+        setSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [sidebarOpen]);
 
   const masthead = (
     <Masthead>
