@@ -41,6 +41,7 @@ import {
 import { AngleDownIcon, AngleRightIcon, BuildIcon, CheckCircleIcon, CodeBranchIcon, CopyIcon, EditIcon, EllipsisVIcon, ExclamationCircleIcon, ExclamationTriangleIcon, ExternalLinkAltIcon, FilterIcon, OutlinedQuestionCircleIcon, OutlinedStarIcon, PlayIcon, StarIcon, TimesIcon } from '@patternfly/react-icons';
 import { type ImageItem, UseBaseImageModal } from './UseBaseImageModal';
 import BuildImageModal from './BuildImageModal';
+import { ImportPipelineModal } from './ImportPipelineModal';
 
 interface ImageTableRow {
   id: string;
@@ -64,6 +65,7 @@ const Dashboard: React.FunctionComponent = () => {
   const [isLaunchModalOpen, setIsLaunchModalOpen] = React.useState(false);
   const [isUseBaseImageModalOpen, setIsUseBaseImageModalOpen] = React.useState(false);
   const [isBuildImageModalOpen, setIsBuildImageModalOpen] = React.useState(false);
+  const [isImportPipelineModalOpen, setIsImportPipelineModalOpen] = React.useState(false);
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
   const [selectedImage, setSelectedImage] = React.useState<ImageTableRow | null>(null);
@@ -853,7 +855,7 @@ const Dashboard: React.FunctionComponent = () => {
                 <FlexItem>
                   <Button 
                     variant="secondary" 
-                    onClick={() => console.log('Import clicked')}
+                    onClick={() => setIsImportPipelineModalOpen(true)}
                   >
                     Import
                   </Button>
@@ -1429,6 +1431,11 @@ const Dashboard: React.FunctionComponent = () => {
         isOpen={isBuildImageModalOpen}
         onClose={() => setIsBuildImageModalOpen(false)}
         editingImage={selectedImage || undefined}
+      />
+
+      <ImportPipelineModal
+        isOpen={isImportPipelineModalOpen}
+        onClose={() => setIsImportPipelineModalOpen(false)}
       />
 
       {/* Delete Confirmation Modal */}
