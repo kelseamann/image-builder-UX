@@ -5,7 +5,6 @@ import {
   FileUpload,
   Modal,
   ModalVariant,
-  Text,
   Title,
 } from '@patternfly/react-core';
 import { InfoCircleIcon } from '@patternfly/react-icons';
@@ -107,13 +106,14 @@ const ImportPipelineModal: React.FunctionComponent<ImportPipelineModalProps> = (
         </div>
 
         {/* Help text */}
-        <Text style={{ 
+        <p style={{ 
           fontSize: '14px', 
           color: '#666',
-          marginBottom: '32px'
+          marginBottom: '32px',
+          margin: '0 0 32px 0'
         }}>
           Upload your blueprint file. Supported formats: JSON, TOML.
-        </Text>
+        </p>
 
         {/* Action buttons */}
         <div style={{ 
