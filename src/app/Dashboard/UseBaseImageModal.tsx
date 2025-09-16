@@ -213,7 +213,7 @@ const UseBaseImageModal: React.FunctionComponent<UseBaseImageModalProps> = ({
             color: '#666'
           }}>
             Use download to quickly access the latest stable version of your image, or select Build Latest to begin customizing with Image Builder.
-            Let's include a link to <a href="https://developers.redhat.com" target="_blank" rel="noopener noreferrer" style={{ color: '#0066cc', textDecoration: 'none' }}>Red Hat Developer Portal here too</a>
+            If you're looking for an individual subscription, visit the <a href="https://developers.redhat.com" target="_blank" rel="noopener noreferrer" style={{ color: '#0066cc', textDecoration: 'none' }}>Red Hat Developer Portal</a>
           </p>
         </div>
         
