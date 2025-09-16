@@ -283,20 +283,29 @@ const UseBaseImageModal: React.FunctionComponent<UseBaseImageModalProps> = ({
                         
                         <div style={{ 
                           display: 'flex', 
-                          flexDirection: 'column',
-                          gap: '8px'
+                          flexDirection: 'row',
+                          gap: '12px',
+                          justifyContent: 'flex-start'
                         }}>
                           <Button
                             variant="primary"
                             onClick={() => handleBuildLatest(image.name)}
-                            style={{ width: '100%' }}
+                            style={{ 
+                              padding: '8px 16px',
+                              minWidth: 'auto',
+                              whiteSpace: 'nowrap'
+                            }}
                           >
                             Build latest
                           </Button>
                           <Button
                             variant="secondary"
                             onClick={() => handleDownload(image.name)}
-                            style={{ width: '100%' }}
+                            style={{ 
+                              padding: '8px 16px',
+                              minWidth: 'auto',
+                              whiteSpace: 'nowrap'
+                            }}
                           >
                             Download blueprint (.json)
                           </Button>
