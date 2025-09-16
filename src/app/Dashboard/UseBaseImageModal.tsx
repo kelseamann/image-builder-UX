@@ -212,6 +212,7 @@ const UseBaseImageModal: React.FunctionComponent<UseBaseImageModalProps> = ({
             color: '#666'
           }}>
             Use download to quickly access the latest stable version of your image, or select Build Latest to begin customizing with Image Builder.
+            Let's include a link to <a href="https://developers.redhat.com" target="_blank" rel="noopener noreferrer" style={{ color: '#0066cc', textDecoration: 'none' }}>developer hub here too</a>
           </p>
         </div>
         
@@ -231,53 +232,75 @@ const UseBaseImageModal: React.FunctionComponent<UseBaseImageModalProps> = ({
               
               <Grid hasGutter>
                 {group.images.map((image) => (
-                  <GridItem span={12} key={image.name}>
-                    <Card>
-                      <CardBody>
-                        <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
-                          <FlexItem>
-                            <h4 style={{ fontWeight: 600, marginBottom: '4px', fontSize: '16px' }}>
+                  <GridItem span={6} key={image.name}>
+                    <Card style={{ 
+                      height: '100%', 
+                      border: '1px solid #d2d2d2',
+                      borderRadius: '8px'
+                    }}>
+                      <CardBody style={{ 
+                        padding: '24px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        minHeight: '180px'
+                      }}>
+                        <div>
+                          <div style={{ 
+                            display: 'flex', 
+                            alignItems: 'flex-start',
+                            justifyContent: 'space-between',
+                            marginBottom: '16px'
+                          }}>
+                            <h4 style={{ 
+                              fontWeight: 600, 
+                              fontSize: '16px',
+                              lineHeight: '1.3',
+                              margin: 0,
+                              flex: 1,
+                              paddingRight: '8px'
+                            }}>
                               {image.name}
                             </h4>
-                          </FlexItem>
-                          
-                          <FlexItem>
-                            <Flex spaceItems={{ default: 'spaceItemsSm' }}>
-                              <FlexItem>
-                                <Button
-                                  variant="primary"
-                                  onClick={() => handleBuildLatest(image.name)}
-                                >
-                                  Build latest
-                                </Button>
-                              </FlexItem>
-                              <FlexItem>
-                                <Button
-                                  variant="secondary"
-                                  onClick={() => handleDownload(image.name)}
-                                >
-                                  Download blueprint (.json)
-                                </Button>
-                              </FlexItem>
-                              <FlexItem>
-                                <Popover
-                                  aria-label="Image details"
-                                  bodyContent={renderDetailsPopover(image)}
-                                  hasAutoWidth
-                                >
-                                  <Button
-                                    variant="link"
-                                    icon={<InfoCircleIcon />}
-                                    onClick={() => handleShowDetails(image.name)}
-                                    style={{ padding: '0.5rem' }}
-                                  >
-                                    Show details
-                                  </Button>
-                                </Popover>
-                              </FlexItem>
-                            </Flex>
-                          </FlexItem>
-                        </Flex>
+                            <Popover
+                              aria-label="Image details"
+                              bodyContent={renderDetailsPopover(image)}
+                              hasAutoWidth
+                            >
+                              <Button
+                                variant="plain"
+                                icon={<InfoCircleIcon />}
+                                onClick={() => handleShowDetails(image.name)}
+                                style={{ 
+                                  padding: '4px',
+                                  minWidth: 'auto',
+                                  color: '#6A6E73'
+                                }}
+                              />
+                            </Popover>
+                          </div>
+                        </div>
+                        
+                        <div style={{ 
+                          display: 'flex', 
+                          flexDirection: 'column',
+                          gap: '8px'
+                        }}>
+                          <Button
+                            variant="primary"
+                            onClick={() => handleBuildLatest(image.name)}
+                            style={{ width: '100%' }}
+                          >
+                            Build latest
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            onClick={() => handleDownload(image.name)}
+                            style={{ width: '100%' }}
+                          >
+                            Download blueprint (.json)
+                          </Button>
+                        </div>
                       </CardBody>
                     </Card>
                   </GridItem>
