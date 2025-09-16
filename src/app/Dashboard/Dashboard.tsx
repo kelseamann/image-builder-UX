@@ -201,7 +201,7 @@ const Dashboard: React.FunctionComponent = () => {
     },
     {
       id: '7',
-      name: 'demo-edit-showcase',
+      name: 'EDITABLE DEMO',
       tag: 'v1.0.0-demo',
       currentRelease: 'RHEL 9',
       currentEnvironment: 'AWS',
@@ -838,17 +838,21 @@ const Dashboard: React.FunctionComponent = () => {
             <FlexItem>
               <Flex spaceItems={{ default: 'spaceItemsSm' }}>
                 <FlexItem>
-                  <Button variant="primary" onClick={() => {
-                    setSelectedImage(null); // Clear selected image for creation flow
-                    setIsBuildImageModalOpen(true);
-                  }}>
-                    Build Image
-                  </Button>
+                  <Tooltip content="Last updated: December 15, 2024">
+                    <Button variant="primary" onClick={() => {
+                      setSelectedImage(null); // Clear selected image for creation flow
+                      setIsBuildImageModalOpen(true);
+                    }}>
+                      Build Image
+                    </Button>
+                  </Tooltip>
                 </FlexItem>
                 <FlexItem>
-                  <Button variant="secondary" onClick={() => setIsUseBaseImageModalOpen(true)}>
-                    Download RHEL
-                  </Button>
+                  <Tooltip content="Last updated: December 12, 2024">
+                    <Button variant="secondary" onClick={() => setIsUseBaseImageModalOpen(true)}>
+                      Download RHEL
+                    </Button>
+                  </Tooltip>
                 </FlexItem>
                 <FlexItem>
                   <Button 
