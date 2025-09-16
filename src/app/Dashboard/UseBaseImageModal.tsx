@@ -243,7 +243,7 @@ const UseBaseImageModal: React.FunctionComponent<UseBaseImageModalProps> = ({
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between',
-                        minHeight: '160px'
+                        minHeight: '100px'
                       }}>
                         <div>
                           <div style={{ 
