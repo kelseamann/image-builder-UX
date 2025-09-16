@@ -250,7 +250,7 @@ const UseBaseImageModal: React.FunctionComponent<UseBaseImageModalProps> = ({
                             display: 'flex', 
                             alignItems: 'flex-start',
                             justifyContent: 'space-between',
-                            marginBottom: '16px'
+                            marginBottom: '8px'
                           }}>
                             <h4 style={{ 
                               fontWeight: 600, 
