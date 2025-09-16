@@ -13,6 +13,7 @@ import {
   ModalVariant,
   Popover,
   Title,
+  Tooltip,
 } from '@patternfly/react-core';
 import { InfoCircleIcon } from '@patternfly/react-icons';
 
@@ -287,28 +288,32 @@ const UseBaseImageModal: React.FunctionComponent<UseBaseImageModalProps> = ({
                           gap: '12px',
                           justifyContent: 'flex-start'
                         }}>
-                          <Button
-                            variant="primary"
-                            onClick={() => handleBuildLatest(image.name)}
-                            style={{ 
-                              padding: '8px 16px',
-                              minWidth: 'auto',
-                              whiteSpace: 'nowrap'
-                            }}
-                          >
-                            Build latest
-                          </Button>
-                          <Button
-                            variant="secondary"
-                            onClick={() => handleDownload(image.name)}
-                            style={{ 
-                              padding: '8px 16px',
-                              minWidth: 'auto',
-                              whiteSpace: 'nowrap'
-                            }}
-                          >
-                            Download blueprint (.json)
-                          </Button>
+                          <Tooltip content="Last updated: December 15, 2024">
+                            <Button
+                              variant="primary"
+                              onClick={() => handleBuildLatest(image.name)}
+                              style={{ 
+                                padding: '8px 16px',
+                                minWidth: 'auto',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              Build latest
+                            </Button>
+                          </Tooltip>
+                          <Tooltip content="Last updated: December 12, 2024">
+                            <Button
+                              variant="secondary"
+                              onClick={() => handleDownload(image.name)}
+                              style={{ 
+                                padding: '8px 16px',
+                                minWidth: 'auto',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              Download blueprint (.json)
+                            </Button>
+                          </Tooltip>
                         </div>
                       </CardBody>
                     </Card>

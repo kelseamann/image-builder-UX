@@ -838,21 +838,17 @@ const Dashboard: React.FunctionComponent = () => {
             <FlexItem>
               <Flex spaceItems={{ default: 'spaceItemsSm' }}>
                 <FlexItem>
-                  <Tooltip content="Last updated: December 15, 2024">
-                    <Button variant="primary" onClick={() => {
-                      setSelectedImage(null); // Clear selected image for creation flow
-                      setIsBuildImageModalOpen(true);
-                    }}>
-                      Build Image
-                    </Button>
-                  </Tooltip>
+                  <Button variant="primary" onClick={() => {
+                    setSelectedImage(null); // Clear selected image for creation flow
+                    setIsBuildImageModalOpen(true);
+                  }}>
+                    Build Image
+                  </Button>
                 </FlexItem>
                 <FlexItem>
-                  <Tooltip content="Last updated: December 12, 2024">
-                    <Button variant="secondary" onClick={() => setIsUseBaseImageModalOpen(true)}>
-                      Download RHEL
-                    </Button>
-                  </Tooltip>
+                  <Button variant="secondary" onClick={() => setIsUseBaseImageModalOpen(true)}>
+                    Download RHEL
+                  </Button>
                 </FlexItem>
                 <FlexItem>
                   <Button 
