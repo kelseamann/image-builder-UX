@@ -38,7 +38,7 @@ import {
   ToolbarItem,
   Tooltip
 } from '@patternfly/react-core';
-import { AngleDownIcon, AngleRightIcon, BuildIcon, CheckCircleIcon, CopyIcon, EditIcon, EllipsisVIcon, ExclamationCircleIcon, ExclamationTriangleIcon, ExternalLinkAltIcon, FilterIcon, OutlinedStarIcon, PlayIcon, StarIcon, TimesIcon } from '@patternfly/react-icons';
+import { AngleDownIcon, AngleRightIcon, BuildIcon, CheckCircleIcon, CodeIcon, CopyIcon, EditIcon, EllipsisVIcon, ExclamationCircleIcon, ExclamationTriangleIcon, ExternalLinkAltIcon, FilterIcon, OutlinedQuestionCircleIcon, OutlinedStarIcon, PlayIcon, StarIcon, TimesIcon } from '@patternfly/react-icons';
 import { type ImageItem, UseBaseImageModal } from './UseBaseImageModal';
 import BuildImageModal from './BuildImageModal';
 
@@ -822,7 +822,11 @@ const Dashboard: React.FunctionComponent = () => {
           <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
             <FlexItem>
               <Title headingLevel="h1" size="lg">
-                Image Builder
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  Image Builder
+                  <OutlinedQuestionCircleIcon style={{ fontSize: '1rem', color: '#666' }} />
+                  <CodeIcon style={{ fontSize: '1rem', color: '#666' }} />
+                </span>
               </Title>
               <p style={{ marginTop: '0.5rem', color: '#666' }}>
                 Manage your system images across releases and environments
