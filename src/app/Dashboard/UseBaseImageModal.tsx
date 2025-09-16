@@ -239,11 +239,11 @@ const UseBaseImageModal: React.FunctionComponent<UseBaseImageModalProps> = ({
                       borderRadius: '8px'
                     }}>
                       <CardBody style={{ 
-                        padding: '24px',
+                        padding: '16px',
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between',
-                        minHeight: '180px'
+                        minHeight: '160px'
                       }}>
                         <div>
                           <div style={{ 
