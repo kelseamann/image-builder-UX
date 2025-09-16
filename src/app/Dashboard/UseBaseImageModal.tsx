@@ -15,7 +15,7 @@ import {
   Title,
   Tooltip,
 } from '@patternfly/react-core';
-import { InfoCircleIcon } from '@patternfly/react-icons';
+import { ExternalLinkAltIcon, InfoCircleIcon } from '@patternfly/react-icons';
 
 interface UseBaseImageModalProps {
   isOpen: boolean;
@@ -213,7 +213,7 @@ const UseBaseImageModal: React.FunctionComponent<UseBaseImageModalProps> = ({
             color: '#666'
           }}>
             Use download to quickly access the latest stable version of your image, or select Build Latest to begin customizing with Image Builder.
-            If you're looking for an individual subscription, visit the <a href="https://developers.redhat.com" target="_blank" rel="noopener noreferrer" style={{ color: '#0066cc', textDecoration: 'none' }}>Red Hat Developer Portal</a>
+            If you're looking for an individual subscription, visit the <a href="https://developers.redhat.com" target="_blank" rel="noopener noreferrer" style={{ color: '#0066cc', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>Red Hat Developer Portal <ExternalLinkAltIcon style={{ fontSize: '0.875rem' }} /></a>
           </p>
         </div>
         
