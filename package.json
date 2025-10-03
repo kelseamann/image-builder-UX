@@ -77,9 +77,10 @@
     "@patternfly/react-core": "^6.2.2",
     "@patternfly/react-icons": "^6.2.2",
     "@patternfly/react-styles": "^6.2.2",
+    "@patternfly/react-table": "^6.3.1",
     "react": "^18",
     "react-dom": "^18",
-    "semantic-ui-layer": "github:kelseamann/semantic-UI",
+    "semantic-ui-layer": "file:/Users/kelseamann/semantic-ui-layer",
     "sirv-cli": "^3.0.1"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
