@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
+// SEMANTIC-UI-LAYER REMINDER: This project uses semantic-ui-layer via npm link.
+// Do NOT reinstall semantic-ui-layer - preserve the npm link for development.
 
 import { merge } from 'webpack-merge';
 import common from './webpack.common.js';

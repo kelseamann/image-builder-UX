@@ -1,4 +1,7 @@
 {
+  // SEMANTIC-UI-LAYER REMINDER: This project uses semantic-ui-layer via npm link.
+  // Do NOT reinstall semantic-ui-layer - the link must be preserved for development.
+  // If semantic-ui-layer changes, restart dev server instead of reinstalling.
   "name": "patternfly-seed",
   "version": "0.0.2",
   "description": "An open source build scaffolding utility for web apps.",

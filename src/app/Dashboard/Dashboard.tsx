@@ -1,3 +1,7 @@
+// SEMANTIC-UI-LAYER REMINDER: This project uses semantic-ui-layer via npm link.
+// Do NOT reinstall semantic-ui-layer dependencies - preserve the npm link for development.
+// This file uses semantic-ui-layer components.
+
 import * as React from 'react';
 import { 
   Alert, 

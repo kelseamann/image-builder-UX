@@ -1,3 +1,6 @@
+// SEMANTIC-UI-LAYER REMINDER: This project uses semantic-ui-layer via npm link.
+// Do NOT reinstall semantic-ui-layer dependencies - preserve the npm link for development.
+
 import * as React from 'react';
 import '@patternfly/react-core/dist/styles/base.css';
 import { BrowserRouter as Router } from 'react-router-dom';

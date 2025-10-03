@@ -1,3 +1,6 @@
+// SEMANTIC-UI-LAYER REMINDER: This project uses semantic-ui-layer via npm link.
+// Do NOT reinstall semantic-ui-layer dependencies - preserve the npm link for development.
+
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from '@app/index';
