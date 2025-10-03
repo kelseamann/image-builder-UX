@@ -17,18 +17,18 @@ export const NamingModeToggle: React.FC = () => {
           isCompact
           aria-label="Naming mode selection"
         >
-          <ToggleGroupItem
-            text="Regular"
-            buttonId="semantic-mode"
-            isSelected={namingMode === 'semantic'}
-            onChange={() => setNamingMode('semantic')}
-          />
-          <ToggleGroupItem
-            text="Semantic"
-            buttonId="regular-mode"
-            isSelected={namingMode === 'regular'}
-            onChange={() => setNamingMode('regular')}
-          />
+                 <ToggleGroupItem
+                   text="Semantic"
+                   buttonId="semantic-mode"
+                   isSelected={namingMode === 'semantic'}
+                   onChange={() => setNamingMode('semantic')}
+                 />
+                 <ToggleGroupItem
+                   text="Regular"
+                   buttonId="regular-mode"
+                   isSelected={namingMode === 'regular'}
+                   onChange={() => setNamingMode('regular')}
+                 />
         </ToggleGroup>
       </FlexItem>
     </Flex>
