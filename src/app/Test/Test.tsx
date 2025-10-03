@@ -43,6 +43,8 @@ import { AngleDownIcon, AngleRightIcon, BuildIcon, CheckCircleIcon, CodeBranchIc
 import { type ImageItem, UseBaseImageModal } from './UseBaseImageModal';
 import BuildImageModal from './BuildImageModal';
 import { ImportPipelineModal } from './ImportPipelineModal';
+import { NamingModeProvider, useNamingMode, getDisplayName } from '../contexts/NamingModeContext';
+import { NamingModeToggle } from '../components/NamingModeToggle';
 
 interface ImageTableRow {
   id: string;
@@ -61,7 +63,8 @@ interface ImageTableRow {
   fileExtension: string;
 }
 
-const Test: React.FunctionComponent = () => {
+const TestContent: React.FunctionComponent = () => {
+  const { namingMode } = useNamingMode();
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [isLaunchModalOpen, setIsLaunchModalOpen] = React.useState(false);
   const [isUseBaseImageModalOpen, setIsUseBaseImageModalOpen] = React.useState(false);
@@ -817,11 +820,30 @@ const Test: React.FunctionComponent = () => {
   <PageSection hasBodyWrapper={false} style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
 
-        {/* Header */}
-        <div style={{ 
-          marginBottom: '1.5rem', 
-          flexShrink: 0
-        }}>
+      {/* Naming Mode Control Toolbar */}
+      <Toolbar style={{
+        backgroundColor: '#f8f9fa',
+        border: '1px solid #d2d2d2',
+        borderBottom: 'none',
+        padding: '0.5rem 1.5rem',
+        marginBottom: '0px'
+      }}>
+        <ToolbarContent>
+          <ToolbarItem>
+            <NamingModeToggle />
+          </ToolbarItem>
+        </ToolbarContent>
+      </Toolbar>
+
+      {/* Header */}
+      <div style={{ 
+        marginBottom: '1.5rem', 
+        flexShrink: 0,
+        border: '1px solid #d2d2d2',
+        borderTop: 'none',
+        backgroundColor: 'white',
+        padding: '2rem 1.5rem'
+      }}>
           <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
             <FlexItem>
               <Title headingLevel="h1" size="lg">
@@ -849,7 +871,7 @@ const Test: React.FunctionComponent = () => {
                       console.log('Build Image button clicked - modal disabled');
                     }}
                   >
-                    Button
+                    {getDisplayName("Create New Image", "Button", namingMode)}
                   </Button>
                 </FlexItem>
                 <FlexItem>
@@ -861,7 +883,7 @@ const Test: React.FunctionComponent = () => {
                       console.log('Download RHEL button clicked - modal disabled');
                     }}
                   >
-                    Button
+                    {getDisplayName("Get RHEL Image", "Button", namingMode)}
                   </Button>
                 </FlexItem>
                 <FlexItem>
@@ -873,7 +895,7 @@ const Test: React.FunctionComponent = () => {
                       console.log('Import button clicked - modal disabled');
                     }}
                   >
-                    Button
+                    {getDisplayName("Load Configuration", "Button", namingMode)}
                   </Button>
                 </FlexItem>
               </Flex>
@@ -1011,6 +1033,7 @@ const Test: React.FunctionComponent = () => {
                   <>
                     <ToolbarItem>
                       <Button
+                        semanticName="Edit Selected Image"
                         variant="primary"
                         icon={<EditIcon />}
                         onClick={() => {
@@ -1024,28 +1047,30 @@ const Test: React.FunctionComponent = () => {
                         }}
                         isDisabled={selectedRows.size !== 1 || hasNonReadySelected}
                       >
-                        Edit
+                        {getDisplayName("Edit Selected Image", "Edit", namingMode)}
                       </Button>
                     </ToolbarItem>
 
                     <ToolbarItem>
                       <Button
+                        semanticName="Duplicate Selected Images"
                         variant="secondary"
                         icon={<CopyIcon />}
                         onClick={handleBulkDuplicate}
                         isDisabled={selectedRows.size === 0 || hasNonReadySelected}
                       >
-                        Duplicate ({selectedRows.size})
+                        {getDisplayName("Duplicate Selected Images", "Duplicate", namingMode)} ({selectedRows.size})
                       </Button>
                     </ToolbarItem>
                     <ToolbarItem>
                       <Button
+                        semanticName="Rebuild Selected Images"
                         variant="secondary"
                         icon={<BuildIcon />}
                         onClick={handleBulkRebuild}
                         isDisabled={selectedRows.size === 0}
                       >
-                        Rebuild ({selectedRows.size})
+                        {getDisplayName("Rebuild Selected Images", "Rebuild", namingMode)} ({selectedRows.size})
                       </Button>
                     </ToolbarItem>
                   </>
@@ -1098,10 +1123,10 @@ const Test: React.FunctionComponent = () => {
                   >
                     {sortField === 'image' ? (
                       <Tooltip content={getSortTooltipText('image', sortDirection)}>
-                        <span>Header{getSortIcon('image')}</span>
+                        <span>{getDisplayName("Image Name", "Header", namingMode)}{getSortIcon('image')}</span>
                       </Tooltip>
                     ) : (
-                      <>Header{getSortIcon('image')}</>
+                      <>{getDisplayName("Image Name", "Header", namingMode)}{getSortIcon('image')}</>
                     )}
                   </Th>
                   <Th
@@ -1111,10 +1136,10 @@ const Test: React.FunctionComponent = () => {
                   >
                     {sortField === 'dateUpdated' ? (
                       <Tooltip content={getSortTooltipText('dateUpdated', sortDirection)}>
-                        <span>Header{getSortIcon('dateUpdated')}</span>
+                        <span>{getDisplayName("Last Modified", "Header", namingMode)}{getSortIcon('dateUpdated')}</span>
                       </Tooltip>
                     ) : (
-                      <>Header{getSortIcon('dateUpdated')}</>
+                      <>{getDisplayName("Last Modified", "Header", namingMode)}{getSortIcon('dateUpdated')}</>
                     )}
                   </Th>
                   <Th
@@ -1124,10 +1149,10 @@ const Test: React.FunctionComponent = () => {
                   >
                     {sortField === 'os' ? (
                       <Tooltip content={getSortTooltipText('os', sortDirection)}>
-                        <span>Header{getSortIcon('os')}</span>
+                        <span>{getDisplayName("Operating System", "Header", namingMode)}{getSortIcon('os')}</span>
                       </Tooltip>
                     ) : (
-                      <>Header{getSortIcon('os')}</>
+                      <>{getDisplayName("Operating System", "Header", namingMode)}{getSortIcon('os')}</>
                     )}
                   </Th>
                   <Th
@@ -1137,10 +1162,10 @@ const Test: React.FunctionComponent = () => {
                   >
                     {sortField === 'targetEnvironment' ? (
                       <Tooltip content={getSortTooltipText('targetEnvironment', sortDirection)}>
-                        <span>Header{getSortIcon('targetEnvironment')}</span>
+                        <span>{getDisplayName("Deployment Target", "Header", namingMode)}{getSortIcon('targetEnvironment')}</span>
                       </Tooltip>
                     ) : (
-                      <>Header{getSortIcon('targetEnvironment')}</>
+                      <>{getDisplayName("Deployment Target", "Header", namingMode)}{getSortIcon('targetEnvironment')}</>
                     )}
                   </Th>
 
@@ -1151,16 +1176,16 @@ const Test: React.FunctionComponent = () => {
                   >
                     {sortField === 'status' ? (
                       <Tooltip content={getSortTooltipText('status', sortDirection)}>
-                        <span>Header{getSortIcon('status')}</span>
+                        <span>{getDisplayName("Build Status", "Header", namingMode)}{getSortIcon('status')}</span>
                       </Tooltip>
                     ) : (
-                      <>Header{getSortIcon('status')}</>
+                      <>{getDisplayName("Build Status", "Header", namingMode)}{getSortIcon('status')}</>
                     )}
                   </Th>
                   <th 
                     style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600 }}
                   >
-                    Header
+                    {getDisplayName("Instance", "Header", namingMode)}
                   </th>
                   <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600 }}> </th>
                 </tr>
@@ -1300,7 +1325,7 @@ const Test: React.FunctionComponent = () => {
                               handleEditImage(image);
                             }}
                           >
-                            Edit
+                            {getDisplayName("Edit Image", "Edit", namingMode)}
                           </DropdownItem>
                           <Divider />
 
@@ -1310,7 +1335,7 @@ const Test: React.FunctionComponent = () => {
                               setOpenDropdowns(new Set());
                             }}
                           >
-                            Duplicate
+                            {getDisplayName("Duplicate Image", "Duplicate", namingMode)}
                           </DropdownItem>
                           <DropdownItem 
                             onClick={() => {
@@ -1318,7 +1343,7 @@ const Test: React.FunctionComponent = () => {
                               setOpenDropdowns(new Set());
                             }}
                           >
-                            Rebuild
+                            {getDisplayName("Rebuild Image", "Rebuild", namingMode)}
                           </DropdownItem>
                           <DropdownItem 
                             onClick={() => {
@@ -1326,14 +1351,14 @@ const Test: React.FunctionComponent = () => {
                               setOpenDropdowns(new Set());
                             }}
                           >
-                            Download blueprint (.json)
+                            {getDisplayName("Download Blueprint", "Download blueprint (.json)", namingMode)}
                           </DropdownItem>
                           <Divider />
                           <DropdownItem 
                             isDanger
                             onClick={() => handleDeleteConfirmation(image)}
                           >
-                            Delete
+                            {getDisplayName("Delete Image", "Delete", namingMode)}
                           </DropdownItem>
                         </DropdownList>
                       </Dropdown>
@@ -1494,10 +1519,10 @@ const Test: React.FunctionComponent = () => {
               marginRight: '-8px'  // Align with X button position
             }}>
               <Button variant="danger" onClick={handleDeleteConfirm}>
-                Delete
+                {getDisplayName("Delete Image", "Delete", namingMode)}
               </Button>
               <Button variant="link" onClick={handleDeleteCancel}>
-                Cancel
+                {getDisplayName("Cancel Action", "Cancel", namingMode)}
               </Button>
             </div>
           </ModalBody>
@@ -1531,7 +1556,7 @@ const Test: React.FunctionComponent = () => {
                   padding: '0.25rem 0.5rem'
                 }}
               >
-                Watch Demo
+                {getDisplayName("Watch Demo Video", "Watch Demo", namingMode)}
               </Button>
             </FlexItem>
             <FlexItem>
@@ -1569,6 +1594,14 @@ const Test: React.FunctionComponent = () => {
         </ModalBody>
       </Modal>
     </>
+  );
+};
+
+const Test: React.FunctionComponent = () => {
+  return (
+    <NamingModeProvider>
+      <TestContent />
+    </NamingModeProvider>
   );
 };
 
