@@ -1080,7 +1080,7 @@ const TestContent: React.FunctionComponent = () => {
                         }}
                         isDisabled={selectedRows.size !== 1 || hasNonReadySelected}
                       >
-                        {getDisplayName("button", "Edit Selected Image", namingMode)}
+                        {getDisplayName("button", "Edit", namingMode)}
                       </Button>
                     </ToolbarItem>
 
@@ -1091,7 +1091,7 @@ const TestContent: React.FunctionComponent = () => {
                         onClick={handleBulkDuplicate}
                         isDisabled={selectedRows.size === 0 || hasNonReadySelected}
                       >
-                        {getDisplayName("button", "Duplicate Selected Images", namingMode)} ({selectedRows.size})
+                        {getDisplayName("button", "Duplicate", namingMode)} ({selectedRows.size})
                       </Button>
                     </ToolbarItem>
                     <ToolbarItem>
@@ -1101,7 +1101,7 @@ const TestContent: React.FunctionComponent = () => {
                         onClick={handleBulkRebuild}
                         isDisabled={selectedRows.size === 0}
                       >
-                        {getDisplayName("button", "Rebuild Selected Images", namingMode)} ({selectedRows.size})
+                        {getDisplayName("button", "Rebuild", namingMode)} ({selectedRows.size})
                       </Button>
                     </ToolbarItem>
                   </>
