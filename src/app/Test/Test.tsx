@@ -844,6 +844,15 @@ const TestContent: React.FunctionComponent = () => {
               variant="secondary"
               onClick={() => {
                 console.log('🔍 Running semantic validation...');
+                // Debug: Check what elements have data-semantic-name
+                const allSemanticElements = document.querySelectorAll('[data-semantic-name]');
+                console.log(`📊 Found ${allSemanticElements.length} elements with data-semantic-name attribute`);
+                allSemanticElements.forEach((el, i) => {
+                  const name = el.getAttribute('data-semantic-name');
+                  const tag = el.tagName;
+                  console.log(`  ${i + 1}. <${tag}> with data-semantic-name="${name}"`);
+                });
+                
                 const result = runSemanticValidation(true);
                 if (result.warnings.length > 0) {
                   console.log(`⚠️ Found ${result.warnings.length} elements that should use semantic-ui-layer components`);
