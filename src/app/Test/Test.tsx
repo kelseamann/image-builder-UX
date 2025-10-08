@@ -1127,7 +1127,7 @@ const TestContent: React.FunctionComponent = () => {
                 backgroundColor: 'white'
               }}>
                 <tr>
-                  <th style={{ padding: '1rem 0.5rem 1rem 1.5rem', textAlign: 'left', fontWeight: 600, width: '40px' }}></th>
+                  <Th semanticName="Expand Row" style={{ padding: '1rem 0.5rem 1rem 1.5rem', textAlign: 'left', fontWeight: 600, width: '40px' }}></Th>
                   <Th 
                     semanticName="Select All Images"
                     style={{ padding: '1rem 0.75rem 1rem 1.5rem', textAlign: 'left', fontWeight: 600, width: '40px' }}
@@ -1145,8 +1145,8 @@ const TestContent: React.FunctionComponent = () => {
                       style={{ cursor: 'pointer' }}
                     />
                   </Th>
-                  <th style={{ padding: '1rem 0.5rem' }}>
-                  </th>
+                  <Th semanticName="Favorite" style={{ padding: '1rem 0.5rem' }}>
+                  </Th>
                   <Th 
                     semanticName="Image Name"
                     style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600, cursor: 'pointer' }}
@@ -1213,12 +1213,13 @@ const TestContent: React.FunctionComponent = () => {
                       <>{getDisplayName("header", "Build Status", namingMode)}{getSortIcon('status')}</>
                     )}
                   </Th>
-                  <th 
+                  <Th 
+                    semanticName="Instance"
                     style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600 }}
                   >
                     {getDisplayName("header", "Instance", namingMode)}
-                  </th>
-                  <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600 }}> </th>
+                  </Th>
+                  <Th semanticName="Actions" style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600 }}> </Th>
                 </tr>
               </Thead>
               <tbody>
