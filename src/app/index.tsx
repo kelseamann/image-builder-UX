@@ -8,12 +8,26 @@ import { AppLayout } from '@app/AppLayout/AppLayout';
 import { AppRoutes } from '@app/routes';
 import '@app/app.css';
 
-const App: React.FunctionComponent = () => (
-  <Router basename={process.env.NODE_ENV === 'production' ? '/image-builder-UX' : ''}>
-    <AppLayout>
-      <AppRoutes />
-    </AppLayout>
-  </Router>
-);
+const App: React.FunctionComponent = () => {
+  // Determine basename based on environment and current location
+  const getBasename = () => {
+    if (process.env.NODE_ENV === 'production') {
+      return '/image-builder-UX';
+    }
+    // For development, check if we're running on GitHub Pages or locally
+    if (window.location.hostname.includes('github.io')) {
+      return '/image-builder-UX';
+    }
+    return undefined; // No basename for local development
+  };
+
+  return (
+    <Router basename={getBasename()}>
+      <AppLayout>
+        <AppRoutes />
+      </AppLayout>
+    </Router>
+  );
+};
 
 export default App;

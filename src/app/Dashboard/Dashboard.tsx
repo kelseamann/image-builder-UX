@@ -7,7 +7,6 @@ import {
   Alert, 
   AlertActionCloseButton, 
   AlertVariant,
-  Button,
   Card,
   CardBody,
   ClipboardCopy,
@@ -43,9 +42,11 @@ import {
   Tooltip
 } from '@patternfly/react-core';
 import { AngleDownIcon, AngleRightIcon, BuildIcon, CheckCircleIcon, CodeBranchIcon, CopyIcon, EditIcon, EllipsisVIcon, ExclamationCircleIcon, ExclamationTriangleIcon, ExternalLinkAltIcon, FilterIcon, OutlinedQuestionCircleIcon, OutlinedStarIcon, PlayIcon, StarIcon, TimesIcon } from '@patternfly/react-icons';
+import { Button } from 'semantic-ui-layer';
 import { type ImageItem, UseBaseImageModal } from './UseBaseImageModal';
 import BuildImageModal from './BuildImageModal';
 import { ImportPipelineModal } from './ImportPipelineModal';
+import { useNamingMode, getDisplayName } from '../contexts/NamingModeContext';
 
 interface ImageTableRow {
   id: string;
@@ -65,6 +66,7 @@ interface ImageTableRow {
 }
 
 const Dashboard: React.FunctionComponent = () => {
+  const { namingMode } = useNamingMode();
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [isLaunchModalOpen, setIsLaunchModalOpen] = React.useState(false);
   const [isUseBaseImageModalOpen, setIsUseBaseImageModalOpen] = React.useState(false);
@@ -1009,7 +1011,7 @@ const Dashboard: React.FunctionComponent = () => {
                         }}
                         isDisabled={selectedRows.size !== 1 || hasNonReadySelected}
                       >
-                        Edit
+                        {getDisplayName('button', 'Edit', namingMode)}
                       </Button>
                     </ToolbarItem>
 
@@ -1020,7 +1022,7 @@ const Dashboard: React.FunctionComponent = () => {
                         onClick={handleBulkDuplicate}
                         isDisabled={selectedRows.size === 0 || hasNonReadySelected}
                       >
-                        Duplicate ({selectedRows.size})
+                        {getDisplayName('button', `Duplicate (${selectedRows.size})`, namingMode)}
                       </Button>
                     </ToolbarItem>
                     <ToolbarItem>
@@ -1030,7 +1032,7 @@ const Dashboard: React.FunctionComponent = () => {
                         onClick={handleBulkRebuild}
                         isDisabled={selectedRows.size === 0}
                       >
-                        Rebuild ({selectedRows.size})
+                        {getDisplayName('button', `Rebuild (${selectedRows.size})`, namingMode)}
                       </Button>
                     </ToolbarItem>
                   </>
@@ -1277,7 +1279,7 @@ const Dashboard: React.FunctionComponent = () => {
                               handleEditImage(image);
                             }}
                           >
-                            Edit
+                            {getDisplayName('button', 'Edit', namingMode)}
                           </DropdownItem>
                           <Divider />
 
@@ -1287,7 +1289,7 @@ const Dashboard: React.FunctionComponent = () => {
                               setOpenDropdowns(new Set());
                             }}
                           >
-                            Duplicate
+                            {getDisplayName('button', 'Duplicate', namingMode)}
                           </DropdownItem>
                           <DropdownItem 
                             onClick={() => {
@@ -1295,7 +1297,7 @@ const Dashboard: React.FunctionComponent = () => {
                               setOpenDropdowns(new Set());
                             }}
                           >
-                            Rebuild
+                            {getDisplayName('button', 'Rebuild', namingMode)}
                           </DropdownItem>
                           <DropdownItem 
                             onClick={() => {

@@ -3,7 +3,6 @@ import {
   Alert, 
   AlertActionCloseButton, 
   AlertVariant,
-  Button,
   Card,
   CardBody,
   ClipboardCopy,
@@ -29,7 +28,9 @@ import {
   Tooltip
 } from '@patternfly/react-core';
 import { AngleDownIcon, AngleRightIcon, BuildIcon, CheckCircleIcon, CopyIcon, EllipsisVIcon, ExclamationCircleIcon, ExclamationTriangleIcon, FilterIcon, MigrationIcon, OutlinedStarIcon, StarIcon, TableIcon } from '@patternfly/react-icons';
+import { Button } from 'semantic-ui-layer';
 import { ImageInfo } from '../Dashboard/ImageMigrationModal';
+import { useNamingMode, getDisplayName } from '../contexts/NamingModeContext';
 
 interface ImageTableRow extends ImageInfo {
   id: string;
@@ -45,6 +46,7 @@ interface ImageTableRow extends ImageInfo {
 }
 
 const Images: React.FunctionComponent = () => {
+  const { namingMode } = useNamingMode();
   const [isLaunchModalOpen, setIsLaunchModalOpen] = React.useState(false);
   const [alertInfo, setAlertInfo] = React.useState<{
     variant: AlertVariant;
@@ -846,36 +848,36 @@ const Images: React.FunctionComponent = () => {
                   </div>
                 </ToolbarItem>
 
-                {(() => {
-                  const selectionInfo = getSelectedImagesInfo();
-                  const hasNonReadySelected = selectionInfo.hasOnlyNonReady || selectionInfo.hasMixed;
-                  
-                  return (
-                    <>
+              {(() => {
+                const selectionInfo = getSelectedImagesInfo();
+                const hasNonReadySelected = selectionInfo.hasOnlyNonReady || selectionInfo.hasMixed;
+                
+                return (
+                  <>
 
-                      <ToolbarItem>
-                        <Button
-                          variant="secondary"
-                          icon={<CopyIcon />}
-                          onClick={handleBulkDuplicate}
-                          isDisabled={selectedRows.size === 0 || hasNonReadySelected}
-                        >
-                          Duplicate ({selectedRows.size})
-                        </Button>
-                      </ToolbarItem>
-                      <ToolbarItem>
-                        <Button
-                          variant="secondary"
-                          icon={<BuildIcon />}
-                          onClick={handleBulkRebuild}
-                          isDisabled={selectedRows.size === 0}
-                        >
-                          Rebuild ({selectedRows.size})
-                        </Button>
-                      </ToolbarItem>
-                    </>
-                  );
-                })()}
+                    <ToolbarItem>
+                      <Button
+                        variant="secondary"
+                        icon={<CopyIcon />}
+                        onClick={handleBulkDuplicate}
+                        isDisabled={selectedRows.size === 0 || hasNonReadySelected}
+                      >
+                        {getDisplayName('button', `Duplicate (${selectedRows.size})`, namingMode)}
+                      </Button>
+                    </ToolbarItem>
+                    <ToolbarItem>
+                      <Button
+                        variant="secondary"
+                        icon={<BuildIcon />}
+                        onClick={handleBulkRebuild}
+                        isDisabled={selectedRows.size === 0}
+                      >
+                        {getDisplayName('button', `Rebuild (${selectedRows.size})`, namingMode)}
+                      </Button>
+                    </ToolbarItem>
+                  </>
+                );
+              })()}
 
               </ToolbarContent>
             </Toolbar>
@@ -1101,7 +1103,7 @@ const Images: React.FunctionComponent = () => {
                         >
                           <DropdownList>
                             <DropdownItem isDisabled>
-                              Edit (disabled)
+                              {getDisplayName('button', 'Edit', namingMode)} (disabled)
                             </DropdownItem>
                             <Divider />
 
@@ -1111,7 +1113,7 @@ const Images: React.FunctionComponent = () => {
                                 setOpenDropdowns(new Set());
                               }}
                             >
-                              Duplicate
+                              {getDisplayName('button', 'Duplicate', namingMode)}
                             </DropdownItem>
                             <DropdownItem 
                               onClick={() => {
@@ -1119,7 +1121,7 @@ const Images: React.FunctionComponent = () => {
                                 setOpenDropdowns(new Set());
                               }}
                             >
-                              Rebuild
+                              {getDisplayName('button', 'Rebuild', namingMode)}
                             </DropdownItem>
                             <DropdownItem 
                               onClick={() => {
