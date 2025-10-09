@@ -10,8 +10,6 @@ import {
   Alert, 
   AlertActionCloseButton, 
   AlertVariant,
-  Button as PFButton,
-  Card as PFCard,
   CardBody,
   ClipboardCopy,
   Divider,
@@ -28,10 +26,12 @@ import {
   Label,
   MenuToggle,
   MenuToggleElement,
-  Modal as PFModal,
   ModalBody,
   ModalHeader,
   ModalVariant,
+  Button as PFButton,
+  Card as PFCard,
+  Modal as PFModal,
   PageSection,
   Pagination,
   SearchInput,
@@ -45,12 +45,12 @@ import {
   ToolbarItem,
   Tooltip
 } from '@patternfly/react-core';
-import { Button, Card, Modal, Th, Td, Thead, Tbody, runSemanticValidation, clearValidationHighlights } from 'semantic-ui-layer';
+import { Button, Card, Modal, Tbody, Td, Th, Thead, clearValidationHighlights, runSemanticValidation } from 'semantic-ui-layer';
 import { AngleDownIcon, AngleRightIcon, BuildIcon, CheckCircleIcon, CodeBranchIcon, CopyIcon, EditIcon, EllipsisVIcon, ExclamationCircleIcon, ExclamationTriangleIcon, ExternalLinkAltIcon, FilterIcon, OutlinedQuestionCircleIcon, OutlinedStarIcon, PlayIcon, StarIcon, TimesIcon } from '@patternfly/react-icons';
 import { type ImageItem, UseBaseImageModal } from './UseBaseImageModal';
 import BuildImageModal from './BuildImageModal';
 import { ImportPipelineModal } from './ImportPipelineModal';
-import { NamingModeProvider, useNamingMode, getDisplayName } from '../contexts/NamingModeContext';
+import { NamingModeProvider, getDisplayName, useNamingMode } from '../contexts/NamingModeContext';
 import { NamingModeToggle } from '../components/NamingModeToggle';
 
 interface ImageTableRow {

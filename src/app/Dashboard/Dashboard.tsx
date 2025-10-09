@@ -46,7 +46,7 @@ import { Button } from 'semantic-ui-layer';
 import { type ImageItem, UseBaseImageModal } from './UseBaseImageModal';
 import BuildImageModal from './BuildImageModal';
 import { ImportPipelineModal } from './ImportPipelineModal';
-import { useNamingMode, getDisplayName } from '../contexts/NamingModeContext';
+import { getDisplayName, useNamingMode } from '../contexts/NamingModeContext';
 
 interface ImageTableRow {
   id: string;

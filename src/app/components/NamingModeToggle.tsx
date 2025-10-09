@@ -1,5 +1,5 @@
 import React from 'react';
-import { ToggleGroup, ToggleGroupItem, Flex, FlexItem } from '@patternfly/react-core';
+import { Flex, FlexItem, ToggleGroup, ToggleGroupItem } from '@patternfly/react-core';
 import { useNamingMode } from '../contexts/NamingModeContext';
 
 export const NamingModeToggle: React.FC = () => {

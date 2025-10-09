@@ -30,7 +30,7 @@ import {
 import { AngleDownIcon, AngleRightIcon, BuildIcon, CheckCircleIcon, CopyIcon, EllipsisVIcon, ExclamationCircleIcon, ExclamationTriangleIcon, FilterIcon, MigrationIcon, OutlinedStarIcon, StarIcon, TableIcon } from '@patternfly/react-icons';
 import { Button } from 'semantic-ui-layer';
 import { ImageInfo } from '../Dashboard/ImageMigrationModal';
-import { useNamingMode, getDisplayName } from '../contexts/NamingModeContext';
+import { getDisplayName, useNamingMode } from '../contexts/NamingModeContext';
 
 interface ImageTableRow extends ImageInfo {
   id: string;

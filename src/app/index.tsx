@@ -6,6 +6,7 @@ import '@patternfly/react-core/dist/styles/base.css';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { AppLayout } from '@app/AppLayout/AppLayout';
 import { AppRoutes } from '@app/routes';
+import { NamingModeProvider } from '@app/contexts/NamingModeContext';
 import '@app/app.css';
 
 const App: React.FunctionComponent = () => {
@@ -22,11 +23,13 @@ const App: React.FunctionComponent = () => {
   };
 
   return (
-    <Router basename={getBasename()}>
-      <AppLayout>
-        <AppRoutes />
-      </AppLayout>
-    </Router>
+    <NamingModeProvider>
+      <Router basename={getBasename()}>
+        <AppLayout>
+          <AppRoutes />
+        </AppLayout>
+      </Router>
+    </NamingModeProvider>
   );
 };
 
